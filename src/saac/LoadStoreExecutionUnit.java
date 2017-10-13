@@ -2,16 +2,18 @@ package saac;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class ExecutionUnit implements ClockedComponent{
+public class LoadStoreExecutionUnit implements ClockedComponent{
 
 	private Connection<Instruction>.Output instructionIn;
 	private Connection<InstructionResult>.Input resultOut;
 	private InstructionResult buffer;
 	private int instructionDelay = 0;
+	private Memory memory;
 	
-	ExecutionUnit(Connection<Instruction>.Output instructionIn, Connection<InstructionResult>.Input resultOut) {
+	LoadStoreExecutionUnit(Connection<Instruction>.Output instructionIn, Connection<InstructionResult>.Input resultOut, Memory memory) {
 		this.instructionIn = instructionIn;
 		this.resultOut = resultOut;
+		this.memory = memory;
 	}
 	
 	@Override
@@ -22,26 +24,17 @@ public class ExecutionUnit implements ClockedComponent{
 		if(inst == null)
 			return;
 		switch(inst.getOpcode()) {
-		case Ldc:
-			buffer = new InstructionResult(inst.getParamA(), inst.getParamB());
+		case Ldma:
+			buffer = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB()));
 			break;
-		case Add:
-		case Addi:
-			buffer = new InstructionResult(inst.getParamA(), inst.getParamB() + inst.getParamC());
+		case Stma:
+			memory.setWord(inst.getParamA(), inst.getParamB());
 			break;
-		case Sub:
-		case Subi:
-			buffer = new InstructionResult(inst.getParamA(), inst.getParamB() - inst.getParamC());
+		case Ldmi:
+			buffer = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
 			break;
-		case Mul:
-		case Muli:
-			buffer = new InstructionResult(inst.getParamA(), inst.getParamB() * inst.getParamC());
-			break;
-		case Nop:
-			break;
-		case Div:
-		case Divi:
-			buffer = new InstructionResult(inst.getParamA(), inst.getParamB() / inst.getParamC());
+		case Stmi:
+			memory.setWord(inst.getParamA(), inst.getParamB() + inst.getParamB());
 			break;
 		default:
 			throw new NotImplementedException();

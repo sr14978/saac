@@ -14,7 +14,7 @@ public class WritebackHandler implements ClockedComponent {
 		InstructionResult res = input.get();
 		if(res == null)
 			return;
-		System.out.println(res);
+		System.out.println(res + " is written back");
 		registerFile.set(res.getTarget(), res.getValue());
 		registerFile.setDirty(res.getTarget(), false);
 	}
