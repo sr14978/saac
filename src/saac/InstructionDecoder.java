@@ -8,23 +8,19 @@ import saac.Instructions.Opcode;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class InstructionDecoder implements ClockedComponent{
+	Connection<byte[]>.Output instructionIn;
 	Connection<Instruction>.Input outputEU_A;
 	Connection<Instruction>.Input outputEU_B;
 	Connection<Instruction>.Input outputLS;
 	Instruction bufferOut;
 	Instruction bufferIn;
 	RegisterFile registerFile;
-	
-	final Instruction[] instructions = new Instruction[]{
-		new Instruction(Opcode.Ldc, 1, 42, 0),
-		new Instruction(Opcode.Ldmi, 0, 1, 10),
-		new Instruction(Opcode.Addi, 0, 0, 1),
-		new Instruction(Opcode.Stma, 1, 52, 0)
-	};
+
 	int count = -1;
 	
-	public InstructionDecoder(Connection<Instruction>.Input outputA,
+	public InstructionDecoder(Connection<byte[]>.Output input, Connection<Instruction>.Input outputA,
 			Connection<Instruction>.Input outputB, Connection<Instruction>.Input outputC, RegisterFile rf) {
+		this.instructionIn = input;
 		this.outputEU_A = outputA;
 		this.outputEU_B = outputB;
 		this.outputLS = outputC;
@@ -36,12 +32,12 @@ public class InstructionDecoder implements ClockedComponent{
 		if(bufferOut != null)
 			return;
 		
-		if(bufferIn == null) {
-			count = (count + 1) % instructions.length;
-			bufferIn = instructions[count];
-		}
+		byte[] bytes = instructionIn.get();
+		if(bytes == null)
+			return;
 		
-		Instruction inst = bufferIn;
+		Instruction inst = new Instruction(Opcode.values()[bytes[0]], bytes[1], bytes[2], bytes[3]);
+		
 		boolean dependOnA = false, dependOnB = false, dependOnC = false, dirtyA = false;
 		switch(inst.getOpcode()) {
 		case Ldc:
