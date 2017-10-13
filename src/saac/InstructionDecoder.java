@@ -11,7 +11,8 @@ public class InstructionDecoder implements ClockedComponent{
 	final Instruction[] instructions = new Instruction[]{
 		new Instruction(Instruction.Opcode.Ldc, 0, 42, 0),
 		new Instruction(Instruction.Opcode.Addi, 1, 1, 1),
-		new Instruction(Instruction.Opcode.Add, 2, 0, 1)
+		new Instruction(Instruction.Opcode.Add, 2, 0, 1),
+		new Instruction(Instruction.Opcode.Div, 4, 5, 0)
 	};
 	int count = -1;
 	
@@ -38,20 +39,22 @@ public class InstructionDecoder implements ClockedComponent{
 			bufferOut = inst;
 			break;
 		case Add:
+		case Mul:
+		case Div:
 			if(registerFile.isDirty(inst.getSourceA()) || registerFile.isDirty(inst.getSourceB()))
 				return;
 			registerFile.setDirty(inst.getTarget(), true);
 			bufferOut = inst.transform(Function.identity(), Function.identity(), registerFile::get, registerFile::get);
 			break;
 		case Addi:
+		case Muli:
+		case Divi:
 			if(registerFile.isDirty(inst.getSourceA()))
 				return;
 			registerFile.setDirty(inst.getTarget(), true);
 			bufferOut = inst.transform(Function.identity(), Function.identity(), registerFile::get, Function.identity());
 			break;
 		case Nop:
-			break;
-		default:
 			break;
 		}
 		bufferIn = null;
