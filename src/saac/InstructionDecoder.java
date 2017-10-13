@@ -39,6 +39,7 @@ public class InstructionDecoder implements ClockedComponent{
 			bufferOut = inst;
 			break;
 		case Add:
+		case Sub:
 		case Mul:
 		case Div:
 			if(registerFile.isDirty(inst.getSourceA()) || registerFile.isDirty(inst.getSourceB()))
@@ -47,6 +48,7 @@ public class InstructionDecoder implements ClockedComponent{
 			bufferOut = inst.transform(Function.identity(), Function.identity(), registerFile::get, registerFile::get);
 			break;
 		case Addi:
+		case Subi:
 		case Muli:
 		case Divi:
 			if(registerFile.isDirty(inst.getSourceA()))
