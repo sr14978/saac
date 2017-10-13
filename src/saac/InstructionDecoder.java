@@ -19,6 +19,7 @@ public class InstructionDecoder implements ClockedComponent{
 		this.output = output;
 		this.registerFile = rf;
 	}
+	
 	@Override
 	public void tick() throws Exception {
 		if(bufferOut != null)
@@ -47,6 +48,10 @@ public class InstructionDecoder implements ClockedComponent{
 				return;
 			registerFile.setDirty(inst.getTarget(), true);
 			bufferOut = inst.transform(Function.identity(), Function.identity(), registerFile::get, Function.identity());
+			break;
+		case Nop:
+			break;
+		default:
 			break;
 		}
 		bufferIn = null;

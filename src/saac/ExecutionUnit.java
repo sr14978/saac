@@ -25,6 +25,10 @@ public class ExecutionUnit implements ClockedComponent{
 		case Addi:
 			buffer = new InstructionResult(inst.getTarget(), inst.getSourceA() + inst.getSourceB());
 			break;
+		case Nop:
+			break;
+		default:
+			break;
 		}
 			
 	}
