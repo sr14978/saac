@@ -41,13 +41,13 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 			res = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB()));
 			break;
 		case Stma:
-			memory.setWord(inst.getParamA(), inst.getParamB());
+			memory.setWord(inst.getParamB(), inst.getParamA());
 			break;
 		case Ldmi:
 			res = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
 			break;
 		case Stmi:
-			memory.setWord(inst.getParamA(), inst.getParamB() + inst.getParamB());
+			memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
 			break;
 		default:
 			throw new NotImplementedException();
