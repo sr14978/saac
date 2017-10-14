@@ -11,7 +11,7 @@ public class InstructionFetcher implements ClockedComponent{
 	
 	boolean halt = false;
 	
-	InstructionFetcher(Connection<byte[]>.Input output, Connection<Integer>.Output fromBrUnit, RegisterFile registerFile) {
+	InstructionFetcher(RegisterFile registerFile, Connection<byte[]>.Input output, Connection<Integer>.Output fromBrUnit) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
 		this.registerFile = registerFile;

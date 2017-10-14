@@ -20,12 +20,12 @@ public class InstructionDecoder implements ClockedComponent{
 	Instruction bufferOut;
 	RegisterFile registerFile;
 	
-	public InstructionDecoder(Connection<byte[]>.Output input,
+	public InstructionDecoder(RegisterFile rf,
+			Connection<byte[]>.Output input,
 			Connection<Instruction>.Input outputA,
 			Connection<Instruction>.Input outputB,
 			Connection<Instruction>.Input outputC,
-			Connection<Instruction>.Input outputBr,
-			RegisterFile rf) {
+			Connection<Instruction>.Input outputBr) {
 		this.instructionIn = input;
 		this.outputEU_A = outputA;
 		this.outputEU_B = outputB;

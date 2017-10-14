@@ -32,31 +32,30 @@ public class Saac implements ClockedComponent {
 		Connection<Instruction> intoEU_A = new Connection<>();
 		Connection<InstructionResult> outOfEU_A = new Connection<>();
 		components.add(new ExecutionUnit(intoEU_A.getOutputEnd(), outOfEU_A.getInputEnd()));
-		components.add(new WritebackHandler(outOfEU_A.getOutputEnd(), registerFile));
 		
 		Connection<Instruction> intoEU_B = new Connection<>();
 		Connection<InstructionResult> outOfEU_B = new Connection<>();
 		components.add(new ExecutionUnit(intoEU_B.getOutputEnd(), outOfEU_B.getInputEnd()));
-		components.add(new WritebackHandler(outOfEU_B.getOutputEnd(), registerFile));
 		
 		Connection<Instruction> intoLS = new Connection<>();
 		Connection<InstructionResult> outOfLS = new Connection<>();
 		components.add(new LoadStoreExecutionUnit(intoLS.getOutputEnd(), outOfLS.getInputEnd(), memory));
-		components.add(new WritebackHandler(outOfLS.getOutputEnd(), registerFile));
 		
 		Connection<Instruction> intoBr = new Connection<>();
 		Connection<Integer> fromBr = new Connection<>();
 		components.add(new BranchExecutionUnit(intoBr.getOutputEnd(), fromBr.getInputEnd()));
+
+		components.add(new WritebackHandler(registerFile, outOfEU_A.getOutputEnd(), outOfEU_B.getOutputEnd(), outOfLS.getOutputEnd()));
 		
 		Connection<byte[]> intoDec = new Connection<>();
-		components.add(new InstructionFetcher(intoDec.getInputEnd(), fromBr.getOutputEnd(), registerFile));
-		components.add(new InstructionDecoder(
+		components.add(new InstructionFetcher(registerFile, intoDec.getInputEnd(), fromBr.getOutputEnd()));
+		components.add(new InstructionDecoder(registerFile,
 				intoDec.getOutputEnd(),
 				intoEU_A.getInputEnd(),
 				intoEU_B.getInputEnd(),
 				intoLS.getInputEnd(),
-				intoBr.getInputEnd(),
-				registerFile));
+				intoBr.getInputEnd()
+				));
 	}
 
 	@Override
