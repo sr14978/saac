@@ -2,7 +2,15 @@ package saac;
 
 public class Memory {
 	static final int addressMax = 0x10000;
-	private int[] values = new int[addressMax];
+	static private int[] values = new int[addressMax];
+	
+	static {
+		for(int i=0; i<10; i++)
+			values[0x10+i] = i+1;
+		
+		for(int i=0; i<10; i++)
+			values[0x40+i] = (i+2);
+	}
 	
 	public int getWord(int addr) {
 		if(addr < addressMax && addr >= 0)

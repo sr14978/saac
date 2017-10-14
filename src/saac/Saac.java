@@ -13,9 +13,9 @@ public class Saac implements ClockedComponent {
 		Saac saac = new Saac();
 		int cycleCounter = 0;
 		while (true) {
-			Thread.sleep(500);
+			Thread.sleep(1);
 			saac.tick();
-			Thread.sleep(500);
+			Thread.sleep(1);
 			saac.tock();
 			cycleCounter++;
 			System.out.println((float) InstructionCounter / cycleCounter);

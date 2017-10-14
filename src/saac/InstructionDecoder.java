@@ -58,16 +58,16 @@ public class InstructionDecoder implements ClockedComponent{
 		case Sub:
 		case Mul:
 		case Div:
+		case Ldmi:
 			dirtyA = dependOnB = dependOnC = true;
 			break;
 		case Stmi:
-			dependOnA = dependOnB = true;
+			dependOnA = dependOnB = dependOnC = true;
 			break;
 		case Addi:
 		case Subi:
 		case Muli:
 		case Divi:
-		case Ldmi:
 			dirtyA = dependOnB = true;
 			break;
 		case Nop:
