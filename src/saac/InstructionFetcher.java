@@ -31,7 +31,7 @@ public class InstructionFetcher implements ClockedComponent{
 		}
 		
 		int programCounter = registerFile.get(RegisterFile.PC);
-		System.out.println("PC: " + programCounter);
+		System.out.println("Fetching instruction: " + programCounter);
 		if(bufferOut != null)
 			return;
 		bufferOut = InstructionsSource.getInstruction(programCounter);
