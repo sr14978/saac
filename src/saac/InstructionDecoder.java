@@ -8,22 +8,31 @@ import saac.Instructions.Opcode;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class InstructionDecoder implements ClockedComponent{
+	
+	static final Function identity = Function.identity();
+	
 	Connection<byte[]>.Output instructionIn;
 	Connection<Instruction>.Input outputEU_A;
 	Connection<Instruction>.Input outputEU_B;
 	Connection<Instruction>.Input outputLS;
+	Connection<Instruction>.Input outputBr;
 	Instruction bufferOut;
 	Instruction bufferIn;
 	RegisterFile registerFile;
 
 	int count = -1;
 	
-	public InstructionDecoder(Connection<byte[]>.Output input, Connection<Instruction>.Input outputA,
-			Connection<Instruction>.Input outputB, Connection<Instruction>.Input outputC, RegisterFile rf) {
+	public InstructionDecoder(Connection<byte[]>.Output input,
+			Connection<Instruction>.Input outputA,
+			Connection<Instruction>.Input outputB,
+			Connection<Instruction>.Input outputC,
+			Connection<Instruction>.Input outputBr,
+			RegisterFile rf) {
 		this.instructionIn = input;
 		this.outputEU_A = outputA;
 		this.outputEU_B = outputB;
 		this.outputLS = outputC;
+		this.outputBr = outputBr;
 		this.registerFile = rf;
 	}
 	
@@ -32,12 +41,14 @@ public class InstructionDecoder implements ClockedComponent{
 		if(bufferOut != null)
 			return;
 		
-		byte[] bytes = instructionIn.get();
-		if(bytes == null)
-			return;
+		if(bufferIn == null) {
+			byte[] bytes = instructionIn.get();
+			if(bytes == null)
+				return;
+			bufferIn = new Instruction(Opcode.values()[bytes[0]], bytes[1], bytes[2], bytes[3]);
+		}
 		
-		Instruction inst = new Instruction(Opcode.values()[bytes[0]], bytes[1], bytes[2], bytes[3]);
-		
+		Instruction inst  = bufferIn;
 		boolean dependOnA = false, dependOnB = false, dependOnC = false, dirtyA = false;
 		switch(inst.getOpcode()) {
 		case Ldc:
@@ -67,6 +78,15 @@ public class InstructionDecoder implements ClockedComponent{
 		case Stma:
 			dependOnA = true;
 			break;
+		case Br:
+			break;
+		case JmpN:
+		case JmpZ:
+			dependOnB = true;
+		case Jmp:
+			inst = inst.transform(identity, identity, identity, x->RegisterFile.PC);
+			dependOnC = true;
+			break;
 		default:
 			throw new NotImplementedException();
 		}
@@ -90,10 +110,10 @@ public class InstructionDecoder implements ClockedComponent{
 			registerFile.setDirty(inst.getParamA(), true);
 		
 		bufferOut = inst.transform(
-				Function.identity(),
-				dependOnA? registerFile::get : Function.identity(),
-				dependOnB? registerFile::get : Function.identity(),
-				dependOnC? registerFile::get : Function.identity()
+				identity,
+				dependOnA? registerFile::get : identity,
+				dependOnB? registerFile::get : identity,
+				dependOnC? registerFile::get : identity
 						);
 		bufferIn = null;
 	}
@@ -132,6 +152,17 @@ public class InstructionDecoder implements ClockedComponent{
 			if(outputLS.isEmpty()) {
 				outputLS.put(bufferOut);
 				System.out.println(bufferOut + " sent for execution on LSU");
+				bufferOut = null;
+				Saac.InstructionCounter++;
+			}
+			break;
+		case Br:
+		case Jmp:
+		case JmpN:
+		case JmpZ:
+			if(outputBr.isEmpty()) {
+				outputBr.put(bufferOut);
+				System.out.println(bufferOut + " sent for execution on BrU");
 				bufferOut = null;
 				Saac.InstructionCounter++;
 			}

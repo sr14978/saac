@@ -40,9 +40,5 @@ public class Instructions {
 		put(Opcode.Stma, 20);
 		put(Opcode.Ldmi, 20);
 		put(Opcode.Stmi, 20);
-		put(Opcode.Br, 0);
-		put(Opcode.Jmp, 0);
-		put(Opcode.JmpZ, 0);
-		put(Opcode.JmpN, 0);
 	}};
 }

@@ -44,9 +44,19 @@ public class Saac implements ClockedComponent {
 		components.add(new LoadStoreExecutionUnit(intoLS.getOutputEnd(), outOfLS.getInputEnd(), memory));
 		components.add(new WritebackHandler(outOfLS.getOutputEnd(), registerFile));
 		
+		Connection<Instruction> intoBr = new Connection<>();
+		Connection<Integer> fromBr = new Connection<>();
+		components.add(new BranchExecutionUnit(intoBr.getOutputEnd(), fromBr.getInputEnd()));
+		
 		Connection<byte[]> intoDec = new Connection<>();
-		components.add(new InstructionFetcher(intoDec.getInputEnd()));
-		components.add(new InstructionDecoder(intoDec.getOutputEnd(), intoEU_A.getInputEnd(), intoEU_B.getInputEnd(), intoLS.getInputEnd(), registerFile));
+		components.add(new InstructionFetcher(intoDec.getInputEnd(), fromBr.getOutputEnd(), registerFile));
+		components.add(new InstructionDecoder(
+				intoDec.getOutputEnd(),
+				intoEU_A.getInputEnd(),
+				intoEU_B.getInputEnd(),
+				intoLS.getInputEnd(),
+				intoBr.getInputEnd(),
+				registerFile));
 	}
 
 	@Override
