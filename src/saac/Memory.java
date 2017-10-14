@@ -10,7 +10,7 @@ public class Memory {
 			values[0x10+i] = i+1;
 		
 		for(int i=0; i<10; i++)
-			values[0x40+i] = (i+2);
+			values[0x20+i] = (i+2);
 	}
 	
 	public int getWord(int addr) {
