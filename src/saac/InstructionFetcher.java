@@ -30,10 +30,11 @@ public class InstructionFetcher implements ClockedComponent{
 			}
 		}
 		
-		int programCounter = registerFile.get(RegisterFile.PC);
-		System.out.println("Fetching instruction: " + programCounter);
 		if(bufferOut != null)
 			return;
+		int programCounter = registerFile.get(RegisterFile.PC);
+		System.out.println("Fetching instruction: " + programCounter);
+		
 		bufferOut = InstructionsSource.getInstruction(programCounter);
 		if(bufferOut[0] == Opcode.Br.ordinal() || bufferOut[0] == Opcode.Jmp.ordinal() || bufferOut[0] == Opcode.JmpN.ordinal() || bufferOut[0] == Opcode.JmpZ.ordinal())
 			halt = true;

@@ -1,7 +1,6 @@
 package saac;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import saac.Instructions.Opcode;
@@ -9,18 +8,17 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class InstructionDecoder implements ClockedComponent{
 	
-	static final Function identity = Function.identity();
+	static final Function<Opcode, Opcode> sameOp = Function.identity();
+	static final Function<Integer, Integer> sameVal = Function.identity();
 	
 	Connection<byte[]>.Output instructionIn;
+	Instruction bufferIn;
 	Connection<Instruction>.Input outputEU_A;
 	Connection<Instruction>.Input outputEU_B;
 	Connection<Instruction>.Input outputLS;
 	Connection<Instruction>.Input outputBr;
 	Instruction bufferOut;
-	Instruction bufferIn;
 	RegisterFile registerFile;
-
-	int count = -1;
 	
 	public InstructionDecoder(Connection<byte[]>.Output input,
 			Connection<Instruction>.Input outputA,
@@ -84,15 +82,15 @@ public class InstructionDecoder implements ClockedComponent{
 		case JmpZ:
 			dependOnB = true;
 		case Jmp:
-			inst = inst.transform(identity, identity, identity, x->RegisterFile.PC);
+			inst = inst.transform(sameOp, sameVal, sameVal, x->RegisterFile.PC);
 			dependOnC = true;
 			break;
 		default:
 			throw new NotImplementedException();
 		}
 		
-		List<Character> paramDependances = new ArrayList();
-		if( dependOnA && registerFile.isDirty(inst.getParamA()) ) {
+		List<Character> paramDependances = new ArrayList<>();
+		if( (dependOnA || dirtyA) && registerFile.isDirty(inst.getParamA()) ) {
 			paramDependances.add('A');
 		}
 		if( dependOnB && registerFile.isDirty(inst.getParamB()) ) {
@@ -110,10 +108,10 @@ public class InstructionDecoder implements ClockedComponent{
 			registerFile.setDirty(inst.getParamA(), true);
 		
 		bufferOut = inst.transform(
-				identity,
-				dependOnA? registerFile::get : identity,
-				dependOnB? registerFile::get : identity,
-				dependOnC? registerFile::get : identity
+				sameOp,
+				dependOnA? registerFile::get : sameVal,
+				dependOnB? registerFile::get : sameVal,
+				dependOnC? registerFile::get : sameVal
 						);
 		bufferIn = null;
 	}
@@ -136,13 +134,9 @@ public class InstructionDecoder implements ClockedComponent{
 			if(outputEU_A.isEmpty()) {
 				outputEU_A.put(bufferOut);
 				System.out.println(bufferOut + " sent for execution on EU 1");
-				bufferOut = null;
-				Saac.InstructionCounter++;
 			} else if(outputEU_B.isEmpty()) {
 				outputEU_B.put(bufferOut);
 				System.out.println(bufferOut + " sent for execution on EU 2");
-				bufferOut = null;
-				Saac.InstructionCounter++;
 			}
 			break;
 		case Ldma:
@@ -152,8 +146,6 @@ public class InstructionDecoder implements ClockedComponent{
 			if(outputLS.isEmpty()) {
 				outputLS.put(bufferOut);
 				System.out.println(bufferOut + " sent for execution on LSU");
-				bufferOut = null;
-				Saac.InstructionCounter++;
 			}
 			break;
 		case Br:
@@ -163,14 +155,13 @@ public class InstructionDecoder implements ClockedComponent{
 			if(outputBr.isEmpty()) {
 				outputBr.put(bufferOut);
 				System.out.println(bufferOut + " sent for execution on BrU");
-				bufferOut = null;
-				Saac.InstructionCounter++;
 			}
 			break;
 		default:
 			throw new NotImplementedException();
 		}
-		
+		bufferOut = null;
+		Saac.InstructionCounter++;
 	}
 	
 	

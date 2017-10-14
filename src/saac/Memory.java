@@ -4,6 +4,7 @@ public class Memory {
 	static final int addressMax = 0x10000;
 	static private int[] values = new int[addressMax];
 	
+	//initialise with values
 	static {
 		for(int i=0; i<10; i++)
 			values[0x10+i] = i+1;

@@ -25,7 +25,9 @@ public class Instructions {
 		JmpZ,
 		JmpN
 	}
-	static Map<Opcode, Integer> InstructionDelay = new HashMap<Opcode, Integer>(){{
+	static Map<Opcode, Integer> InstructionDelay = new HashMap<Opcode, Integer>(){
+		private static final long serialVersionUID = 1L;
+	{
 		put(Opcode.Nop, 0);
 		put(Opcode.Ldc, 0);
 		put(Opcode.Add, 0);

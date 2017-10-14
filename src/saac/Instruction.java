@@ -1,7 +1,5 @@
 package saac;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 import saac.Instructions.Opcode;

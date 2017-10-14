@@ -61,8 +61,10 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 		for(Item i : new HashSet<>(buffer)) {
 			if(i.delay > 0)
 				i.delay -= 1;
-			else if(res == null && i.result != null) {
+			else if(i.result != null && res == null) {
 				res = i.result;
+				buffer.remove(i);
+			} else if(i.result == null) {
 				buffer.remove(i);
 			}
 		}
