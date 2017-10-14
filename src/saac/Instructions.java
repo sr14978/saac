@@ -20,7 +20,7 @@ public class Instructions {
 		Stma,	// Stma	rI #n .  -> mem[#m] = rI 
 		Ldmi,	// Ldmi	rI rJ rK -> rI = mem[rJ + rk] 
 		Stmi,	// Stmi	rI rJ rK -> mem[rJ + rk] = rI 
-		Br,		// Br 	#n .  .  -> pc = #n
+		Br,  	// Br 	#n .  .  -> pc = #n
 		Jmp,	// Jmp  #n .  .  -> pc = pc + #n
 		JmpZ,	// Jmp  #n rI .  -> pc = if rI=0 then pc + #n else pc
 		JmpN	// Jmp  #n rI .  -> pc = if rI<0 then pc + #n else pc
