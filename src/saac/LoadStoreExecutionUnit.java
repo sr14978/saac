@@ -1,13 +1,24 @@
 package saac;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class LoadStoreExecutionUnit implements ClockedComponent{
-
+	static final int LDLimit = 4;
+	private class Item{
+		InstructionResult result;
+		int delay;
+		Item(InstructionResult r, int d) {
+			this.result = r;
+			this.delay = d;
+		}
+	}
+	
 	private Connection<Instruction>.Output instructionIn;
 	private Connection<InstructionResult>.Input resultOut;
-	private InstructionResult buffer;
-	private int instructionDelay = 0;
+	private Set<Item> buffer = new HashSet<>();
 	private Memory memory;
 	
 	LoadStoreExecutionUnit(Connection<Instruction>.Output instructionIn, Connection<InstructionResult>.Input resultOut, Memory memory) {
@@ -18,20 +29,22 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 	
 	@Override
 	public void tick() {
-		if(buffer != null)
+		if(buffer.size() >= LDLimit)
 			return;
 		Instruction inst = instructionIn.get();
 		if(inst == null)
 			return;
+		
+		InstructionResult res = null;		
 		switch(inst.getOpcode()) {
 		case Ldma:
-			buffer = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB()));
+			res = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB()));
 			break;
 		case Stma:
 			memory.setWord(inst.getParamA(), inst.getParamB());
 			break;
 		case Ldmi:
-			buffer = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
+			res = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
 			break;
 		case Stmi:
 			memory.setWord(inst.getParamA(), inst.getParamB() + inst.getParamB());
@@ -39,19 +52,25 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 		default:
 			throw new NotImplementedException();
 		}
-		instructionDelay = Instructions.InstructionDelay.get(inst.getOpcode());
-			
+		buffer.add(new Item(res, Instructions.InstructionDelay.get(inst.getOpcode())));
 	}
 
 	@Override
 	public void tock() throws FullChannelException {
-		if(instructionDelay > 0)
-			instructionDelay -= 1;
-		else if(buffer == null)
+		InstructionResult res = null;
+		for(Item i : new HashSet<>(buffer)) {
+			if(i.delay > 0)
+				i.delay -= 1;
+			else if(res == null && i.result != null) {
+				res = i.result;
+				buffer.remove(i);
+			}
+		}
+		if(res == null)
 			return;
 		else if(resultOut.isEmpty()) {
-			resultOut.put(buffer);
-			buffer = null;
+			resultOut.put(res);
+			res = null;
 		}
 	}
 
