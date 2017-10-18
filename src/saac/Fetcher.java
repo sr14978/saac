@@ -2,16 +2,16 @@ package saac;
 
 import saac.Instructions.Opcode;
 
-public class InstructionFetcher implements ClockedComponent{
+public class Fetcher implements ClockedComponent{
 
 	RegisterFile registerFile;
-	Connection<byte[]>.Input output;
-	byte[] bufferOut;
+	Connection<int[]>.Input output;
+	int[] bufferOut;
 	Connection<Integer>.Output fromBrUnit;
 	
 	boolean halt = false;
 	
-	InstructionFetcher(RegisterFile registerFile, Connection<byte[]>.Input output, Connection<Integer>.Output fromBrUnit) {
+	Fetcher(RegisterFile registerFile, Connection<int[]>.Input output, Connection<Integer>.Output fromBrUnit) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
 		this.registerFile = registerFile;

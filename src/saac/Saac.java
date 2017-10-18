@@ -47,9 +47,9 @@ public class Saac implements ClockedComponent {
 
 		components.add(new WritebackHandler(registerFile, outOfEU_A.getOutputEnd(), outOfEU_B.getOutputEnd(), outOfLS.getOutputEnd()));
 		
-		Connection<byte[]> intoDec = new Connection<>();
-		components.add(new InstructionFetcher(registerFile, intoDec.getInputEnd(), fromBr.getOutputEnd()));
-		components.add(new InstructionDecoder(registerFile,
+		Connection<int[]> intoDec = new Connection<>();
+		components.add(new Fetcher(registerFile, intoDec.getInputEnd(), fromBr.getOutputEnd()));
+		components.add(new Decoder(registerFile,
 				intoDec.getOutputEnd(),
 				intoEU_A.getInputEnd(),
 				intoEU_B.getInputEnd(),

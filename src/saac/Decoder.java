@@ -6,12 +6,12 @@ import java.util.function.Function;
 import saac.Instructions.Opcode;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class InstructionDecoder implements ClockedComponent{
+public class Decoder implements ClockedComponent{
 	
 	static final Function<Opcode, Opcode> sameOp = Function.identity();
 	static final Function<Integer, Integer> sameVal = Function.identity();
 	
-	Connection<byte[]>.Output instructionIn;
+	Connection<int[]>.Output instructionIn;
 	Instruction bufferIn;
 	Connection<Instruction>.Input outputEU_A;
 	Connection<Instruction>.Input outputEU_B;
@@ -20,13 +20,13 @@ public class InstructionDecoder implements ClockedComponent{
 	Instruction bufferOut;
 	RegisterFile registerFile;
 	
-	public InstructionDecoder(RegisterFile rf,
-			Connection<byte[]>.Output input,
+	public Decoder(RegisterFile rf,
+			Connection<int[]>.Output output,
 			Connection<Instruction>.Input outputA,
 			Connection<Instruction>.Input outputB,
 			Connection<Instruction>.Input outputC,
 			Connection<Instruction>.Input outputBr) {
-		this.instructionIn = input;
+		this.instructionIn = output;
 		this.outputEU_A = outputA;
 		this.outputEU_B = outputB;
 		this.outputLS = outputC;
@@ -40,10 +40,10 @@ public class InstructionDecoder implements ClockedComponent{
 			return;
 		
 		if(bufferIn == null) {
-			byte[] bytes = instructionIn.get();
-			if(bytes == null)
+			int[] data = instructionIn.get();
+			if(data == null)
 				return;
-			bufferIn = new Instruction(Opcode.values()[bytes[0]], bytes[1], bytes[2], bytes[3]);
+			bufferIn = new Instruction(Opcode.values()[data[0]], data[1], data[2], data[3]);
 		}
 		
 		Instruction inst  = bufferIn;
