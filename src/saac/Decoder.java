@@ -13,23 +13,20 @@ public class Decoder implements ClockedComponent{
 	
 	Connection<int[]>.Output instructionIn;
 	Instruction bufferIn;
-	Connection<Instruction>.Input outputEU_A;
-	Connection<Instruction>.Input outputEU_B;
+	Connection<Instruction>.Input outputEU;
 	Connection<Instruction>.Input outputLS;
 	Connection<Instruction>.Input outputBr;
 	Instruction bufferOut;
 	RegisterFile registerFile;
 	
 	public Decoder(RegisterFile rf,
-			Connection<int[]>.Output output,
-			Connection<Instruction>.Input outputA,
-			Connection<Instruction>.Input outputB,
-			Connection<Instruction>.Input outputC,
+			Connection<int[]>.Output input,
+			Connection<Instruction>.Input outputEU,
+			Connection<Instruction>.Input outputLS,
 			Connection<Instruction>.Input outputBr) {
-		this.instructionIn = output;
-		this.outputEU_A = outputA;
-		this.outputEU_B = outputB;
-		this.outputLS = outputC;
+		this.instructionIn = input;
+		this.outputEU = outputEU;
+		this.outputLS = outputLS;
 		this.outputBr = outputBr;
 		this.registerFile = rf;
 	}
@@ -131,12 +128,9 @@ public class Decoder implements ClockedComponent{
 		case Muli:
 		case Divi:
 		case Nop:
-			if(outputEU_A.isEmpty()) {
-				outputEU_A.put(bufferOut);
-				System.out.println(bufferOut + " sent for execution on EU 1");
-			} else if(outputEU_B.isEmpty()) {
-				outputEU_B.put(bufferOut);
-				System.out.println(bufferOut + " sent for execution on EU 2");
+			if(outputEU.isEmpty()) {
+				outputEU.put(bufferOut);
+				System.out.println(bufferOut + " sent to EU reservation station");
 			}
 			break;
 		case Ldma:

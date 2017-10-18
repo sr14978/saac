@@ -48,14 +48,16 @@ public class Saac implements ClockedComponent {
 		components.add(new WritebackHandler(registerFile, outOfEU_A.getOutputEnd(), outOfEU_B.getOutputEnd(), outOfLS.getOutputEnd()));
 		
 		Connection<int[]> intoDec = new Connection<>();
+		Connection<Instruction> intoDualResStation = new Connection<>();
 		components.add(new Fetcher(registerFile, intoDec.getInputEnd(), fromBr.getOutputEnd()));
 		components.add(new Decoder(registerFile,
 				intoDec.getOutputEnd(),
-				intoEU_A.getInputEnd(),
-				intoEU_B.getInputEnd(),
+				intoDualResStation.getInputEnd(),
 				intoLS.getInputEnd(),
 				intoBr.getInputEnd()
 				));
+		
+		components.add(new DualReservationStation(intoEU_A.getInputEnd(), intoEU_B.getInputEnd(), intoDualResStation.getOutputEnd()));
 	}
 
 	@Override
