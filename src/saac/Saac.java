@@ -18,7 +18,7 @@ public class Saac implements ClockedComponent {
 			Thread.sleep(10);
 			saac.tock();
 			cycleCounter++;
-			//System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
+			System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
 		}
 	}
 	
@@ -47,10 +47,13 @@ public class Saac implements ClockedComponent {
 
 		components.add(new WritebackHandler(registerFile, outOfEU_A.getOutputEnd(), outOfEU_B.getOutputEnd(), outOfLS.getOutputEnd()));
 		
-		Connection<int[]> intoDecode = new Connection<>();
-		Connection<Instruction> intoIssue = new Connection<>();
 		Connection<Instruction> intoDualResStation = new Connection<>();
+		components.add(new DualReservationStation(intoEU_A.getInputEnd(), intoEU_B.getInputEnd(), intoDualResStation.getOutputEnd()));
+			
+		Connection<int[]> intoDecode = new Connection<>();
 		components.add(new Fetcher(registerFile, intoDecode.getInputEnd(), fromBr.getOutputEnd()));
+		
+		Connection<Instruction> intoIssue = new Connection<>();
 		components.add(new Decoder(intoIssue.getInputEnd(), intoDecode.getOutputEnd()));
 		
 		components.add(new Issuer(registerFile,
@@ -59,8 +62,6 @@ public class Saac implements ClockedComponent {
 				intoLS.getInputEnd(),
 				intoBr.getInputEnd()
 				));
-		
-		components.add(new DualReservationStation(intoEU_A.getInputEnd(), intoEU_B.getInputEnd(), intoDualResStation.getOutputEnd()));
 	}
 
 	@Override
