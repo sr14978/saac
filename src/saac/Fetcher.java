@@ -42,10 +42,20 @@ public class Fetcher implements ClockedComponent{
 		
 		switch(Opcode.fromInt(bufferOut[0])) {
 		case Jmp:
+			programCounter += bufferOut[1];
+			bufferOut = null;
+			System.out.println("Fetch is jumping");
+			tick();
+			break;
+		case Br:
+			programCounter = bufferOut[1];
+			bufferOut = null;
+			System.out.println("Fetch is Branching");
+			tick();
+			break;
 		case JmpN:
 		case JmpZ:
 			bufferOut[3] = programCounter;
-		case Br:
 		case Ln:
 			halt = true;
 			break;
