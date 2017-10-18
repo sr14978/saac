@@ -18,7 +18,7 @@ public class Saac implements ClockedComponent {
 			Thread.sleep(10);
 			saac.tock();
 			cycleCounter++;
-			System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
+			//System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
 		}
 	}
 	
@@ -47,11 +47,14 @@ public class Saac implements ClockedComponent {
 
 		components.add(new WritebackHandler(registerFile, outOfEU_A.getOutputEnd(), outOfEU_B.getOutputEnd(), outOfLS.getOutputEnd()));
 		
-		Connection<int[]> intoDec = new Connection<>();
+		Connection<int[]> intoDecode = new Connection<>();
+		Connection<Instruction> intoIssue = new Connection<>();
 		Connection<Instruction> intoDualResStation = new Connection<>();
-		components.add(new Fetcher(registerFile, intoDec.getInputEnd(), fromBr.getOutputEnd()));
-		components.add(new Decoder(registerFile,
-				intoDec.getOutputEnd(),
+		components.add(new Fetcher(registerFile, intoDecode.getInputEnd(), fromBr.getOutputEnd()));
+		components.add(new Decoder(intoIssue.getInputEnd(), intoDecode.getOutputEnd()));
+		
+		components.add(new Issuer(registerFile,
+				intoIssue.getOutputEnd(),
 				intoDualResStation.getInputEnd(),
 				intoLS.getInputEnd(),
 				intoBr.getInputEnd()
@@ -62,14 +65,14 @@ public class Saac implements ClockedComponent {
 
 	@Override
 	public void tick() throws Exception {
-		System.out.println("Clock tick");
+		//System.out.println("Clock tick");
 		for(ClockedComponent c : components)
 			c.tick();
 	}
 
 	@Override
 	public void tock() throws Exception {
-		System.out.println("Clock tock");
+		//System.out.println("Clock tock");
 		for(ClockedComponent c : components)
 			c.tock();
 	}

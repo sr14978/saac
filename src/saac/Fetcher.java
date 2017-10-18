@@ -1,7 +1,6 @@
 package saac;
 
 import saac.Instructions.Opcode;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Fetcher implements ClockedComponent{
 
