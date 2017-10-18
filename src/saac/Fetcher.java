@@ -1,6 +1,7 @@
 package saac;
 
 import saac.Instructions.Opcode;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Fetcher implements ClockedComponent{
 
@@ -8,6 +9,8 @@ public class Fetcher implements ClockedComponent{
 	Connection<int[]>.Input output;
 	int[] bufferOut;
 	Connection<Integer>.Output fromBrUnit;
+	
+	int programCounter = 0;
 	
 	boolean halt = false;
 	
@@ -21,25 +24,35 @@ public class Fetcher implements ClockedComponent{
 	public void tick() throws Exception {
 		
 		if(halt) {
+			
 			Integer newPC = fromBrUnit.get();
 			if(newPC == null)
 				return;
 			else {
 				halt = false;
-				registerFile.set(RegisterFile.PC, newPC);
+				programCounter = newPC;
 			}
 		}
 		
 		if(bufferOut != null)
 			return;
-		int programCounter = registerFile.get(RegisterFile.PC);
-		System.out.println("Fetching instruction: " + programCounter);
 		
 		bufferOut = InstructionsSource.getInstruction(programCounter);
-		if(bufferOut[0] == Opcode.Br.ordinal() || bufferOut[0] == Opcode.Jmp.ordinal() || bufferOut[0] == Opcode.JmpN.ordinal() || bufferOut[0] == Opcode.JmpZ.ordinal())
-			halt = true;
+		System.out.println("Fetching instruction: " + programCounter + " = " + Opcode.fromInt(bufferOut[0]));
+		programCounter++;
 		
-		registerFile.set(RegisterFile.PC, programCounter+1);
+		switch(Opcode.fromInt(bufferOut[0])) {
+		case Jmp:
+		case JmpN:
+		case JmpZ:
+			bufferOut[3] = programCounter;
+		case Br:
+		case Ln:
+			halt = true;
+			break;
+		default:
+			break;
+		}		
 	}
 	
 	@Override

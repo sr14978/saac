@@ -43,7 +43,7 @@ public class Decoder implements ClockedComponent{
 			int[] data = instructionIn.get();
 			if(data == null)
 				return;
-			bufferIn = new Instruction(Opcode.values()[data[0]], data[1], data[2], data[3]);
+			bufferIn = new Instruction(Opcode.fromInt(data[0]), data[1], data[2], data[3]);
 		}
 		
 		Instruction inst  = bufferIn;
@@ -78,12 +78,12 @@ public class Decoder implements ClockedComponent{
 			break;
 		case Br:
 			break;
+		case Ln:
 		case JmpN:
 		case JmpZ:
 			dependOnB = true;
+			break;
 		case Jmp:
-			inst = inst.transform(sameOp, sameVal, sameVal, x->RegisterFile.PC);
-			dependOnC = true;
 			break;
 		default:
 			throw new NotImplementedException();
@@ -158,6 +158,7 @@ public class Decoder implements ClockedComponent{
 			}
 			break;
 		default:
+			System.err.println(bufferOut.getOpcode());
 			throw new NotImplementedException();
 		}
 		bufferOut = null;
