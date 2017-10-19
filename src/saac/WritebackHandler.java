@@ -29,8 +29,8 @@ public class WritebackHandler implements ClockedComponent {
 					return;
 			}			
 		}
-		if(res instanceof MemeoryResult) {
-			MemeoryResult mr = (MemeoryResult) res;
+		if(res instanceof MemoryResult) {
+			MemoryResult mr = (MemoryResult) res;
 			issuer.dirtyMem.remove(mr.getValue());
 		} else if(res instanceof RegisterResult) {
 			RegisterResult rr = (RegisterResult) res;

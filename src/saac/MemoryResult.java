@@ -1,10 +1,10 @@
 package saac;
 
-public class MemeoryResult extends InstructionResult {
+public class MemoryResult extends InstructionResult {
 	
 	private int value;
 	
-	public MemeoryResult(int i) {
+	public MemoryResult(int i) {
 		value = i;
 	}
 
