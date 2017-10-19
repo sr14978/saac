@@ -23,25 +23,25 @@ public class ExecutionUnit implements ClockedComponent{
 			return;
 		switch(inst.getOpcode()) {
 		case Ldc:
-			bufferOut = new InstructionResult(inst.getParamA(), inst.getParamB());
+			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB());
 			break;
 		case Add:
 		case Addi:
-			bufferOut = new InstructionResult(inst.getParamA(), inst.getParamB() + inst.getParamC());
+			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() + inst.getParamC());
 			break;
 		case Sub:
 		case Subi:
-			bufferOut = new InstructionResult(inst.getParamA(), inst.getParamB() - inst.getParamC());
+			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() - inst.getParamC());
 			break;
 		case Mul:
 		case Muli:
-			bufferOut = new InstructionResult(inst.getParamA(), inst.getParamB() * inst.getParamC());
+			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() * inst.getParamC());
 			break;
 		case Nop:
 			break;
 		case Div:
 		case Divi:
-			bufferOut = new InstructionResult(inst.getParamA(), inst.getParamB() / inst.getParamC());
+			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() / inst.getParamC());
 			break;
 		default:
 			throw new NotImplementedException();

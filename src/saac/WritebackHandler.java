@@ -5,8 +5,9 @@ public class WritebackHandler implements ClockedComponent {
 	Connection<InstructionResult>.Output inputEU_B; 
 	Connection<InstructionResult>.Output inputLS;
 	RegisterFile registerFile;
+	Issuer issuer;
 	
-	public WritebackHandler(RegisterFile rf,
+	public WritebackHandler(RegisterFile rf, Issuer issuer,
 			Connection<InstructionResult>.Output inputEU_A, 
 			Connection<InstructionResult>.Output inputEU_B, 
 			Connection<InstructionResult>.Output inputLS) {
@@ -14,6 +15,7 @@ public class WritebackHandler implements ClockedComponent {
 		this.inputEU_B = inputEU_B;
 		this.inputLS = inputLS;
 		this.registerFile = rf;
+		this.issuer = issuer;
 	}
 
 	@Override
@@ -27,9 +29,15 @@ public class WritebackHandler implements ClockedComponent {
 					return;
 			}			
 		}
-		System.out.println(String.format("%d is written back to r%d", res.getValue(), res.getTarget()));
-		registerFile.set(res.getTarget(), res.getValue());
-		registerFile.setDirty(res.getTarget(), false);
+		if(res instanceof MemeoryResult) {
+			MemeoryResult mr = (MemeoryResult) res;
+			issuer.dirtyMem.remove(mr.getValue());
+		} else if(res instanceof RegisterResult) {
+			RegisterResult rr = (RegisterResult) res;
+			System.out.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget()));
+			registerFile.set(rr.getTarget(), rr.getValue());
+			registerFile.setDirty(rr.getTarget(), false);
+		}
 	}
 
 	@Override

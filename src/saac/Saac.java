@@ -44,8 +44,6 @@ public class Saac implements ClockedComponent {
 		Connection<Instruction> intoBr = new Connection<>();
 		Connection<Integer> fromBr = new Connection<>();
 		components.add(new BranchExecutionUnit(intoBr.getOutputEnd(), fromBr.getInputEnd()));
-
-		components.add(new WritebackHandler(registerFile, outOfEU_A.getOutputEnd(), outOfEU_B.getOutputEnd(), outOfLS.getOutputEnd()));
 		
 		Connection<Instruction> intoDualResStation = new Connection<>();
 		components.add(new DualReservationStation(intoEU_A.getInputEnd(), intoEU_B.getInputEnd(), intoDualResStation.getOutputEnd()));
@@ -56,12 +54,14 @@ public class Saac implements ClockedComponent {
 		Connection<Instruction> intoIssue = new Connection<>();
 		components.add(new Decoder(intoIssue.getInputEnd(), intoDecode.getOutputEnd()));
 		
-		components.add(new Issuer(registerFile,
+		Issuer issuer = new Issuer(registerFile,
 				intoIssue.getOutputEnd(),
 				intoDualResStation.getInputEnd(),
 				intoLS.getInputEnd(),
 				intoBr.getInputEnd()
-				));
+				);
+		components.add(new WritebackHandler(registerFile, issuer, outOfEU_A.getOutputEnd(), outOfEU_B.getOutputEnd(), outOfLS.getOutputEnd()));
+		components.add(issuer);
 	}
 
 	@Override

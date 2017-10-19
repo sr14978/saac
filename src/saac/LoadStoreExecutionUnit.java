@@ -38,16 +38,18 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 		InstructionResult res = null;		
 		switch(inst.getOpcode()) {
 		case Ldma:
-			res = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB()));
+			res = new RegisterResult(inst.getParamA(), memory.getWord(inst.getParamB()));
 			break;
 		case Stma:
 			memory.setWord(inst.getParamB(), inst.getParamA());
+			res = new MemeoryResult(inst.getParamB());
 			break;
 		case Ldmi:
-			res = new InstructionResult(inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
+			res = new RegisterResult(inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
 			break;
 		case Stmi:
 			memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
+			res = new MemeoryResult(inst.getParamB() + inst.getParamC());
 			break;
 		default:
 			throw new NotImplementedException();
@@ -61,10 +63,8 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 		for(Item i : new HashSet<>(buffer)) {
 			if(i.delay > 0)
 				i.delay -= 1;
-			else if(i.result != null && res == null) {
+			else if(res == null) {
 				res = i.result;
-				buffer.remove(i);
-			} else if(i.result == null) {
 				buffer.remove(i);
 			}
 		}

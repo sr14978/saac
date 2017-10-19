@@ -1,8 +1,11 @@
 package saac;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
+
 import saac.Instructions.Opcode;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -18,6 +21,7 @@ public class Issuer implements ClockedComponent{
 	Connection<Instruction>.Input outputBr;
 	Instruction bufferOut;
 	RegisterFile registerFile;
+	Set<Integer> dirtyMem = new HashSet<>();
 	
 	public Issuer(RegisterFile rf,
 			Connection<Instruction>.Output input,
@@ -98,6 +102,31 @@ public class Issuer implements ClockedComponent{
 		if(!paramDependances.isEmpty()) {
 			System.out.println(inst + " is blocked by " + paramDependances);
 			return;
+		}
+		
+		
+		int addr;
+		switch(inst.getOpcode()) {
+		case Ldmi:
+			addr = registerFile.get(inst.getParamB()) + registerFile.get(inst.getParamC());
+			if(dirtyMem.contains(addr))
+				return;
+			break;
+		case Stmi:
+			addr = registerFile.get(inst.getParamB()) + registerFile.get(inst.getParamC());
+			dirtyMem.add(addr);
+			break;
+		case Ldma:
+			addr = registerFile.get(inst.getParamB());
+			if(dirtyMem.contains(addr))
+				return;
+			break;
+		case Stma:
+			addr = registerFile.get(inst.getParamB());
+			dirtyMem.add(addr);
+			break;
+		default:
+			break;
 		}
 		
 		if(dirtyA)
