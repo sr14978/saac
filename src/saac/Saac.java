@@ -68,14 +68,30 @@ public class Saac implements ClockedComponent {
 	public void tick() throws Exception {
 		//System.out.println("Clock tick");
 		for(ClockedComponent c : components)
-			c.tick();
+			new Thread(){
+				public void run() {
+					try {
+						c.tick();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}.start();
 	}
 
 	@Override
 	public void tock() throws Exception {
 		//System.out.println("Clock tock");
 		for(ClockedComponent c : components)
-			c.tock();
+			new Thread(){
+			public void run() {
+				try {
+					c.tock();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}.start();
 	}
 
 }
