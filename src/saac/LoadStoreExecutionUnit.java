@@ -1,7 +1,7 @@
 package saac;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.List;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -18,7 +18,7 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 	
 	private Connection<Instruction>.Output instructionIn;
 	private Connection<InstructionResult>.Input resultOut;
-	private Set<Item> buffer = new HashSet<>();
+	private List<Item> buffer = new LinkedList<>();
 	private Memory memory;
 	
 	LoadStoreExecutionUnit(Connection<Instruction>.Output instructionIn, Connection<InstructionResult>.Input resultOut, Memory memory) {
@@ -60,7 +60,7 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 	@Override
 	public void tock() throws FullChannelException {
 		InstructionResult res = null;
-		for(Item i : new HashSet<>(buffer)) {
+		for(Item i : new LinkedList<>(buffer)) {
 			if(i.delay > 0)
 				i.delay -= 1;
 			else if(res == null) {
