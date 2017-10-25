@@ -5,15 +5,15 @@ import saac.Instructions.Opcode;
 public class Fetcher implements ClockedComponent{
 
 	RegisterFile registerFile;
-	Connection<int[]>.Input output;
+	FConnection<int[]>.Input output;
 	int[] bufferOut;
-	Connection<Integer>.Output fromBrUnit;
+	FConnection<Integer>.Output fromBrUnit;
 	
 	int programCounter = 0;
 	
 	boolean halt = false;
 	
-	Fetcher(RegisterFile registerFile, Connection<int[]>.Input output, Connection<Integer>.Output fromBrUnit) {
+	Fetcher(RegisterFile registerFile, FConnection<int[]>.Input output, FConnection<Integer>.Output fromBrUnit) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
 		this.registerFile = registerFile;
@@ -24,13 +24,11 @@ public class Fetcher implements ClockedComponent{
 		
 		if(halt) {
 			
-			Integer newPC = fromBrUnit.get();
-			if(newPC == null)
+			if(!fromBrUnit.ready())
 				return;
-			else {
-				halt = false;
-				programCounter = newPC;
-			}
+			Integer newPC = fromBrUnit.get();
+			halt = false;
+			programCounter = newPC;
 		}
 		
 		if(bufferOut != null)
@@ -68,7 +66,7 @@ public class Fetcher implements ClockedComponent{
 	public void tock() throws Exception {
 		if(bufferOut == null)
 			return;
-		else if(output.isEmpty()) {
+		else if(output.clear()) {
 			output.put(bufferOut);
 			bufferOut = null;
 		}

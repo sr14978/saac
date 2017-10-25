@@ -14,20 +14,20 @@ public class Issuer implements ClockedComponent{
 	static final Function<Opcode, Opcode> sameOp = Function.identity();
 	static final Function<Integer, Integer> sameVal = Function.identity();
 	
-	Connection<Instruction>.Output instructionIn;
+	FConnection<Instruction>.Output instructionIn;
 	Instruction bufferIn;
-	Connection<Instruction>.Input outputEU;
-	Connection<Instruction>.Input outputLS;
-	Connection<Instruction>.Input outputBr;
+	FConnection<Instruction>.Input outputEU;
+	FConnection<Instruction>.Input outputLS;
+	FConnection<Instruction>.Input outputBr;
 	Instruction bufferOut;
 	RegisterFile registerFile;
 	Set<Integer> dirtyMem = new HashSet<>();
 	
 	public Issuer(RegisterFile rf,
-			Connection<Instruction>.Output input,
-			Connection<Instruction>.Input outputEU,
-			Connection<Instruction>.Input outputLS,
-			Connection<Instruction>.Input outputBr) {
+			FConnection<Instruction>.Output input,
+			FConnection<Instruction>.Input outputEU,
+			FConnection<Instruction>.Input outputLS,
+			FConnection<Instruction>.Input outputBr) {
 		this.instructionIn = input;
 		this.outputEU = outputEU;
 		this.outputLS = outputLS;
@@ -41,9 +41,9 @@ public class Issuer implements ClockedComponent{
 			return;
 		
 		if(bufferIn == null) {
-			bufferIn = instructionIn.get();
-			if(bufferIn == null)
+			if(!instructionIn.ready())
 				return;
+			bufferIn = instructionIn.get();
 		}
 		
 		Instruction inst  = bufferIn;
@@ -156,7 +156,7 @@ public class Issuer implements ClockedComponent{
 		case Muli:
 		case Divi:
 		case Nop:
-			if(outputEU.isEmpty()) {
+			if(outputEU.clear()) {
 				outputEU.put(bufferOut);
 				System.out.println(bufferOut + " sent to EU reservation station");
 			}
@@ -165,7 +165,7 @@ public class Issuer implements ClockedComponent{
 		case Stmi:
 		case Stma:
 		case Ldmi:
-			if(outputLS.isEmpty()) {
+			if(outputLS.clear()) {
 				outputLS.put(bufferOut);
 				System.out.println(bufferOut + " sent for execution on LSU");
 			}
@@ -174,7 +174,7 @@ public class Issuer implements ClockedComponent{
 		case Jmp:
 		case JmpN:
 		case JmpZ:
-			if(outputBr.isEmpty()) {
+			if(outputBr.clear()) {
 				outputBr.put(bufferOut);
 				System.out.println(bufferOut + " sent for execution on BrU");
 			}

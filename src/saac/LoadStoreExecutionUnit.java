@@ -16,24 +16,26 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 		}
 	}
 	
-	private Connection<Instruction>.Output instructionIn;
-	private Connection<InstructionResult>.Input resultOut;
+	private FConnection<Instruction>.Output instructionIn;
+	private FConnection<InstructionResult>.Input resultOut;
 	private List<Item> buffer = new LinkedList<>();
 	private Memory memory;
 	
-	LoadStoreExecutionUnit(Connection<Instruction>.Output instructionIn, Connection<InstructionResult>.Input resultOut, Memory memory) {
+	LoadStoreExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut, Memory memory) {
 		this.instructionIn = instructionIn;
 		this.resultOut = resultOut;
 		this.memory = memory;
 	}
 	
 	@Override
-	public void tick() {
+	public void tick() throws FullChannelException {
 		if(buffer.size() >= LDLimit)
 			return;
-		Instruction inst = instructionIn.get();
-		if(inst == null)
+		
+		
+		if(!instructionIn.ready())
 			return;
+		Instruction inst = instructionIn.get();
 		
 		InstructionResult res = null;		
 		switch(inst.getOpcode()) {
@@ -70,7 +72,7 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 		}
 		if(res == null)
 			return;
-		else if(resultOut.isEmpty()) {
+		else if (resultOut.clear()) {
 			resultOut.put(res);
 			res = null;
 		}

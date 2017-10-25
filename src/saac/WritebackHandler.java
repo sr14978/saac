@@ -1,16 +1,16 @@
 package saac;
 
 public class WritebackHandler implements ClockedComponent {
-	Connection<InstructionResult>.Output inputEU_A; 
-	Connection<InstructionResult>.Output inputEU_B; 
-	Connection<InstructionResult>.Output inputLS;
+	FConnection<InstructionResult>.Output inputEU_A; 
+	FConnection<InstructionResult>.Output inputEU_B; 
+	FConnection<InstructionResult>.Output inputLS;
 	RegisterFile registerFile;
 	Issuer issuer;
 	
 	public WritebackHandler(RegisterFile rf, Issuer issuer,
-			Connection<InstructionResult>.Output inputEU_A, 
-			Connection<InstructionResult>.Output inputEU_B, 
-			Connection<InstructionResult>.Output inputLS) {
+			FConnection<InstructionResult>.Output inputEU_A, 
+			FConnection<InstructionResult>.Output inputEU_B, 
+			FConnection<InstructionResult>.Output inputLS) {
 		this.inputEU_A = inputEU_A;
 		this.inputEU_B = inputEU_B;
 		this.inputLS = inputLS;
@@ -20,15 +20,16 @@ public class WritebackHandler implements ClockedComponent {
 
 	@Override
 	public void tick() throws Exception {
-		InstructionResult res = inputLS.get();
-		if(res == null) {
+		InstructionResult res;
+		if(inputLS.ready())
+			res = inputLS.get();
+		else if(inputEU_A.ready())
 			res = inputEU_A.get();
-			if(res == null) {
-				res = inputEU_B.get();
-				if(res == null)
-					return;
-			}			
-		}
+		else if(inputEU_B.ready())
+			res = inputEU_B.get();
+		else
+			return;
+		
 		if(res instanceof MemoryResult) {
 			MemoryResult mr = (MemoryResult) res;
 			issuer.dirtyMem.remove(mr.getValue());

@@ -3,22 +3,22 @@ package saac;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class BranchExecutionUnit implements ClockedComponent{
-	private Connection<Instruction>.Output instructionIn;
-	Connection<Integer>.Input output;
+	private FConnection<Instruction>.Output instructionIn;
+	FConnection<Integer>.Input output;
 	Integer bufferOut;
 	
-	BranchExecutionUnit(Connection<Instruction>.Output instructionIn, Connection<Integer>.Input output) {
+	BranchExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<Integer>.Input output) {
 		this.instructionIn = instructionIn;
 		this.output = output;
 	}
 	
 	@Override
-	public void tick() {
+	public void tick() throws FullChannelException {
 		if(bufferOut != null)
 			return;
-		Instruction inst = instructionIn.get();
-		if(inst == null)
+		if(!instructionIn.ready())
 			return;
+		Instruction inst = instructionIn.get();
 		switch(inst.getOpcode()) {
 		case Br:
 			bufferOut = inst.getParamA();
@@ -51,7 +51,7 @@ public class BranchExecutionUnit implements ClockedComponent{
 	public void tock() throws FullChannelException {
 		if(bufferOut == null)
 			return;
-		else if(output.isEmpty()) {
+		else if(output.clear()) {
 			output.put(bufferOut);
 			bufferOut = null;
 		}

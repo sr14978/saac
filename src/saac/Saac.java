@@ -29,29 +29,29 @@ public class Saac implements ClockedComponent {
 		RegisterFile registerFile = new RegisterFile();
 		Memory memory = new Memory();
 		//populated list
-		Connection<Instruction> intoEU_A = new Connection<>();
-		Connection<InstructionResult> outOfEU_A = new Connection<>();
+		FConnection<Instruction> intoEU_A = new FConnection<>();
+		FConnection<InstructionResult> outOfEU_A = new FConnection<>();
 		components.add(new ExecutionUnit(intoEU_A.getOutputEnd(), outOfEU_A.getInputEnd()));
 		
-		Connection<Instruction> intoEU_B = new Connection<>();
-		Connection<InstructionResult> outOfEU_B = new Connection<>();
+		FConnection<Instruction> intoEU_B = new FConnection<>();
+		FConnection<InstructionResult> outOfEU_B = new FConnection<>();
 		components.add(new ExecutionUnit(intoEU_B.getOutputEnd(), outOfEU_B.getInputEnd()));
 		
-		Connection<Instruction> intoLS = new Connection<>();
-		Connection<InstructionResult> outOfLS = new Connection<>();
+		FConnection<Instruction> intoLS = new FConnection<>();
+		FConnection<InstructionResult> outOfLS = new FConnection<>();
 		components.add(new LoadStoreExecutionUnit(intoLS.getOutputEnd(), outOfLS.getInputEnd(), memory));
 		
-		Connection<Instruction> intoBr = new Connection<>();
-		Connection<Integer> fromBr = new Connection<>();
+		FConnection<Instruction> intoBr = new FConnection<>();
+		FConnection<Integer> fromBr = new FConnection<>();
 		components.add(new BranchExecutionUnit(intoBr.getOutputEnd(), fromBr.getInputEnd()));
 		
-		Connection<Instruction> intoDualResStation = new Connection<>();
+		FConnection<Instruction> intoDualResStation = new FConnection<>();
 		components.add(new DualReservationStation(intoEU_A.getInputEnd(), intoEU_B.getInputEnd(), intoDualResStation.getOutputEnd()));
 			
-		Connection<int[]> intoDecode = new Connection<>();
+		FConnection<int[]> intoDecode = new FConnection<>();
 		components.add(new Fetcher(registerFile, intoDecode.getInputEnd(), fromBr.getOutputEnd()));
 		
-		Connection<Instruction> intoIssue = new Connection<>();
+		FConnection<Instruction> intoIssue = new FConnection<>();
 		components.add(new Decoder(intoIssue.getInputEnd(), intoDecode.getOutputEnd()));
 		
 		Issuer issuer = new Issuer(registerFile,

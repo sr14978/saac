@@ -4,11 +4,11 @@ import saac.Instructions.Opcode;
 
 public class Decoder implements ClockedComponent{
 
-	Connection<Instruction>.Input output;
-	Connection<int[]>.Output input;
+	FConnection<Instruction>.Input output;
+	FConnection<int[]>.Output input;
 	Instruction bufferOut;
 	
-	public Decoder(Connection<Instruction>.Input output, Connection<int[]>.Output input) {
+	public Decoder(FConnection<Instruction>.Input output, FConnection<int[]>.Output input) {
 		this.output = output;
 		this.input = input;
 	}
@@ -18,9 +18,10 @@ public class Decoder implements ClockedComponent{
 		if(bufferOut != null)
 			return;
 		
-		int[] data = input.get();
-		if(data == null)
+		if(!input.ready())
 			return;
+		int[] data = input.get();
+		
 		bufferOut = new Instruction(Opcode.fromInt(data[0]), data[1], data[2], data[3]);
 	}
 
@@ -28,7 +29,7 @@ public class Decoder implements ClockedComponent{
 	public void tock() throws Exception {
 		if(bufferOut == null)
 			return;
-		if(output.isEmpty()) {
+		if(output.clear()) {
 			output.put(bufferOut);
 			bufferOut = null;
 		}
