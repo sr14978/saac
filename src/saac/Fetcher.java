@@ -86,7 +86,7 @@ public class Fetcher implements ClockedComponent, VisibleComponent {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Fetcher");
 			gc.setFill(Color.BLACK);
-			gc.fillText(Integer.toString(programCounter), 10, 35);
+			gc.fillText("pc: " + Integer.toString(programCounter), 10, 35);
 			gc.translate(-position.x, -position.y);
 		}
 	}
