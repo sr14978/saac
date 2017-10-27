@@ -2,29 +2,52 @@ package saac;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import static saac.DrawingHelper.BOX_SIZE;
 
-public class Saac extends Application implements ClockedComponent {
+public class Saac implements ClockedComponent {
 
 	static int InstructionCounter = 0;
+	Lock mutex = new ReentrantLock();
 
+	int cycleCounter = 0;
 	
-	public static void main(String[] args) throws Exception {
-		System.out.println("This is Saac: Started");
-		launch(args);
+	void worker(Runnable f) throws Exception {
+		while(true) {
+			mutex.lock();
+        	mutex.unlock();
+			step(f);
+		}
+	}
+	
+	void step(Runnable paint) throws Exception {
+		Thread.sleep(100);
+		tick();
+		paint.run();
+		Thread.sleep(100);
+		tock();
+		paint.run();
+		cycleCounter++;
+		System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
 	}
 	
 	List<ClockedComponent> clockedComponents;
-	List<ComponentView> visibleComponents;
 	
-	public Saac() {
+	public Saac(List<ComponentView> visibleComponents) {
 		
 		RegisterFile registerFile = new RegisterFile();
 		Memory memory = new Memory();
@@ -75,7 +98,6 @@ public class Saac extends Application implements ClockedComponent {
 		clockedComponents.add(writeBack);
 		
 		int middleOffset = (int) (1.5*BOX_SIZE);
-		visibleComponents = new ArrayList<>();
 		visibleComponents.add(fetcher.createView(middleOffset, 0));
 		visibleComponents.add(fetchToDecode.createView(middleOffset, 50));
 		visibleComponents.add(registerFile.createView(1200, 100));
@@ -100,76 +122,13 @@ public class Saac extends Application implements ClockedComponent {
 	
 	@Override
 	public void tick() throws Exception {
-		//System.out.println("Clock tick");
 		for(ClockedComponent c : clockedComponents)
-//			new Thread(){
-//				public void run() {
-//					try {
-						c.tick();
-//					} catch (Exception e) {
-//						e.printStackTrace();
-//					}
-//				}
-//			}.start();
+			c.tick();
 	}
 
 	@Override
 	public void tock() throws Exception {
-		//System.out.println("Clock tock");
 		for(ClockedComponent c : clockedComponents)
-//			new Thread(){
-//			public void run() {
-//				try {
-					c.tock();
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//			}
-//		}.start();
-	}
-    
-	public void paint(GraphicsContext gc) {
-		gc.clearRect(0, 0, 1600, 600);
-		for(ComponentView vc : visibleComponents)
-			vc.paint(gc);
-	}
-	
-	
-    @Override
-    public void start(Stage primaryStage) {
-        primaryStage.setTitle("Hello World!");
-        final Canvas canvas = new Canvas(1600,600);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        StackPane root = new StackPane();
-        root.getChildren().add(canvas);
-        primaryStage.setScene(new Scene(root, 1700, 900));
-        primaryStage.show();
-        
-        
-        new Thread(){
-			public void run() {
-				int cycleCounter = 0;
-				while (true) {
-					try {
-						Thread.sleep(100);
-						tick();
-						paint(gc);
-						Thread.sleep(100);
-						tock();
-						paint(gc);
-						cycleCounter++;
-						System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-		}.start();
-        
-    }
-    @Override
-    public void stop(){
-        System.exit(0);
-    }
+			c.tock();
+	}    
 }
