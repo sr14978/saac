@@ -1,4 +1,4 @@
-package saac;
+package saac.dataObjects;
 
 public class InstructionResult {
 	

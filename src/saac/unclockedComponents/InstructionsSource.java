@@ -1,6 +1,6 @@
-package saac;
+package saac.unclockedComponents;
 
-import saac.Instructions.Opcode;
+import saac.utils.Instructions.Opcode;
 
 public class InstructionsSource {
 	static final int[][] instructions = new int[][]{
@@ -22,7 +22,7 @@ public class InstructionsSource {
 			/*F*/new int[] {Opcode.toInt(Opcode.Jmp), -2, 0, 0},
 		};
 	
-	static int[] getInstruction(int addr) {
+	public static int[] getInstruction(int addr) {
 		if(addr < instructions.length && addr >= 0)
 			return instructions[addr];
 		else 

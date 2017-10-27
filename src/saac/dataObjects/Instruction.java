@@ -1,8 +1,8 @@
-package saac;
+package saac.dataObjects;
 
 import java.util.function.Function;
 
-import saac.Instructions.Opcode;
+import saac.utils.Instructions.Opcode;
 
 public class Instruction {
 	
@@ -12,30 +12,30 @@ public class Instruction {
 	private int paramB;
 	private int paramC;
 	
-	Instruction(Opcode opcode, int paramA, int paramB, int paramC) {
+	public Instruction(Opcode opcode, int paramA, int paramB, int paramC) {
 		this.opcode = opcode;
 		this.paramA = paramA;
 		this.paramB = paramB;
 		this.paramC = paramC;
 	}
 	
-	Opcode getOpcode() {
+	public Opcode getOpcode() {
 		return opcode;
 	}
 	
-	int getParamA() {
+	public int getParamA() {
 		return paramA;
 	}
 
-	int getParamB() {
+	public int getParamB() {
 		return paramB;
 	}
 
-	int getParamC() {
+	public int getParamC() {
 		return paramC;
 	}
 	
-	Instruction transform(Function<Opcode, Opcode> opcode, Function<Integer, Integer> target,
+	public Instruction transform(Function<Opcode, Opcode> opcode, Function<Integer, Integer> target,
 			Function<Integer, Integer> sourceA, Function<Integer, Integer> sourceB) {
 		return new Instruction(opcode.apply(this.opcode), target.apply(this.paramA),
 				sourceA.apply(this.paramB), sourceB.apply(this.paramC));

@@ -1,4 +1,4 @@
-package saac;
+package saac.clockedComponents;
 
 import java.awt.Point;
 import java.util.LinkedList;
@@ -6,6 +6,18 @@ import java.util.List;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import saac.dataObjects.Instruction;
+import saac.dataObjects.InstructionResult;
+import saac.dataObjects.MemoryResult;
+import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.interfaces.FullChannelException;
+import saac.interfaces.VisibleComponent;
+import saac.unclockedComponents.Memory;
+import saac.utils.DrawingHelper;
+import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class LoadStoreExecutionUnit implements ClockedComponent, VisibleComponent{
@@ -24,7 +36,7 @@ public class LoadStoreExecutionUnit implements ClockedComponent, VisibleComponen
 	private List<Item> buffer = new LinkedList<>();
 	private Memory memory;
 	
-	LoadStoreExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut, Memory memory) {
+	public LoadStoreExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut, Memory memory) {
 		this.instructionIn = instructionIn;
 		this.resultOut = resultOut;
 		this.memory = memory;

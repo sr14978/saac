@@ -1,10 +1,17 @@
-package saac;
+package saac.clockedComponents;
 
 import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import saac.Instructions.Opcode;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.interfaces.VisibleComponent;
+import saac.unclockedComponents.InstructionsSource;
+import saac.unclockedComponents.RegisterFile;
+import saac.utils.DrawingHelper;
+import saac.utils.Instructions.Opcode;
 
 public class Fetcher implements ClockedComponent, VisibleComponent {
 
@@ -16,7 +23,7 @@ public class Fetcher implements ClockedComponent, VisibleComponent {
 	
 	boolean halt = false;
 	
-	Fetcher(RegisterFile registerFile, FConnection<int[]>.Input output, FConnection<Integer>.Output fromBrUnit) {
+	public Fetcher(RegisterFile registerFile, FConnection<int[]>.Input output, FConnection<Integer>.Output fromBrUnit) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
 		this.registerFile = registerFile;

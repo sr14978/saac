@@ -2,8 +2,6 @@ package saac;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -18,6 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import saac.interfaces.ComponentView;
 
 public class Main extends Application {
 	
@@ -85,7 +84,7 @@ public class Main extends Application {
 		gc.clearRect(0, 0, 1600, 600);
 		for(ComponentView cv : visibleComponents)
 			cv.paint(gc);
-		float rateVal = (float) Math.round(((float) saac.InstructionCounter / saac.cycleCounter)*100 ) / 100;
+		float rateVal = (float) Math.round(((float) Saac.InstructionCounter / saac.cycleCounter)*100 ) / 100;
 		Platform.runLater(()->rate.setText(Float.toString(rateVal)));
 	}
     

@@ -1,27 +1,31 @@
 package saac;
 
+import static saac.utils.DrawingHelper.BOX_SIZE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
-import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
-import static saac.DrawingHelper.BOX_SIZE;
+import saac.clockedComponents.BranchExecutionUnit;
+import saac.clockedComponents.Decoder;
+import saac.clockedComponents.DualReservationStation;
+import saac.clockedComponents.ExecutionUnit;
+import saac.clockedComponents.Fetcher;
+import saac.clockedComponents.Issuer;
+import saac.clockedComponents.LoadStoreExecutionUnit;
+import saac.clockedComponents.WritebackHandler;
+import saac.dataObjects.Instruction;
+import saac.dataObjects.InstructionResult;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.unclockedComponents.Memory;
+import saac.unclockedComponents.RegisterFile;
 
 public class Saac implements ClockedComponent {
 
-	static int InstructionCounter = 0;
+	public static int InstructionCounter = 0;
 	Lock mutex = new ReentrantLock();
 
 	int cycleCounter = 0;

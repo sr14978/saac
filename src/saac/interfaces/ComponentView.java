@@ -1,4 +1,4 @@
-package saac;
+package saac.interfaces;
 
 import javafx.scene.canvas.GraphicsContext;
 

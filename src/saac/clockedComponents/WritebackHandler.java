@@ -1,11 +1,20 @@
-package saac;
+package saac.clockedComponents;
 
-import static saac.DrawingHelper.BOX_SIZE;
+import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import saac.dataObjects.InstructionResult;
+import saac.dataObjects.MemoryResult;
+import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.interfaces.VisibleComponent;
+import saac.unclockedComponents.RegisterFile;
+import saac.utils.DrawingHelper;
 
 public class WritebackHandler implements ClockedComponent, VisibleComponent {
 	FConnection<InstructionResult>.Output inputEU_A; 

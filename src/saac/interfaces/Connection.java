@@ -1,4 +1,4 @@
-package saac;
+package saac.interfaces;
 
 public class Connection<T> {
 	

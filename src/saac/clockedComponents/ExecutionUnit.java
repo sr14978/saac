@@ -1,9 +1,19 @@
-package saac;
+package saac.clockedComponents;
 
 import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import saac.dataObjects.Instruction;
+import saac.dataObjects.InstructionResult;
+import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.interfaces.FullChannelException;
+import saac.interfaces.VisibleComponent;
+import saac.utils.DrawingHelper;
+import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class ExecutionUnit implements ClockedComponent, VisibleComponent{
@@ -13,7 +23,7 @@ public class ExecutionUnit implements ClockedComponent, VisibleComponent{
 	private InstructionResult bufferOut;
 	private int instructionDelay = 0;
 	
-	ExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut) {
+	public ExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut) {
 		this.instructionIn = instructionIn;
 		this.resultOut = resultOut;
 	}

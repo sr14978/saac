@@ -1,13 +1,19 @@
-package saac;
+package saac.clockedComponents;
 
+import static saac.utils.DrawingHelper.BOX_SIZE;
+
+import java.awt.Point;
+import java.util.LinkedList;
 import java.util.List;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-
-import java.awt.Point;
-import java.util.LinkedList;
-import static saac.DrawingHelper.BOX_SIZE;
+import saac.dataObjects.Instruction;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.interfaces.VisibleComponent;
+import saac.utils.DrawingHelper;
 
 
 public class DualReservationStation implements ClockedComponent, VisibleComponent{

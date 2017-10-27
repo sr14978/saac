@@ -1,37 +1,38 @@
-package saac;
+package saac.interfaces;
+
+import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import static saac.DrawingHelper.BOX_SIZE;
 
 public class FConnection<T> implements VisibleComponent{
 
 	private T value;
 	
-	Input getInputEnd() {
+	public Input getInputEnd() {
 		return new Input();
 	}
 	
-	Output getOutputEnd() {
+	public Output getOutputEnd() {
 		return new Output();
 	}
 	
-	class Input {
-		void put(T val) throws FullChannelException {
+	public class Input {
+		public void put(T val) throws FullChannelException {
 			if(value == null)
 				value = val;
 			else
 				throw new FullChannelException();
 		}
-		boolean clear() {
+		public boolean clear() {
 			return value == null;
 		}
 	}
 	
-	class Output {
-		T get() throws FullChannelException {
+	public class Output {
+		public T get() throws FullChannelException {
 			if(value == null) {
 				throw new FullChannelException();
 			} else {
@@ -41,7 +42,7 @@ public class FConnection<T> implements VisibleComponent{
 			}
 			
 		}
-		boolean ready() {
+		public boolean ready() {
 			return value != null;
 		}
 	}

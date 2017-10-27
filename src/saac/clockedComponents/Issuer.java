@@ -1,4 +1,4 @@
-package saac;
+package saac.clockedComponents;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -9,7 +9,15 @@ import java.util.function.Function;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import saac.Instructions.Opcode;
+import saac.Saac;
+import saac.dataObjects.Instruction;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.interfaces.VisibleComponent;
+import saac.unclockedComponents.RegisterFile;
+import saac.utils.DrawingHelper;
+import saac.utils.Instructions.Opcode;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Issuer implements ClockedComponent, VisibleComponent{

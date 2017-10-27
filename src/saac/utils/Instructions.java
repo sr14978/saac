@@ -1,4 +1,4 @@
-package saac;
+package saac.utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
 public class Instructions {
-	enum Opcode {
+	public enum Opcode {
 		Nop,	// Nop	.  .  .  -> 
 		Ldc, 	// Ldc 	rI #n .  -> rI = #n  
 		Add, 	// Add 	rI rJ rK -> rI = rJ + rK
@@ -27,7 +27,8 @@ public class Instructions {
 		Jmp,	// Jmp  #n .  .  -> pc = pc + #n
 		JmpZ,	// Jmp  #n rI .  -> pc = if rI=0 then pc + #n else pc
 		JmpN;	// Jmp  #n rI .  -> pc = if rI<0 then pc + #n else pc
-		static Opcode fromInt(int code) {
+		
+		public static Opcode fromInt(int code) {
 			switch(code) {
 			case 0x0: return Nop;
 			case 0x1: return Ldc;
@@ -50,7 +51,8 @@ public class Instructions {
 			default: throw new NotImplementedException();
 			}
 		}
-		static int toInt(Opcode op) {
+		
+		public static int toInt(Opcode op) {
 			switch(op) {
 			case Nop: return 0x0;
 			case Ldc: return 0x1;
@@ -74,7 +76,7 @@ public class Instructions {
 			}
 		}
 	}
-	static Map<Opcode, Integer> InstructionDelay = new HashMap<Opcode, Integer>(){
+	public static Map<Opcode, Integer> InstructionDelay = new HashMap<Opcode, Integer>(){
 		private static final long serialVersionUID = 1L;
 	{
 		put(Opcode.Nop, 0);

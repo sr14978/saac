@@ -1,10 +1,16 @@
-package saac;
+package saac.clockedComponents;
 
 import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import saac.ExecutionUnit.View;
+import saac.dataObjects.Instruction;
+import saac.interfaces.ClockedComponent;
+import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
+import saac.interfaces.FullChannelException;
+import saac.interfaces.VisibleComponent;
+import saac.utils.DrawingHelper;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class BranchExecutionUnit implements ClockedComponent, VisibleComponent{
@@ -12,7 +18,7 @@ public class BranchExecutionUnit implements ClockedComponent, VisibleComponent{
 	FConnection<Integer>.Input output;
 	Integer bufferOut;
 	
-	BranchExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<Integer>.Input output) {
+	public BranchExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<Integer>.Input output) {
 		this.instructionIn = instructionIn;
 		this.output = output;
 	}

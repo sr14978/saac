@@ -1,10 +1,14 @@
-package saac;
+package saac.unclockedComponents;
+
+import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import static saac.DrawingHelper.BOX_SIZE;
+import saac.interfaces.ComponentView;
+import saac.interfaces.VisibleComponent;
+import saac.utils.DrawingHelper;
 
 
 public class RegisterFile implements VisibleComponent{
@@ -14,28 +18,28 @@ public class RegisterFile implements VisibleComponent{
 	private int[] values = new int[registerNum];
 	private boolean[] dirtyBits = new boolean[registerNum];
 
-	void set(int index, int value) {
+	public void set(int index, int value) {
 		if(index < registerNum && index >= 0)
 			values[index] = value;
 		else 
 			throw new ArrayIndexOutOfBoundsException();
 	}
 	
-	int get(int index) {
+	public int get(int index) {
 		if(index < registerNum && index >= 0)
 			return values[index];
 		else 
 			throw new ArrayIndexOutOfBoundsException();
 	}
 	
-	void setDirty(int index, boolean bool) {
+	public void setDirty(int index, boolean bool) {
 		if(index < registerNum && index >= 0)
 			dirtyBits[index] = bool;
 		else 
 			throw new ArrayIndexOutOfBoundsException();
 	}
 	
-	boolean isDirty(int index) {
+	public boolean isDirty(int index) {
 		if(index < registerNum && index >= 0)
 			return dirtyBits[index];
 		else 
