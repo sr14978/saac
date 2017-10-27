@@ -17,6 +17,7 @@ import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.WritebackHandler;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
+import saac.dataObjects.RegisterResult;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
 import saac.interfaces.FConnection;
@@ -39,10 +40,10 @@ public class Saac implements ClockedComponent {
 	}
 	
 	void step(Runnable paint) throws Exception {
-		Thread.sleep(100);
+		Thread.sleep(50);
 		tick();
 		paint.run();
-		Thread.sleep(100);
+		Thread.sleep(50);
 		tock();
 		paint.run();
 		cycleCounter++;
@@ -53,8 +54,12 @@ public class Saac implements ClockedComponent {
 	
 	public Saac(List<ComponentView> visibleComponents) {
 		
-		RegisterFile registerFile = new RegisterFile();
 		Memory memory = new Memory();
+		
+		FConnection<Integer> issuerToRegister = new FConnection<>();
+		FConnection<Integer> registerToIssuer = new FConnection<>();
+		FConnection<RegisterResult> WBtoRegister = new FConnection<>();
+		RegisterFile registerFile = new RegisterFile(issuerToRegister.getOutputEnd(), registerToIssuer.getInputEnd(), WBtoRegister.getOutputEnd());
 		
 		FConnection<Instruction> dualRSToEU_A = new FConnection<>();
 		FConnection<InstructionResult> EU_AtoWB = new FConnection<>();

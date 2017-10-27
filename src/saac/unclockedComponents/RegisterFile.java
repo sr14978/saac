@@ -6,12 +6,15 @@ import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
+import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
 import saac.utils.DrawingHelper;
 
 
-public class RegisterFile implements VisibleComponent{
+public class RegisterFile implements VisibleComponent, ClockedComponent{
 
 	static final int registerNum = 10;
 	static final int PC = registerNum;
@@ -45,6 +48,39 @@ public class RegisterFile implements VisibleComponent{
 		else 
 			throw new ArrayIndexOutOfBoundsException();
 	}
+	
+	FConnection<Integer>.Output readInput;
+	FConnection<Integer>.Input readOutput;
+	FConnection<RegisterResult>.Output writeInputs;
+	
+	public RegisterFile(
+			FConnection<Integer>.Output readInput,
+			FConnection<Integer>.Input readOutput,
+			FConnection<RegisterResult>.Output writeInputs
+			) {
+	this.readInput = readInput;
+	this.readOutput = readOutput;
+	this.writeInputs = writeInputs;
+	}
+	
+	@Override
+	public void tick() throws Exception {
+		if(readInput.ready() && readOutput.clear()) {
+			readOutput.put(get(readInput.get()));
+		}
+		
+		if(writeInputs.ready()) {
+			RegisterResult res = writeInputs.get();
+			set(res.getTarget(), res.getValue());
+		}
+		
+	}
+
+	@Override
+	public void tock() throws Exception {
+		
+		
+	}	
 	
 	class View implements ComponentView {
 		

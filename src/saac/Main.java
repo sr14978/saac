@@ -81,7 +81,6 @@ public class Main extends Application {
     }
     
     public void paint() {
-		gc.clearRect(0, 0, 1600, 600);
 		for(ComponentView cv : visibleComponents)
 			cv.paint(gc);
 		float rateVal = (float) Math.round(((float) Saac.InstructionCounter / saac.cycleCounter)*100 ) / 100;
@@ -120,7 +119,6 @@ public class Main extends Application {
 	            	try {
 	            		saac.step(self::paint);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
