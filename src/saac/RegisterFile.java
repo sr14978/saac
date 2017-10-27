@@ -1,6 +1,13 @@
 package saac;
 
-public class RegisterFile{
+import java.awt.Point;
+
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+import static saac.DrawingHelper.BOX_SIZE;
+
+
+public class RegisterFile implements VisibleComponent{
 
 	static final int registerNum = 10;
 	static final int PC = registerNum;
@@ -33,5 +40,28 @@ public class RegisterFile{
 			return dirtyBits[index];
 		else 
 			throw new ArrayIndexOutOfBoundsException();
+	}
+	
+	class View implements ComponentView {
+		
+		Point position; 
+		View(int x, int y){
+			position = new Point(x, y);
+		}
+		
+		public void paint(GraphicsContext gc) {
+			gc.translate(position.x, position.y);
+			DrawingHelper.drawBox(gc, "Register File", 2*BOX_SIZE, 50);
+			gc.setFill(Color.BLACK);
+			for( int i = 0; i<registerNum; i++) {
+				gc.fillText(Integer.toString(values[i]) + (dirtyBits[i]?"(d)":"  "), 40*i+5, 30);
+			}
+			gc.translate(-position.x, -position.y);
+		}
+	}
+
+	@Override
+	public ComponentView createView(int x, int y) {
+		return new View(x, y);
 	}
 }

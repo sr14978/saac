@@ -1,12 +1,15 @@
 package saac;
 
+import java.awt.Point;
 import java.util.LinkedList;
 import java.util.List;
 
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class LoadStoreExecutionUnit implements ClockedComponent{
-	static final int LDLimit = 4;
+public class LoadStoreExecutionUnit implements ClockedComponent, VisibleComponent{
+	static final int LDLimit = 3;
 	private class Item{
 		InstructionResult result;
 		int delay;
@@ -77,5 +80,26 @@ public class LoadStoreExecutionUnit implements ClockedComponent{
 			res = null;
 		}
 	}
+	
+	class View implements ComponentView {
+		
+		Point position; 
+		View(int x, int y){
+			position = new Point(x, y);
+		}
+		
+		public void paint(GraphicsContext gc) {
+			gc.translate(position.x, position.y);
+			DrawingHelper.drawBox(gc, "Load/Store");
+			gc.setFill(Color.BLACK);
+			for( int i = 0; i<buffer.size(); i++)
+				gc.fillText(buffer.get(i).result  + "(" + Integer.toString(buffer.get(i).delay) + ")", 5, 20+10*i);
+			gc.translate(-position.x, -position.y);
+		}
+	}
 
+	@Override
+	public ComponentView createView(int x, int y) {
+		return new View(x, y);
+	}
 }

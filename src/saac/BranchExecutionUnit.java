@@ -1,8 +1,13 @@
 package saac;
 
+import java.awt.Point;
+
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+import saac.ExecutionUnit.View;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class BranchExecutionUnit implements ClockedComponent{
+public class BranchExecutionUnit implements ClockedComponent, VisibleComponent{
 	private FConnection<Instruction>.Output instructionIn;
 	FConnection<Integer>.Input output;
 	Integer bufferOut;
@@ -55,6 +60,28 @@ public class BranchExecutionUnit implements ClockedComponent{
 			output.put(bufferOut);
 			bufferOut = null;
 		}
+	}
+	
+class View implements ComponentView {
+		
+		Point position; 
+		View(int x, int y){
+			position = new Point(x, y);
+		}
+		
+		public void paint(GraphicsContext gc) {
+			gc.translate(position.x, position.y);
+			DrawingHelper.drawBox(gc, "Branches");
+			gc.setFill(Color.BLACK);
+			if(bufferOut != null)
+				gc.fillText("pc: " + bufferOut, 10, 30);
+			gc.translate(-position.x, -position.y);
+		}
+	}
+
+	@Override
+	public ComponentView createView(int x, int y) {
+		return new View(x, y);
 	}
 
 }

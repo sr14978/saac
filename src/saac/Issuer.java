@@ -1,15 +1,18 @@
 package saac;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 import saac.Instructions.Opcode;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class Issuer implements ClockedComponent{
+public class Issuer implements ClockedComponent, VisibleComponent{
 	
 	static final Function<Opcode, Opcode> sameOp = Function.identity();
 	static final Function<Integer, Integer> sameVal = Function.identity();
@@ -186,7 +189,29 @@ public class Issuer implements ClockedComponent{
 		bufferOut = null;
 		Saac.InstructionCounter++;
 	}
-	
-	
+		
+	class View implements ComponentView {
+		
+		Point position; 
+		View(int x, int y){
+			position = new Point(x, y);
+		}
+		
+		public void paint(GraphicsContext gc) {
+			gc.translate(position.x, position.y);
+			DrawingHelper.drawBox(gc, "Issuer");
+			gc.setFill(Color.BLACK);
+			if(bufferIn != null)
+				gc.fillText(bufferIn.toString(), 10, 25);
+			if(bufferOut != null)
+				gc.fillText(bufferOut.toString(), 10, 40);
+			gc.translate(-position.x, -position.y);
+		}
+	}
+
+	@Override
+	public ComponentView createView(int x, int y) {
+		return new View(x, y);
+	}
 
 }

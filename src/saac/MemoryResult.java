@@ -11,4 +11,8 @@ public class MemoryResult extends InstructionResult {
 	public int getValue() {
 		return value;
 	}
+	
+	public String toString() {
+		return "addr: " + Integer.toString(value); 
+	}
 }

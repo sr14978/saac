@@ -1,14 +1,17 @@
 package saac;
 
+import java.awt.Point;
+
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 import saac.Instructions.Opcode;
 
-public class Fetcher implements ClockedComponent{
+public class Fetcher implements ClockedComponent, VisibleComponent {
 
 	RegisterFile registerFile;
 	FConnection<int[]>.Input output;
 	int[] bufferOut;
 	FConnection<Integer>.Output fromBrUnit;
-	
 	int programCounter = 0;
 	
 	boolean halt = false;
@@ -72,4 +75,24 @@ public class Fetcher implements ClockedComponent{
 		}
 	}
 
+	class View implements ComponentView {
+		
+		Point position; 
+		View(int x, int y){
+			position = new Point(x, y);
+		}
+		
+		public void paint(GraphicsContext gc) {
+			gc.translate(position.x, position.y);
+			DrawingHelper.drawBox(gc, "Fetcher");
+			gc.setFill(Color.BLACK);
+			gc.fillText(Integer.toString(programCounter), 10, 35);
+			gc.translate(-position.x, -position.y);
+		}
+	}
+
+	@Override
+	public ComponentView createView(int x, int y) {
+		return new View(x, y);
+	}
 }

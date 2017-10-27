@@ -1,6 +1,13 @@
 package saac;
 
-public class WritebackHandler implements ClockedComponent {
+import static saac.DrawingHelper.BOX_SIZE;
+
+import java.awt.Point;
+
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+
+public class WritebackHandler implements ClockedComponent, VisibleComponent {
 	FConnection<InstructionResult>.Output inputEU_A; 
 	FConnection<InstructionResult>.Output inputEU_B; 
 	FConnection<InstructionResult>.Output inputLS;
@@ -46,4 +53,24 @@ public class WritebackHandler implements ClockedComponent {
 		
 	}
 
+	class View implements ComponentView {
+		
+		Point position; 
+		View(int x, int y){
+			position = new Point(x, y);
+		}
+		
+		public void paint(GraphicsContext gc) {
+			gc.translate(position.x, position.y);
+			DrawingHelper.drawBox(gc, "Write Back Handler", 3*BOX_SIZE, 50);
+			gc.setFill(Color.BLACK);
+			gc.translate(-position.x, -position.y);
+		}
+	}
+
+	@Override
+	public ComponentView createView(int x, int y) {
+		return new View(x, y);
+	}
+	
 }

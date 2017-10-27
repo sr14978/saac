@@ -1,14 +1,21 @@
 package saac;
 
 import java.util.List;
-import java.util.LinkedList;
 
-public class DualReservationStation implements ClockedComponent{
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+
+import java.awt.Point;
+import java.util.LinkedList;
+import static saac.DrawingHelper.BOX_SIZE;
+
+
+public class DualReservationStation implements ClockedComponent, VisibleComponent{
 	FConnection<Instruction>.Input outputUnit1;
 	FConnection<Instruction>.Input outputUnit2;
 	FConnection<Instruction>.Output input;
 	List<Instruction> buffer = new LinkedList<>();
-	
+	static int bufferLimit = 3;
 	public DualReservationStation(FConnection<Instruction>.Input outputUnit1, FConnection<Instruction>.Input outputUnit2,
 			FConnection<Instruction>.Output input) {
 		this.outputUnit1 = outputUnit1;
@@ -18,6 +25,8 @@ public class DualReservationStation implements ClockedComponent{
 
 	@Override
 	public void tick() throws Exception {
+		if(buffer.size() >= bufferLimit)
+			return;
 		if(!input.ready())
 			return;
 		buffer.add(input.get());
@@ -39,5 +48,26 @@ public class DualReservationStation implements ClockedComponent{
 		}
 		
 	}
+	
+	class View implements ComponentView {
+		
+		Point position; 
+		View(int x, int y){
+			position = new Point(x, y);
+		}
+		
+		public void paint(GraphicsContext gc) {
+			gc.translate(position.x, position.y);
+			DrawingHelper.drawBox(gc, "Dual Reservation Station", 2*BOX_SIZE, 50);
+			gc.setFill(Color.BLACK);
+			for( int i = 0; i<buffer.size(); i++)
+				gc.fillText(buffer.get(i).toString(), 5, 25+10*i);
+			gc.translate(-position.x, -position.y);
+		}
+	}
 
+	@Override
+	public ComponentView createView(int x, int y) {
+		return new View(x, y);
+	}
 }
