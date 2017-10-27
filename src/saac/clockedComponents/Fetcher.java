@@ -9,7 +9,6 @@ import saac.interfaces.ComponentView;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
 import saac.unclockedComponents.InstructionsSource;
-import saac.unclockedComponents.RegisterFile;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 

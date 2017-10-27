@@ -14,6 +14,7 @@ import saac.clockedComponents.ExecutionUnit;
 import saac.clockedComponents.Fetcher;
 import saac.clockedComponents.Issuer;
 import saac.clockedComponents.LoadStoreExecutionUnit;
+import saac.clockedComponents.RegisterFile;
 import saac.clockedComponents.WritebackHandler;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
@@ -22,7 +23,6 @@ import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
 import saac.interfaces.FConnection;
 import saac.unclockedComponents.Memory;
-import saac.unclockedComponents.RegisterFile;
 
 public class Saac implements ClockedComponent {
 

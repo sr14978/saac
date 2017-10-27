@@ -13,7 +13,6 @@ import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
-import saac.unclockedComponents.RegisterFile;
 import saac.utils.DrawingHelper;
 
 public class WritebackHandler implements ClockedComponent, VisibleComponent {
