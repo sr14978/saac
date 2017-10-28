@@ -1,11 +1,6 @@
 package saac.clockedComponents;
 
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -13,32 +8,47 @@ import saac.Saac;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
+import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
+import saac.utils.Output;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Issuer implements ClockedComponent, VisibleComponent{
 	
-	static final Function<Opcode, Opcode> sameOp = Function.identity();
-	static final Function<Integer, Integer> sameVal = Function.identity();
-	
-	FConnection<Instruction>.Output instructionIn;
-	Instruction bufferIn;
+	FConnection<Opcode>.Output opcodeIn;
+	Connection<Integer>.Output paramARegInput;
+	Connection<Integer>.Output paramAPassInput;
+	Connection<Integer>.Output paramBRegInput;
+	Connection<Integer>.Output paramBPassInput;
+	Connection<Integer>.Output paramCRegInput;
+	Connection<Integer>.Output paramCPassInput;
 	FConnection<Instruction>.Input outputEU;
 	FConnection<Instruction>.Input outputLS;
 	FConnection<Instruction>.Input outputBr;
 	Instruction bufferOut;
 	RegisterFile registerFile;
-	Set<Integer> dirtyMem = new HashSet<>();
 	
 	public Issuer(RegisterFile rf,
-			FConnection<Instruction>.Output input,
+			FConnection<Opcode>.Output opcodeIn,
+			Connection<Integer>.Output paramARegInput,
+			Connection<Integer>.Output paramAPassInput,
+			Connection<Integer>.Output paramBRegInput,
+			Connection<Integer>.Output paramBPassInput,
+			Connection<Integer>.Output paramCRegInput,
+			Connection<Integer>.Output paramCPassInput,
 			FConnection<Instruction>.Input outputEU,
 			FConnection<Instruction>.Input outputLS,
 			FConnection<Instruction>.Input outputBr) {
-		this.instructionIn = input;
+		this.opcodeIn = opcodeIn;
+		this.paramARegInput = paramARegInput;
+		this.paramAPassInput = paramAPassInput;
+		this.paramBRegInput = paramBRegInput;
+		this.paramBPassInput = paramBPassInput;
+		this.paramCRegInput = paramCRegInput;
+		this.paramCPassInput = paramCPassInput;
 		this.outputEU = outputEU;
 		this.outputLS = outputLS;
 		this.outputBr = outputBr;
@@ -47,112 +57,57 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 	
 	@Override
 	public void tick() throws Exception {
-		if(bufferOut != null)
-			return;
-		
-		if(bufferIn == null) {
-			if(!instructionIn.ready())
-				return;
-			bufferIn = instructionIn.get();
+		Output.debug1.println("Issue tock");
+		Output.debug1.println("every");
+		if(opcodeIn.ready() && bufferOut == null) {
+			Output.debug1.println("ready");
+			boolean paramAreg=false, paramBreg=false, paramCreg=false;
+			Opcode opcode = opcodeIn.get();
+			switch(opcode) {
+			case Ldc:
+			case Nop:
+			case Br:
+			case Ldma:
+			case Jmp:
+				break;
+			case Add:
+			case Sub:
+			case Mul:
+			case Div:
+			case Ldmi:
+				paramBreg = paramCreg = true;
+				break;
+			case Stmi:
+				paramAreg = paramBreg = paramCreg = true;
+				break;
+			case Addi:
+			case Subi:
+			case Muli:
+			case Divi:
+			case Ln:
+			case JmpN:
+			case JmpZ:
+				paramBreg = true;
+				break;
+			case Stma:
+				paramAreg = true;
+				break;
+			default:
+				throw new NotImplementedException();
+			}
+			
+			bufferOut = new Instruction(opcode,
+					paramAreg? paramARegInput.get():paramAPassInput.get(),
+					paramBreg? paramBRegInput.get():paramBPassInput.get(), 		
+					paramCreg? paramCRegInput.get():paramCPassInput.get());
+			Output.debug1.println("bufferout: " + bufferOut);
+			
 		}
-		
-		Instruction inst  = bufferIn;
-		boolean dependOnA = false, dependOnB = false, dependOnC = false, dirtyA = false;
-		switch(inst.getOpcode()) {
-		case Ldc:
-			dirtyA = true;
-			break;
-		case Add:
-		case Sub:
-		case Mul:
-		case Div:
-		case Ldmi:
-			dirtyA = dependOnB = dependOnC = true;
-			break;
-		case Stmi:
-			dependOnA = dependOnB = dependOnC = true;
-			break;
-		case Addi:
-		case Subi:
-		case Muli:
-		case Divi:
-			dirtyA = dependOnB = true;
-			break;
-		case Nop:
-			break;
-		case Ldma:
-			dirtyA = true;
-			break;
-		case Stma:
-			dependOnA = true;
-			break;
-		case Br:
-			break;
-		case Ln:
-		case JmpN:
-		case JmpZ:
-			dependOnB = true;
-			break;
-		case Jmp:
-			break;
-		default:
-			throw new NotImplementedException();
-		}
-		
-		List<Character> paramDependances = new ArrayList<>();
-		if( (dependOnA || dirtyA) && registerFile.isDirty(inst.getParamA()) ) {
-			paramDependances.add('A');
-		}
-		if( dependOnB && registerFile.isDirty(inst.getParamB()) ) {
-			paramDependances.add('B');
-		}
-		if( dependOnC && registerFile.isDirty(inst.getParamC()) ) {
-			paramDependances.add('C');
-		}
-		if(!paramDependances.isEmpty()) {
-			System.out.println(inst + " is blocked by " + paramDependances);
-			return;
-		}
-		
-		
-		int addr;
-		switch(inst.getOpcode()) {
-		case Ldmi:
-			addr = registerFile.get(inst.getParamB()) + registerFile.get(inst.getParamC());
-			if(dirtyMem.contains(addr))
-				return;
-			break;
-		case Stmi:
-			addr = registerFile.get(inst.getParamB()) + registerFile.get(inst.getParamC());
-			dirtyMem.add(addr);
-			break;
-		case Ldma:
-			addr = registerFile.get(inst.getParamB());
-			if(dirtyMem.contains(addr))
-				return;
-			break;
-		case Stma:
-			addr = registerFile.get(inst.getParamB());
-			dirtyMem.add(addr);
-			break;
-		default:
-			break;
-		}
-		
-		if(dirtyA)
-			registerFile.setDirty(inst.getParamA(), true);
-		
-		bufferOut = inst.transform(
-				sameOp,
-				dependOnA? registerFile::get : sameVal,
-				dependOnB? registerFile::get : sameVal,
-				dependOnC? registerFile::get : sameVal
-						);
-		bufferIn = null;
 	}
 	
 	@Override
 	public void tock() throws Exception {
+		Output.debug1.println("Issue tock");
 		if(bufferOut == null)
 			return;
 		switch(bufferOut.getOpcode()) {
@@ -168,7 +123,7 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 		case Nop:
 			if(outputEU.clear()) {
 				outputEU.put(bufferOut);
-				System.out.println(bufferOut + " sent to EU reservation station");
+				Output.debug.println(bufferOut + " sent to EU reservation station");
 			}
 			break;
 		case Ldma:
@@ -177,7 +132,7 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 		case Ldmi:
 			if(outputLS.clear()) {
 				outputLS.put(bufferOut);
-				System.out.println(bufferOut + " sent for execution on LSU");
+				Output.debug.println(bufferOut + " sent for execution on LSU");
 			}
 			break;
 		case Br:
@@ -186,7 +141,7 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 		case JmpZ:
 			if(outputBr.clear()) {
 				outputBr.put(bufferOut);
-				System.out.println(bufferOut + " sent for execution on BrU");
+				Output.debug.println(bufferOut + " sent for execution on BrU");
 			}
 			break;
 		default:
@@ -208,10 +163,8 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Issuer");
 			gc.setFill(Color.BLACK);
-			if(bufferIn != null)
-				gc.fillText(bufferIn.toString(), 10, 25);
 			if(bufferOut != null)
-				gc.fillText(bufferOut.toString(), 10, 40);
+				gc.fillText(bufferOut.toString(), 10, 35);
 			gc.translate(-position.x, -position.y);
 		}
 	}

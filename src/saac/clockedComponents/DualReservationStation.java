@@ -14,6 +14,7 @@ import saac.interfaces.ComponentView;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
 import saac.utils.DrawingHelper;
+import saac.utils.Output;
 
 
 public class DualReservationStation implements ClockedComponent, VisibleComponent{
@@ -46,11 +47,11 @@ public class DualReservationStation implements ClockedComponent, VisibleComponen
 		if(outputUnit1.clear()) {
 			Instruction inst = buffer.remove(0);
 			outputUnit1.put(inst);
-			System.out.println(inst + " sent for execution on EU 1");
+			Output.info.println(inst + " sent for execution on EU 1");
 		} else if(outputUnit2.clear()) {
 			Instruction inst = buffer.remove(0);
 			outputUnit2.put(inst);
-			System.out.println(inst + " sent for execution on EU 2");
+			Output.info.println(inst + " sent for execution on EU 2");
 		}
 		
 	}

@@ -6,6 +6,7 @@ import java.awt.Point;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import saac.utils.DrawingHelper;
 
 public class FConnection<T> implements VisibleComponent{
 
@@ -48,9 +49,6 @@ public class FConnection<T> implements VisibleComponent{
 	}
 	
 	static final int C_BOX_SIZE = BOX_SIZE-50;
-	static final double[] arrowX = new double[] {C_BOX_SIZE/2-10, C_BOX_SIZE/2, C_BOX_SIZE/2+10};
-	static final double[] arrowY_in = new double[] {-12, -2, -12};
-	static final double[] arrowY_out = new double[] {23, 33, 23};
 	class View implements ComponentView {
 		Point position; 
 		View(int x, int y){
@@ -59,13 +57,9 @@ public class FConnection<T> implements VisibleComponent{
 		
 		public void paint(GraphicsContext gc) {
 			gc.translate(position.x, position.y);
-			gc.setFill(Color.BLACK);
-			gc.fillPolygon(arrowX, arrowY_in, 3);
-			gc.fillPolygon(arrowX, arrowY_out, 3);
-			gc.setFill(Color.LIGHTGRAY);
-			gc.fillRect(0, 0, C_BOX_SIZE, 20);
-			gc.setFill(Color.BLACK);
-			gc.strokeRect(0, 0, C_BOX_SIZE, 20);
+			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, -12);
+			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, 23);
+			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHTGRAY, Color.BLACK);
 			if(value != null) {
 				if(value instanceof int[]) {
 					int[] val = (int[]) value;

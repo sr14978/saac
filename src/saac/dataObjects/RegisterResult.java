@@ -17,7 +17,7 @@ public class RegisterResult extends InstructionResult {
 		return target;
 	}
 	public String toString() {
-		return String.format("target: %d, value: %d", target, value); 
+		return String.format("target reg: %d, value: %d", target, value); 
 	}
 
 }

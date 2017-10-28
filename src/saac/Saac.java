@@ -9,6 +9,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import saac.clockedComponents.BranchExecutionUnit;
 import saac.clockedComponents.Decoder;
+import saac.clockedComponents.DepChecker;
 import saac.clockedComponents.DualReservationStation;
 import saac.clockedComponents.ExecutionUnit;
 import saac.clockedComponents.Fetcher;
@@ -21,8 +22,10 @@ import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
+import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.unclockedComponents.Memory;
+import saac.utils.Instructions.Opcode;
 
 public class Saac implements ClockedComponent {
 
@@ -38,16 +41,18 @@ public class Saac implements ClockedComponent {
 			step(f);
 		}
 	}
-	
+	boolean phase = true;
 	void step(Runnable paint) throws Exception {
 		Thread.sleep(50);
-		tick();
+		if(phase)
+			tick();
+		else {
+			tock();
+			cycleCounter++;
+			System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
+		}
 		paint.run();
-		Thread.sleep(50);
-		tock();
-		paint.run();
-		cycleCounter++;
-		System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
+		phase = !phase;
 	}
 	
 	List<ClockedComponent> clockedComponents;
@@ -55,12 +60,7 @@ public class Saac implements ClockedComponent {
 	public Saac(List<ComponentView> visibleComponents) {
 		
 		Memory memory = new Memory();
-		
-		FConnection<Integer> issuerToRegister = new FConnection<>();
-		FConnection<Integer> registerToIssuer = new FConnection<>();
-		FConnection<RegisterResult> WBtoRegister = new FConnection<>();
-		RegisterFile registerFile = new RegisterFile(issuerToRegister.getOutputEnd(), registerToIssuer.getInputEnd(), WBtoRegister.getOutputEnd());
-		
+						
 		FConnection<Instruction> dualRSToEU_A = new FConnection<>();
 		FConnection<InstructionResult> EU_AtoWB = new FConnection<>();
 		ExecutionUnit executionUnit_A = new ExecutionUnit(dualRSToEU_A.getOutputEnd(), EU_AtoWB.getInputEnd());
@@ -79,25 +79,79 @@ public class Saac implements ClockedComponent {
 		
 		FConnection<Instruction> issueToDualRS = new FConnection<>();
 		DualReservationStation dualRS = new DualReservationStation(dualRSToEU_A.getInputEnd(), dualRSToEU_B.getInputEnd(), issueToDualRS.getOutputEnd());
-			
+				
 		FConnection<int[]> fetchToDecode = new FConnection<>();
+		FConnection<Instruction> decodeToDep = new FConnection<>();
+		Decoder decoder = new Decoder(decodeToDep.getInputEnd(), fetchToDecode.getOutputEnd());
+				
+		Connection<Integer> paramADepToReg = new Connection<>();
+		Connection<Integer> paramBDepToReg = new Connection<>();
+		Connection<Integer> paramCDepToReg = new Connection<>();
+		
+		Connection<Integer> paramAReg_RegToIssue = new Connection<>();
+		Connection<Integer> paramBReg_RegToIssue = new Connection<>();
+		Connection<Integer> paramCReg_RegToIssue = new Connection<>();
+		
+		Connection<Integer> paramAPass_RegToIssue = new Connection<>();
+		Connection<Integer> paramBPass_RegToIssue = new Connection<>();
+		Connection<Integer> paramCPass_RegToIssue = new Connection<>();
+		
+		FConnection<RegisterResult> WBtoRegister = new FConnection<>();
+				
+		RegisterFile registerFile = new RegisterFile(
+				paramADepToReg.getOutputEnd(),
+				paramAReg_RegToIssue.getInputEnd(),
+				paramAPass_RegToIssue.getInputEnd(),
+				paramBDepToReg.getOutputEnd(),
+				paramBReg_RegToIssue.getInputEnd(),
+				paramBPass_RegToIssue.getInputEnd(),
+				paramCDepToReg.getOutputEnd(),
+				paramCReg_RegToIssue.getInputEnd(),
+				paramCPass_RegToIssue.getInputEnd(),
+				WBtoRegister.getOutputEnd()
+				);
+		
 		Fetcher fetcher = new Fetcher(registerFile, fetchToDecode.getInputEnd(), brToFetch.getOutputEnd());
 		
-		FConnection<Instruction> decodeToIssue = new FConnection<>();
-		Decoder decoder = new Decoder(decodeToIssue.getInputEnd(), fetchToDecode.getOutputEnd());
-		
+		FConnection<Opcode> opcodeDepToIssue = new FConnection<>();
+		FConnection<Integer> dirtyWBtoDep = new FConnection<>();
+
+		DepChecker depChecker = new DepChecker(registerFile,
+				decodeToDep.getOutputEnd(),
+				dirtyWBtoDep.getOutputEnd(),
+				opcodeDepToIssue.getInputEnd(),
+				paramADepToReg.getInputEnd(),
+				paramBDepToReg.getInputEnd(),
+				paramCDepToReg.getInputEnd()
+			);
+				
 		Issuer issuer = new Issuer(registerFile,
-				decodeToIssue.getOutputEnd(),
+				opcodeDepToIssue.getOutputEnd(),
+				paramAReg_RegToIssue.getOutputEnd(),
+				paramAPass_RegToIssue.getOutputEnd(),
+				paramBReg_RegToIssue.getOutputEnd(),
+				paramBPass_RegToIssue.getOutputEnd(),
+				paramCReg_RegToIssue.getOutputEnd(),
+				paramCPass_RegToIssue.getOutputEnd(),
 				issueToDualRS.getInputEnd(),
 				issueToLS.getInputEnd(),
 				issueToBr.getInputEnd()
-				);
-		WritebackHandler writeBack = new WritebackHandler(registerFile, issuer, EU_AtoWB.getOutputEnd(), EU_BtoWB.getOutputEnd(), LStoWB.getOutputEnd());
+			);
+		
+		WritebackHandler writeBack = new WritebackHandler(registerFile, depChecker,
+				EU_AtoWB.getOutputEnd(),
+				EU_BtoWB.getOutputEnd(),
+				LStoWB.getOutputEnd(),
+				WBtoRegister.getInputEnd(),
+				dirtyWBtoDep.getInputEnd()
+			);
 		
 		
 		clockedComponents = new ArrayList<>();
 		clockedComponents.add(fetcher);
 		clockedComponents.add(decoder);
+		clockedComponents.add(registerFile);
+		clockedComponents.add(depChecker);
 		clockedComponents.add(issuer);
 		clockedComponents.add(dualRS);
 		clockedComponents.add(executionUnit_A);
@@ -107,26 +161,51 @@ public class Saac implements ClockedComponent {
 		clockedComponents.add(writeBack);
 		
 		int middleOffset = (int) (1.5*BOX_SIZE);
-		visibleComponents.add(fetcher.createView(middleOffset, 0));
-		visibleComponents.add(fetchToDecode.createView(middleOffset, 50));
-		visibleComponents.add(registerFile.createView(1200, 100));
-		visibleComponents.add(decoder.createView(middleOffset, 100));
-		visibleComponents.add(decodeToIssue.createView(middleOffset, 150));
-		visibleComponents.add(issuer.createView(middleOffset, 200));
-		visibleComponents.add(issueToDualRS.createView(BOX_SIZE, 250));
-		visibleComponents.add(dualRS.createView(0, 300));
-		visibleComponents.add(dualRSToEU_A.createView(0, 350));
-		visibleComponents.add(executionUnit_A.createView(0, 400));
-		visibleComponents.add(dualRSToEU_B.createView(BOX_SIZE, 350));
-		visibleComponents.add(executionUnit_B.createView(BOX_SIZE, 400));
-		visibleComponents.add(issueToLS.createView(2*BOX_SIZE, 250));
-		visibleComponents.add(LSEU.createView(2*BOX_SIZE, 400));
-		visibleComponents.add(issueToBr.createView(3*BOX_SIZE, 250));
-		visibleComponents.add(brUnit.createView(3*BOX_SIZE, 400));
-		visibleComponents.add(EU_AtoWB.createView(0, 450));
-		visibleComponents.add(EU_BtoWB.createView(BOX_SIZE, 450));
-		visibleComponents.add(LStoWB.createView(2*BOX_SIZE, 450));
-		visibleComponents.add(writeBack.createView(0, 500));
+		int boxHeight = 50;
+		int c = 0;
+		visibleComponents.add(fetcher.createView(middleOffset, boxHeight*c++));
+		visibleComponents.add(fetchToDecode.createView(middleOffset, boxHeight*c++));
+		visibleComponents.add(decoder.createView(middleOffset, boxHeight*c++));
+		visibleComponents.add(decodeToDep.createView(middleOffset, boxHeight*c++));
+		visibleComponents.add(depChecker.createView(middleOffset, boxHeight*c));
+		c++;
+		visibleComponents.add(paramADepToReg.createView(middleOffset, boxHeight*c, 3));
+		visibleComponents.add(paramBDepToReg.createView(middleOffset+BOX_SIZE/3, boxHeight*c, 3));
+		visibleComponents.add(paramCDepToReg.createView(middleOffset+2*BOX_SIZE/3, boxHeight*c, 3));
+		c++;
+		visibleComponents.add(opcodeDepToIssue.createView(BOX_SIZE/2, boxHeight*c));
+		visibleComponents.add(registerFile.createView(middleOffset, boxHeight*c));
+		c++;
+		visibleComponents.add(paramAReg_RegToIssue.createView(middleOffset, boxHeight*c, 6));
+		visibleComponents.add(paramBReg_RegToIssue.createView(middleOffset+BOX_SIZE/6, boxHeight*c, 6));
+		visibleComponents.add(paramCReg_RegToIssue.createView(middleOffset+2*BOX_SIZE/6, boxHeight*c, 6));
+		visibleComponents.add(paramAPass_RegToIssue.createView(middleOffset+3*BOX_SIZE/6, boxHeight*c, 6));
+		visibleComponents.add(paramBPass_RegToIssue.createView(middleOffset+4*BOX_SIZE/6, boxHeight*c, 6));
+		visibleComponents.add(paramCPass_RegToIssue.createView(middleOffset+5*BOX_SIZE/6, boxHeight*c, 6));
+		c++;
+		visibleComponents.add(issuer.createView(middleOffset, boxHeight*c++));
+		
+		visibleComponents.add(issueToDualRS.createView(BOX_SIZE, boxHeight*c));
+		visibleComponents.add(issueToLS.createView(2*BOX_SIZE, boxHeight*c));
+		visibleComponents.add(issueToBr.createView(3*BOX_SIZE, boxHeight*c));
+		c++;
+		visibleComponents.add(dualRS.createView(0, boxHeight*c++));
+		visibleComponents.add(dualRSToEU_A.createView(0, boxHeight*c));
+		visibleComponents.add(dualRSToEU_B.createView(BOX_SIZE, boxHeight*c));
+		c++;
+		visibleComponents.add(executionUnit_A.createView(0, boxHeight*c));
+		visibleComponents.add(executionUnit_B.createView(BOX_SIZE, boxHeight*c));
+		visibleComponents.add(LSEU.createView(2*BOX_SIZE, boxHeight*c));
+		visibleComponents.add(brUnit.createView(3*BOX_SIZE, boxHeight*c));
+		c++;
+		visibleComponents.add(EU_AtoWB.createView(0, boxHeight*c));
+		visibleComponents.add(EU_BtoWB.createView(BOX_SIZE, boxHeight*c));
+		visibleComponents.add(LStoWB.createView(2*BOX_SIZE, boxHeight*c));
+		c++;
+		visibleComponents.add(writeBack.createView(0, boxHeight*c));
+		c++;
+		visibleComponents.add(WBtoRegister.createView(BOX_SIZE/2, boxHeight*c));
+		visibleComponents.add(dirtyWBtoDep.createView(3*BOX_SIZE/2, boxHeight*c));
 	}
 	
 	@Override

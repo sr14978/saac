@@ -13,6 +13,6 @@ public class MemoryResult extends InstructionResult {
 	}
 	
 	public String toString() {
-		return "addr: " + Integer.toString(value); 
+		return "target addr: " + Integer.toString(value); 
 	}
 }

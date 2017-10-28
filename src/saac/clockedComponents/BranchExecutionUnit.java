@@ -11,6 +11,7 @@ import saac.interfaces.FConnection;
 import saac.interfaces.FullChannelException;
 import saac.interfaces.VisibleComponent;
 import saac.utils.DrawingHelper;
+import saac.utils.Output;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class BranchExecutionUnit implements ClockedComponent, VisibleComponent{
@@ -36,19 +37,19 @@ public class BranchExecutionUnit implements ClockedComponent, VisibleComponent{
 			break;
 		case Jmp:
 			bufferOut = inst.getParamA() + inst.getParamC();
-			System.out.println("jumping to " + bufferOut);
+			Output.jumping_info.println("jumping to " + bufferOut);
 			break;
 		case JmpN:
 			if(inst.getParamB() < 0) {
 				bufferOut = inst.getParamA() + inst.getParamC();
-				System.out.println("jumping to " + bufferOut);
+				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
 				bufferOut = inst.getParamC();
 			break;
 		case JmpZ:
 			if(inst.getParamB() == 0) {
 				bufferOut = inst.getParamA() + inst.getParamC();
-				System.out.println("jumping to " + bufferOut);
+				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
 				bufferOut = inst.getParamC();
 			break;

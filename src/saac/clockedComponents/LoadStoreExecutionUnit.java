@@ -105,7 +105,7 @@ public class LoadStoreExecutionUnit implements ClockedComponent, VisibleComponen
 			DrawingHelper.drawBox(gc, "Load/Store");
 			gc.setFill(Color.BLACK);
 			for( int i = 0; i<buffer.size(); i++)
-				gc.fillText(buffer.get(i).result  + "(" + Integer.toString(buffer.get(i).delay) + ")", 5, 20+10*i);
+				gc.fillText(buffer.get(i).result  + " (" + Integer.toString(buffer.get(i).delay) + ")", 5, 22+10*i);
 			gc.translate(-position.x, -position.y);
 		}
 	}

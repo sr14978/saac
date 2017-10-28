@@ -20,17 +20,23 @@ public class WritebackHandler implements ClockedComponent, VisibleComponent {
 	FConnection<InstructionResult>.Output inputEU_B; 
 	FConnection<InstructionResult>.Output inputLS;
 	RegisterFile registerFile;
-	Issuer issuer;
+	DepChecker depChecker;
+	FConnection<RegisterResult>.Input resultOutput;
+	FConnection<Integer>.Input dirtyOutput;
 	
-	public WritebackHandler(RegisterFile rf, Issuer issuer,
+	public WritebackHandler(RegisterFile rf, DepChecker depChecker,
 			FConnection<InstructionResult>.Output inputEU_A, 
 			FConnection<InstructionResult>.Output inputEU_B, 
-			FConnection<InstructionResult>.Output inputLS) {
+			FConnection<InstructionResult>.Output inputLS,
+			FConnection<RegisterResult>.Input resultOutput,
+			FConnection<Integer>.Input dirtyOutput) {
 		this.inputEU_A = inputEU_A;
 		this.inputEU_B = inputEU_B;
 		this.inputLS = inputLS;
 		this.registerFile = rf;
-		this.issuer = issuer;
+		this.depChecker = depChecker;
+		this.resultOutput = resultOutput;
+		this.dirtyOutput = dirtyOutput;
 	}
 
 	@Override
@@ -47,12 +53,12 @@ public class WritebackHandler implements ClockedComponent, VisibleComponent {
 		
 		if(res instanceof MemoryResult) {
 			MemoryResult mr = (MemoryResult) res;
-			issuer.dirtyMem.remove(mr.getValue());
+			depChecker.dirtyMem.remove(mr.getValue());
 		} else if(res instanceof RegisterResult) {
 			RegisterResult rr = (RegisterResult) res;
 			System.out.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget()));
-			registerFile.set(rr.getTarget(), rr.getValue());
-			registerFile.setDirty(rr.getTarget(), false);
+			resultOutput.put(new RegisterResult(rr.getTarget(), rr.getValue()));
+			dirtyOutput.put(rr.getTarget());
 		}
 	}
 

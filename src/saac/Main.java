@@ -40,7 +40,7 @@ public class Main extends Application {
     	
         primaryStage.setTitle("Saac - Sam's Advanced Architecture Computer");
         
-        final Canvas canvas = new Canvas(1600,600);
+        final Canvas canvas = new Canvas(1600,800);
         gc = canvas.getGraphicsContext2D();
         
         Button start = new Button("Start");
@@ -67,6 +67,8 @@ public class Main extends Application {
         primaryStage.setScene(new Scene(root, 1700, 900));
         primaryStage.show();
         
+        saac.mutex.lock();
+		stopped = true;
         
         new Thread(){
 			public void run() {

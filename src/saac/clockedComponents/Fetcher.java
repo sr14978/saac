@@ -10,6 +10,7 @@ import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
 import saac.unclockedComponents.InstructionsSource;
 import saac.utils.DrawingHelper;
+import saac.utils.Output;
 import saac.utils.Instructions.Opcode;
 
 public class Fetcher implements ClockedComponent, VisibleComponent {
@@ -44,20 +45,20 @@ public class Fetcher implements ClockedComponent, VisibleComponent {
 			return;
 		
 		bufferOut = InstructionsSource.getInstruction(programCounter);
-		System.out.println("Fetching instruction: " + programCounter + " = " + Opcode.fromInt(bufferOut[0]));
+		Output.info.println("Fetching instruction: " + programCounter + " = " + Opcode.fromInt(bufferOut[0]));
 		programCounter++;
 		
 		switch(Opcode.fromInt(bufferOut[0])) {
 		case Jmp:
 			programCounter += bufferOut[1];
 			bufferOut = null;
-			System.out.println("Fetch is jumping");
+			Output.jumping_info.println("Fetch is jumping");
 			tick();
 			break;
 		case Br:
 			programCounter = bufferOut[1];
 			bufferOut = null;
-			System.out.println("Fetch is Branching");
+			Output.jumping_info.println("Fetch is Branching");
 			tick();
 			break;
 		case JmpN:
