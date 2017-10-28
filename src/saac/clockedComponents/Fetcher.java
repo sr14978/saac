@@ -8,78 +8,86 @@ import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
-import saac.unclockedComponents.InstructionsSource;
 import saac.utils.DrawingHelper;
-import saac.utils.Output;
 import saac.utils.Instructions.Opcode;
+import saac.utils.Output;
 
 public class Fetcher implements ClockedComponent, VisibleComponent {
 
 	RegisterFile registerFile;
 	FConnection<int[]>.Input output;
-	int[] bufferOut;
+
 	FConnection<Integer>.Output fromBrUnit;
 	int programCounter = 0;
-	
+	FConnection<Integer>.Input addrOutput;
+	FConnection<Boolean>.Input clearOutput;
+	FConnection<int[]>.Output instructionInput;
 	boolean halt = false;
 	
-	public Fetcher(RegisterFile registerFile, FConnection<int[]>.Input output, FConnection<Integer>.Output fromBrUnit) {
+	public Fetcher(RegisterFile registerFile,
+			FConnection<int[]>.Input output,
+			FConnection<Integer>.Output fromBrUnit,
+			FConnection<Integer>.Input addrOutput,
+			FConnection<Boolean>.Input clearOutput,
+			FConnection<int[]>.Output instructionInput
+			) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
 		this.registerFile = registerFile;
+		this.addrOutput = addrOutput;
+		this.clearOutput = clearOutput;
+		this.instructionInput = instructionInput;
 	}
 	
 	@Override
 	public void tick() throws Exception {
 		
 		if(halt) {
-			
 			if(!fromBrUnit.ready())
 				return;
 			Integer newPC = fromBrUnit.get();
 			halt = false;
 			programCounter = newPC;
+		} else if(addrOutput.clear()) {
+			addrOutput.put(programCounter);
+			programCounter++;
 		}
 		
-		if(bufferOut != null)
-			return;
-		
-		bufferOut = InstructionsSource.getInstruction(programCounter);
-		Output.info.println("Fetching instruction: " + programCounter + " = " + Opcode.fromInt(bufferOut[0]));
-		programCounter++;
-		
-		switch(Opcode.fromInt(bufferOut[0])) {
-		case Jmp:
-			programCounter += bufferOut[1];
-			bufferOut = null;
-			Output.jumping_info.println("Fetch is jumping");
-			tick();
-			break;
-		case Br:
-			programCounter = bufferOut[1];
-			bufferOut = null;
-			Output.jumping_info.println("Fetch is Branching");
-			tick();
-			break;
-		case JmpN:
-		case JmpZ:
-			bufferOut[3] = programCounter;
-		case Ln:
-			halt = true;
-			break;
-		default:
-			break;
-		}		
 	}
 	
 	@Override
 	public void tock() throws Exception {
-		if(bufferOut == null)
+		
+		if(!instructionInput.ready())
 			return;
-		else if(output.clear()) {
-			output.put(bufferOut);
-			bufferOut = null;
+		if(!output.clear())
+			return;
+		
+		int[] inst = instructionInput.get();
+				
+		switch(Opcode.fromInt(inst[0])) {
+		case Jmp:
+			programCounter = inst[4] + 1 + inst[1];
+			Output.jumping_info.println("Fetch is jumping");
+			clearOutput.put(true);
+			return;
+		case Br:
+			programCounter = inst[1];
+			Output.jumping_info.println("Fetch is Branching");
+			clearOutput.put(true);
+			return;
+		case JmpN:
+		case JmpZ:
+			inst[3] = inst[4] + 1;
+		case Ln:
+			halt = true;
+			clearOutput.put(true);
+			break;
+		default:
+			break;
 		}
+		
+		output.put(inst);
 	}
 
 	class View implements ComponentView {

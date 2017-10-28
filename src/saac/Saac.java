@@ -24,6 +24,7 @@ import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
+import saac.unclockedComponents.InstructionsSource;
 import saac.unclockedComponents.Memory;
 import saac.utils.Instructions.Opcode;
 
@@ -43,7 +44,7 @@ public class Saac implements ClockedComponent {
 	}
 	boolean phase = true;
 	void step(Runnable paint) throws Exception {
-		Thread.sleep(100);
+		Thread.sleep(10);
 		if(phase)
 			tick();
 		else {
@@ -111,7 +112,22 @@ public class Saac implements ClockedComponent {
 				WBtoRegister.getOutputEnd()
 				);
 		
-		Fetcher fetcher = new Fetcher(registerFile, fetchToDecode.getInputEnd(), brToFetch.getOutputEnd());
+		FConnection<Integer> addrInput = new FConnection<>();
+		FConnection<Boolean> clearInput = new FConnection<>();
+		FConnection<int[]> instructionOutput = new FConnection<>();
+		InstructionsSource instructionSource = new InstructionsSource(
+				addrInput.getOutputEnd(),
+				clearInput.getOutputEnd(),
+				instructionOutput.getInputEnd()
+			);
+		
+		Fetcher fetcher = new Fetcher(registerFile,
+				fetchToDecode.getInputEnd(),
+				brToFetch.getOutputEnd(),
+				addrInput.getInputEnd(),
+				clearInput.getInputEnd(),
+				instructionOutput.getOutputEnd()
+				);
 		
 		FConnection<Opcode> opcodeDepToIssue = new FConnection<>();
 		FConnection<Integer> dirtyWBtoDep = new FConnection<>();
@@ -149,6 +165,7 @@ public class Saac implements ClockedComponent {
 		
 		clockedComponents = new ArrayList<>();
 		clockedComponents.add(fetcher);
+		clockedComponents.add(instructionSource);
 		clockedComponents.add(decoder);
 		clockedComponents.add(registerFile);
 		clockedComponents.add(depChecker);
@@ -163,9 +180,15 @@ public class Saac implements ClockedComponent {
 		int middleOffset = (int) (1.5*BOX_SIZE);
 		int boxHeight = 50;
 		int c = 0;
-		visibleComponents.add(fetcher.createView(middleOffset, boxHeight*c++));
-		visibleComponents.add(fetchToDecode.createView(middleOffset, boxHeight*c++));
-		visibleComponents.add(decoder.createView(middleOffset, boxHeight*c++));
+		visibleComponents.add(fetcher.createView(middleOffset, boxHeight*c));
+		visibleComponents.add(addrInput.createView(0, boxHeight*c));
+		c++;
+		visibleComponents.add(instructionSource.createView(0, boxHeight*c));
+		visibleComponents.add(fetchToDecode.createView(middleOffset, boxHeight*c));
+		c++;
+		visibleComponents.add(decoder.createView(middleOffset, boxHeight*c));
+		visibleComponents.add(instructionOutput.createView(0, boxHeight*c));
+		c++;
 		visibleComponents.add(decodeToDep.createView(middleOffset, boxHeight*c++));
 		visibleComponents.add(depChecker.createView(middleOffset, boxHeight*c));
 		c++;
@@ -206,6 +229,7 @@ public class Saac implements ClockedComponent {
 		c++;
 		visibleComponents.add(WBtoRegister.createView(BOX_SIZE/2, boxHeight*c));
 		visibleComponents.add(dirtyWBtoDep.createView(3*BOX_SIZE/2, boxHeight*c));
+		visibleComponents.add(brToFetch.createView(3*BOX_SIZE, boxHeight*c));
 	}
 	
 	@Override
