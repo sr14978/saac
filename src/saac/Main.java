@@ -5,6 +5,8 @@ import java.util.List;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -12,6 +14,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -19,6 +22,8 @@ import javafx.stage.Stage;
 import saac.interfaces.ComponentView;
 
 public class Main extends Application {
+	
+	
 	
 	public static void main(String[] args) {
 		launch();
@@ -52,10 +57,20 @@ public class Main extends Application {
         stop.setOnAction(buttonHandler);
         step.setOnAction(buttonHandler);
         
+        Slider slider = new Slider();
+        slider.setMin(10);
+        slider.setMax(1000);
+        slider.setValue(saac.delay);
+        slider.valueProperty().addListener(new ChangeListener<Number>() {
+	        	public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
+	            		saac.delay = new_val.intValue();
+	        	}
+        	});
+        
         rate = new Label("#rate");
         
         HBox topBar= new HBox();
-        topBar.getChildren().addAll(start, stop, step, rate);
+        topBar.getChildren().addAll(start, stop, step, slider, rate);
         
         BorderPane border = new BorderPane();        
         border.setCenter(canvas);
@@ -82,9 +97,16 @@ public class Main extends Application {
         
     }
     
+    int counter = 0;
     public void paint() {
+    	counter++;
+    	if(counter<50/saac.delay)
+    		return;
+		counter = 0;
+		
 		for(ComponentView cv : visibleComponents)
 			cv.paint(gc);
+		
 		float rateVal = round((float) Saac.InstructionCounter / saac.cycleCounter);
 		Platform.runLater(()->rate.setText(Float.toString(rateVal)));
 	}

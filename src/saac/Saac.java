@@ -31,6 +31,7 @@ import saac.utils.Instructions.Opcode;
 public class Saac implements ClockedComponent {
 
 	public static int InstructionCounter = 0;
+	//lock used for pausing
 	Lock mutex = new ReentrantLock();
 
 	int cycleCounter = 0;
@@ -42,9 +43,11 @@ public class Saac implements ClockedComponent {
 			step(f);
 		}
 	}
+	
+	int delay = 200;
 	boolean phase = true;
 	void step(Runnable paint) throws Exception {
-		//Thread.sleep(10);
+		Thread.sleep(delay);
 		if(phase)
 			tick();
 		else {
