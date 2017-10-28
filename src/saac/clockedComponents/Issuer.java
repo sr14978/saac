@@ -57,10 +57,7 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 	
 	@Override
 	public void tick() throws Exception {
-		Output.debug1.println("Issue tock");
-		Output.debug1.println("every");
 		if(opcodeIn.ready() && bufferOut == null) {
-			Output.debug1.println("ready");
 			boolean paramAreg=false, paramBreg=false, paramCreg=false;
 			Opcode opcode = opcodeIn.get();
 			switch(opcode) {
@@ -100,14 +97,12 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 					paramAreg? paramARegInput.get():paramAPassInput.get(),
 					paramBreg? paramBRegInput.get():paramBPassInput.get(), 		
 					paramCreg? paramCRegInput.get():paramCPassInput.get());
-			Output.debug1.println("bufferout: " + bufferOut);
 			
 		}
 	}
 	
 	@Override
 	public void tock() throws Exception {
-		Output.debug1.println("Issue tock");
 		if(bufferOut == null)
 			return;
 		switch(bufferOut.getOpcode()) {

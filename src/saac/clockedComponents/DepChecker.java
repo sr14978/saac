@@ -55,11 +55,8 @@ public class DepChecker implements VisibleComponent, ClockedComponent{
 	
 	@Override
 	public void tick() throws Exception {
-		Output.debug1.println("Dep tick");
-		Output.debug1.println("start");
 		if(bufferOpOut != null)
 			return;
-		Output.debug1.println("clear");
 		if(bufferIn == null) {
 			if(!instructionIn.ready())
 				return;
@@ -67,7 +64,6 @@ public class DepChecker implements VisibleComponent, ClockedComponent{
 		}
 		
 		Instruction inst  = bufferIn;
-		Output.debug.println(inst);
 		
 		boolean dependOnA = false, dependOnB = false, dependOnC = false, dirtyA = false;
 		switch(inst.getOpcode()) {
@@ -158,14 +154,12 @@ public class DepChecker implements VisibleComponent, ClockedComponent{
 		paramBOut.put(inst.getParamB());
 		paramCOut.put(inst.getParamC());
 		bufferOpOut = inst.getOpcode();
-		Output.debug1.println("buffered");
 		bufferIn = null;
 		
 	}
 
 	@Override
 	public void tock() throws Exception {
-		Output.debug1.println("Dep tock");
 		
 		if(dirtyIn.ready())
 			registerFile.setDirty(dirtyIn.get(), false);
@@ -175,7 +169,6 @@ public class DepChecker implements VisibleComponent, ClockedComponent{
 		if(!opcodeOut.clear())
 			return;
 		opcodeOut.put(bufferOpOut);
-		Output.debug.println("sent: " + bufferOpOut);
 		bufferOpOut = null;
 
 	}

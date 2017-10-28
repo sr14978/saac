@@ -86,12 +86,10 @@ public class RegisterFile implements VisibleComponent, ClockedComponent{
 	
 	@Override
 	public void tick() throws Exception {
-		Output.debug1.println("Reg tick");
 	}
 
 	@Override
 	public void tock() throws Exception {
-		Output.debug1.println("Reg tock");
 		
 		System.out.println(readInputA.get());
 		System.out.println(readInputB.get());

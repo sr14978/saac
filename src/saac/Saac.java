@@ -43,7 +43,7 @@ public class Saac implements ClockedComponent {
 	}
 	boolean phase = true;
 	void step(Runnable paint) throws Exception {
-		Thread.sleep(50);
+		Thread.sleep(100);
 		if(phase)
 			tick();
 		else {

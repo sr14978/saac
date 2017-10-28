@@ -67,8 +67,8 @@ public class Main extends Application {
         primaryStage.setScene(new Scene(root, 1700, 900));
         primaryStage.show();
         
-        saac.mutex.lock();
-		stopped = true;
+        //saac.mutex.lock();
+		//stopped = true;
         
         new Thread(){
 			public void run() {
