@@ -11,7 +11,6 @@ import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
 import saac.utils.DrawingHelper;
-import saac.utils.Output;
 
 
 public class RegisterFile implements VisibleComponent, ClockedComponent{

@@ -85,9 +85,13 @@ public class Main extends Application {
     public void paint() {
 		for(ComponentView cv : visibleComponents)
 			cv.paint(gc);
-		float rateVal = (float) Math.round(((float) Saac.InstructionCounter / saac.cycleCounter)*100 ) / 100;
+		float rateVal = round((float) Saac.InstructionCounter / saac.cycleCounter);
 		Platform.runLater(()->rate.setText(Float.toString(rateVal)));
 	}
+    
+    static float round(float i) {
+    	return (float) Math.round(( i )*100 ) / 100;
+    }
     
     @Override
     public void stop(){
