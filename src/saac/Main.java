@@ -101,13 +101,11 @@ public class Main extends JFrame {
 	}
     
 	
-    int counter = 0;
+    long lastRepaintTime = 0;
     public void paint() {
-    	counter++;
-    	if(stopped || counter>50/saac.delay) {
-    		
-			counter = 0;
-			
+    	long currentTime = System.currentTimeMillis();
+    	if(currentTime - lastRepaintTime > 1000/30) {
+    		lastRepaintTime = currentTime;	
 			gui.repaint();
 			rateLable.repaint();
     	}
