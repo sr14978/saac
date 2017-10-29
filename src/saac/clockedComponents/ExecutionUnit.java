@@ -1,22 +1,22 @@
 package saac.clockedComponents;
 
-import java.awt.Point;
-
-import java.awt.Graphics2D;
 import java.awt.Color;
+import java.awt.Graphics2D;
+
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.FullChannelException;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class ExecutionUnit implements ClockedComponent, VisibleComponent{
+public class ExecutionUnit implements ClockedComponentI, VisibleComponentI{
 
 	private FConnection<Instruction>.Output instructionIn;
 	private FConnection<InstructionResult>.Input resultOut;
@@ -76,25 +76,22 @@ public class ExecutionUnit implements ClockedComponent, VisibleComponent{
 		}
 	}
 	
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "EU");
 			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
 				gc.drawString(bufferOut.toString() + "(" + Integer.toString(instructionDelay) + ")", 10, 30);
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 	

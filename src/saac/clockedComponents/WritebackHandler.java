@@ -2,20 +2,19 @@ package saac.clockedComponents;
 
 import static saac.utils.DrawingHelper.BOX_SIZE;
 
-import java.awt.Point;
-
 import java.awt.Graphics2D;
-import java.awt.Color;
+
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
-public class WritebackHandler implements ClockedComponent, VisibleComponent {
+public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	FConnection<InstructionResult>.Output inputEU_A; 
 	FConnection<InstructionResult>.Output inputEU_B; 
 	FConnection<InstructionResult>.Output inputLS;
@@ -67,23 +66,19 @@ public class WritebackHandler implements ClockedComponent, VisibleComponent {
 		
 	}
 
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Write Back Handler", 3*BOX_SIZE, 50);
-			gc.setColor(Color.BLACK);
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 	

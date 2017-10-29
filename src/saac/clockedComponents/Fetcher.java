@@ -1,18 +1,18 @@
 package saac.clockedComponents;
 
-import java.awt.Point;
-
-import java.awt.Graphics2D;
 import java.awt.Color;
-import saac.interfaces.ClockedComponent;
+import java.awt.Graphics2D;
+
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 import saac.utils.Output;
 
-public class Fetcher implements ClockedComponent, VisibleComponent {
+public class Fetcher implements ClockedComponentI, VisibleComponentI {
 
 	RegisterFile registerFile;
 	FConnection<int[]>.Input output;
@@ -82,32 +82,29 @@ public class Fetcher implements ClockedComponent, VisibleComponent {
 		case Ln:
 			halt = true;
 			clearOutput.put(true);
+			output.put(inst);
 			break;
 		default:
+			output.put(inst);
 			break;
-		}
-		
-		output.put(inst);
+		}		
 	}
 
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Fetcher");
 			gc.setColor(Color.BLACK);
 			gc.drawString("pc: " + Integer.toString(programCounter), 10, 35);
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 }

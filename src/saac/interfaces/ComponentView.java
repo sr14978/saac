@@ -1,7 +1,15 @@
 package saac.interfaces;
 
-import java.awt.Graphics2D;
+import java.awt.Point;
 
-public interface ComponentView {
-	void paint(Graphics2D g);
+public abstract class ComponentView implements ComponentViewI{
+
+	Point position; 
+	protected ComponentView(int x, int y){
+		position = new Point(x, y);
+	}
+
+	public Point getPosition() {
+		return position;
+	}
 }

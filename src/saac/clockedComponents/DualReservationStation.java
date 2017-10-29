@@ -2,22 +2,22 @@ package saac.clockedComponents;
 
 import static saac.utils.DrawingHelper.BOX_SIZE;
 
-import java.awt.Point;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.util.LinkedList;
 import java.util.List;
 
-import java.awt.Graphics2D;
-import java.awt.Color;
 import saac.dataObjects.Instruction;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Output;
 
 
-public class DualReservationStation implements ClockedComponent, VisibleComponent{
+public class DualReservationStation implements ClockedComponentI, VisibleComponentI{
 	FConnection<Instruction>.Input outputUnit1;
 	FConnection<Instruction>.Input outputUnit2;
 	FConnection<Instruction>.Output input;
@@ -56,25 +56,22 @@ public class DualReservationStation implements ClockedComponent, VisibleComponen
 		
 	}
 	
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Dual Reservation Station", 2*BOX_SIZE, 50);
 			gc.setColor(Color.BLACK);
 			for( int i = 0; i<buffer.size(); i++)
 				gc.drawString(buffer.get(i).toString(), 5, 25+10*i);
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 }

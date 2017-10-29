@@ -1,21 +1,21 @@
 package saac.clockedComponents;
 
-import java.awt.Point;
+import java.awt.Graphics2D;
 import java.util.LinkedList;
 import java.util.List;
-import java.awt.Graphics2D;
+
 import saac.dataObjects.Instruction;
-import saac.dataObjects.InstructionResult;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
 import saac.utils.Instructions.Opcode;
 
 
-public class InstructionsSource implements ClockedComponent, VisibleComponent{
+public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
 	static final int[][] instructions = new int[][]{
 			/*0*/new int[] {Opcode.toInt(Opcode.Ldc), 0, 0, 0},
 			/*1*/new int[] {Opcode.toInt(Opcode.Ldc), 1, 0, 0},
@@ -98,27 +98,24 @@ public class InstructionsSource implements ClockedComponent, VisibleComponent{
 		bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, Instructions.InstructionDelay.get(Opcode.Ldma)));
 	}
 	
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Instruction Source");
 			for(int i = 0; i<bufferOut.size(); i++) {
 				int[] item = bufferOut.get(i).value;
 				int delay = bufferOut.get(i).delay;
 				gc.drawString(new Instruction(Opcode.fromInt(item[0]), item[1], item[2], item[3]).toString() + " (" + delay + ")", 5, 22+10*i);
 			}
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 	

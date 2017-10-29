@@ -1,19 +1,19 @@
 package saac.clockedComponents;
 
-import java.awt.Point;
-
-import java.awt.Graphics2D;
 import java.awt.Color;
+import java.awt.Graphics2D;
+
 import saac.dataObjects.RegisterResult;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
 
-public class RegisterFile implements VisibleComponent, ClockedComponent{
+public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 
 	static final int registerNum = 12;
 	static final int PC = registerNum;
@@ -104,26 +104,23 @@ public class RegisterFile implements VisibleComponent, ClockedComponent{
 		}
 	}	
 	
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Register File");
 			gc.setColor(Color.BLACK);
 			for( int i = 0; i<registerNum; i++) {
 				gc.drawString(Integer.toString(values[i]) + (dirtyBits[i]?"(d)":"  "), 33*i+5, 30);
 			}
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 }

@@ -1,20 +1,20 @@
 package saac.clockedComponents;
 
-import java.awt.Graphics2D;
-import java.awt.Point;
-
 import java.awt.Color;
+import java.awt.Graphics2D;
+
 import saac.dataObjects.Instruction;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.FullChannelException;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Output;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class BranchExecutionUnit implements ClockedComponent, VisibleComponent{
+public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI{
 	private FConnection<Instruction>.Output instructionIn;
 	FConnection<Integer>.Input output;
 	Integer bufferOut;
@@ -69,25 +69,22 @@ public class BranchExecutionUnit implements ClockedComponent, VisibleComponent{
 		}
 	}
 	
-class View implements ComponentView {
-		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+	class View extends ComponentView {
+			
+		View(int x, int y) {
+			super(x, y);
 		}
-		
+
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Branches");
 			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
 				gc.drawString("pc: " + bufferOut, 10, 30);
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 

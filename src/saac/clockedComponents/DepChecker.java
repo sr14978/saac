@@ -1,26 +1,25 @@
 package saac.clockedComponents;
 
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-
 import saac.dataObjects.Instruction;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 import saac.utils.Output;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class DepChecker implements VisibleComponent, ClockedComponent{
+public class DepChecker implements VisibleComponentI, ClockedComponentI{
 
 	static final Function<Opcode, Opcode> sameOp = Function.identity();
 	static final Function<Integer, Integer> sameVal = Function.identity();
@@ -174,25 +173,21 @@ public class DepChecker implements VisibleComponent, ClockedComponent{
 
 	}
 	
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Dependency Checker");
 			if(bufferIn != null)
 				gc.drawString("(Hold) " + bufferIn.toString(), 10, 35);
-			
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}	
 }

@@ -1,6 +1,6 @@
 package saac.interfaces;
 
-public interface ClockedComponent {
+public interface ClockedComponentI {
 	void tick() throws Exception;
 	void tock() throws Exception;
 }

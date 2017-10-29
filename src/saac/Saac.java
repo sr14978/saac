@@ -21,14 +21,14 @@ import saac.clockedComponents.WritebackHandler;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
-import saac.interfaces.ClockedComponent;
-import saac.interfaces.ComponentView;
+import saac.interfaces.ClockedComponentI;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.unclockedComponents.Memory;
 import saac.utils.Instructions.Opcode;
 
-public class Saac implements ClockedComponent {
+public class Saac implements ClockedComponentI {
 
 	public static int InstructionCounter = 0;
 	//lock used for pausing
@@ -59,9 +59,9 @@ public class Saac implements ClockedComponent {
 		phase = !phase;
 	}
 	
-	List<ClockedComponent> clockedComponents;
+	List<ClockedComponentI> clockedComponents;
 	
-	public Saac(List<ComponentView> visibleComponents) {
+	public Saac(List<ComponentViewI> visibleComponents) {
 		
 		Memory memory = new Memory();
 						
@@ -237,13 +237,13 @@ public class Saac implements ClockedComponent {
 	
 	@Override
 	public void tick() throws Exception {
-		for(ClockedComponent c : clockedComponents)
+		for(ClockedComponentI c : clockedComponents)
 			c.tick();
 	}
 
 	@Override
 	public void tock() throws Exception {
-		for(ClockedComponent c : clockedComponents)
+		for(ClockedComponentI c : clockedComponents)
 			c.tock();
 	}    
 }

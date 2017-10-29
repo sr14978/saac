@@ -2,13 +2,12 @@ package saac.interfaces;
 
 import static saac.utils.DrawingHelper.BOX_SIZE;
 
-import java.awt.Point;
-
-import java.awt.Graphics2D;
 import java.awt.Color;
+import java.awt.Graphics2D;
+
 import saac.utils.DrawingHelper;
 
-public class FConnection<T> implements VisibleComponent{
+public class FConnection<T> implements VisibleComponentI{
 
 	private T value;
 	
@@ -49,14 +48,13 @@ public class FConnection<T> implements VisibleComponent{
 	}
 	
 	static final int C_BOX_SIZE = BOX_SIZE-50;
-	class View implements ComponentView {
-		Point position; 
+	class View extends ComponentView {
+
 		View(int x, int y){
-			position = new Point(x + (BOX_SIZE - C_BOX_SIZE)/2, y+15);
+			super(x + (BOX_SIZE - C_BOX_SIZE)/2, y+15);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, -12);
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, 23);
 			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHT_GRAY, Color.BLACK);
@@ -68,12 +66,11 @@ public class FConnection<T> implements VisibleComponent{
 				} else
 					gc.drawString(value.toString(), 5, 15);
 			}
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 }

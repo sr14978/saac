@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
-import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 
 public class Main extends JFrame {
 	
@@ -24,7 +25,7 @@ public class Main extends JFrame {
 		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 	
-	List<ComponentView> visibleComponents = new ArrayList<>();;
+	List<ComponentViewI> visibleComponents = new ArrayList<>();;
 	Saac saac;
 	boolean stopped = false;
     Main self = this;
@@ -95,8 +96,12 @@ public class Main extends JFrame {
 			Graphics2D g = (Graphics2D) gg;
 			g.setColor(getBackground());
 			g.fillRect(0, 0, 1700, 900);
-			for(ComponentView cv : visibleComponents)
+			for(ComponentViewI cv : visibleComponents) {
+				Point pos = cv.getPosition();
+				g.translate(pos.x, pos.y);
 				cv.paint(g);
+				g.translate(-pos.x, -pos.y);
+			}
 		}
 	}
     

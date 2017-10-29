@@ -1,18 +1,18 @@
 package saac.clockedComponents;
 
-import java.awt.Graphics2D;
-import java.awt.Point;
-
 import java.awt.Color;
+import java.awt.Graphics2D;
+
 import saac.dataObjects.Instruction;
-import saac.interfaces.ClockedComponent;
+import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
-import saac.interfaces.VisibleComponent;
+import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 
-public class Decoder implements ClockedComponent, VisibleComponent{
+public class Decoder implements ClockedComponentI, VisibleComponentI{
 
 	FConnection<Instruction>.Input output;
 	FConnection<int[]>.Output input;
@@ -45,25 +45,22 @@ public class Decoder implements ClockedComponent, VisibleComponent{
 		}
 	}
 		
-	class View implements ComponentView {
+	class View extends ComponentView {
 		
-		Point position; 
-		View(int x, int y){
-			position = new Point(x, y);
+		View(int x, int y) {
+			super(x, y);
 		}
 		
 		public void paint(Graphics2D gc) {
-			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Decoder");
 			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
 				gc.drawString(bufferOut.toString(), 10, 30);
-			gc.translate(-position.x, -position.y);
 		}
 	}
 
 	@Override
-	public ComponentView createView(int x, int y) {
+	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
 	}
 	
