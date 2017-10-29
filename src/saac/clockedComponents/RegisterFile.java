@@ -15,7 +15,7 @@ import saac.utils.DrawingHelper;
 
 public class RegisterFile implements VisibleComponent, ClockedComponent{
 
-	static final int registerNum = 10;
+	static final int registerNum = 12;
 	static final int PC = registerNum;
 	private int[] values = new int[registerNum];
 	private boolean[] dirtyBits = new boolean[registerNum];
@@ -116,7 +116,7 @@ public class RegisterFile implements VisibleComponent, ClockedComponent{
 			DrawingHelper.drawBox(gc, "Register File");
 			gc.setColor(Color.BLACK);
 			for( int i = 0; i<registerNum; i++) {
-				gc.drawString(Integer.toString(values[i]) + (dirtyBits[i]?"(d)":"  "), 40*i+5, 30);
+				gc.drawString(Integer.toString(values[i]) + (dirtyBits[i]?"(d)":"  "), 33*i+5, 30);
 			}
 			gc.translate(-position.x, -position.y);
 		}

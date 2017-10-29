@@ -1,14 +1,17 @@
 package saac.clockedComponents;
 
 import java.awt.Point;
-
+import java.util.LinkedList;
+import java.util.List;
 import java.awt.Graphics2D;
 import saac.dataObjects.Instruction;
+import saac.dataObjects.InstructionResult;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponent;
 import saac.utils.DrawingHelper;
+import saac.utils.Instructions;
 import saac.utils.Instructions.Opcode;
 
 
@@ -42,7 +45,18 @@ public class InstructionsSource implements ClockedComponent, VisibleComponent{
 	FConnection<Integer>.Output addrInput;
 	FConnection<Boolean>.Output clearInput;
 	FConnection<int[]>.Input instructionOutput;
-	int[] bufferOut;
+	
+	private class Item{
+		int[] value;
+		int delay;
+		Item(int[] r, int d) {
+			this.value = r;
+			this.delay = d;
+		}
+	}
+	
+	List<Item> bufferOut = new LinkedList<>();
+	static final int BufferSize = 4;
 	
 	public InstructionsSource(
 			FConnection<Integer>.Output addrInput,
@@ -58,27 +72,30 @@ public class InstructionsSource implements ClockedComponent, VisibleComponent{
 	public void tick() throws Exception {
 		if(!instructionOutput.clear())
 			return;
-		if(bufferOut == null)
+		if(bufferOut.isEmpty())
 			return;
-		instructionOutput.put(bufferOut);
-		bufferOut = null;			
+		if(bufferOut.get(0).delay == 0)
+			instructionOutput.put(bufferOut.remove(0).value);
+		
+		for(Item item : bufferOut)
+			item.delay = item.delay > 0? item.delay-1 : 0;		
 	}
 
 	@Override
 	public void tock() throws Exception {
 		if(clearInput.ready() && clearInput.get()) {
-			bufferOut = null;
+			bufferOut.clear();
 			if(addrInput.ready())
 				addrInput.get();
 		}
 		
 		if(!addrInput.ready())
 			return;
-		if(bufferOut != null)
+		if(bufferOut.size() == BufferSize)
 			return;
 		int pc = addrInput.get();
 		int[] bytes = getInstruction(pc);
-		bufferOut = new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc};
+		bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, Instructions.InstructionDelay.get(Opcode.Ldma)));
 	}
 	
 	class View implements ComponentView {
@@ -91,8 +108,11 @@ public class InstructionsSource implements ClockedComponent, VisibleComponent{
 		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Instruction Source");
-			if(bufferOut != null)
-				gc.drawString(new Instruction(Opcode.fromInt(bufferOut[0]), bufferOut[1], bufferOut[2], bufferOut[3]).toString(), 10, 35);
+			for(int i = 0; i<bufferOut.size(); i++) {
+				int[] item = bufferOut.get(i).value;
+				int delay = bufferOut.get(i).delay;
+				gc.drawString(new Instruction(Opcode.fromInt(item[0]), item[1], item[2], item[3]).toString() + " (" + delay + ")", 5, 22+10*i);
+			}
 			gc.translate(-position.x, -position.y);
 		}
 	}
