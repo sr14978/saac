@@ -1,9 +1,9 @@
 package saac.clockedComponents;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Color;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
@@ -52,12 +52,12 @@ public class Decoder implements ClockedComponent, VisibleComponent{
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Decoder");
-			gc.setFill(Color.BLACK);
+			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
-				gc.fillText(bufferOut.toString(), 10, 30);
+				gc.drawString(bufferOut.toString(), 10, 30);
 			gc.translate(-position.x, -position.y);
 		}
 	}

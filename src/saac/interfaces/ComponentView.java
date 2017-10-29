@@ -1,7 +1,7 @@
 package saac.interfaces;
 
-import javafx.scene.canvas.GraphicsContext;
+import java.awt.Graphics2D;
 
 public interface ComponentView {
-	void paint(GraphicsContext gc);
+	void paint(Graphics2D g);
 }

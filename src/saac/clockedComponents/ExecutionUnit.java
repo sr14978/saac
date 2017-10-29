@@ -2,8 +2,8 @@ package saac.clockedComponents;
 
 import java.awt.Point;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
@@ -83,12 +83,12 @@ public class ExecutionUnit implements ClockedComponent, VisibleComponent{
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "EU");
-			gc.setFill(Color.BLACK);
+			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
-				gc.fillText(bufferOut.toString() + "(" + Integer.toString(instructionDelay) + ")", 10, 30);
+				gc.drawString(bufferOut.toString() + "(" + Integer.toString(instructionDelay) + ")", 10, 30);
 			gc.translate(-position.x, -position.y);
 		}
 	}

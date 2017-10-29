@@ -2,8 +2,8 @@ package saac.clockedComponents;
 
 import java.awt.Point;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import saac.Saac;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponent;
@@ -154,12 +154,12 @@ public class Issuer implements ClockedComponent, VisibleComponent{
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Issuer");
-			gc.setFill(Color.BLACK);
+			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
-				gc.fillText(bufferOut.toString(), 10, 35);
+				gc.drawString(bufferOut.toString(), 10, 35);
 			gc.translate(-position.x, -position.y);
 		}
 	}

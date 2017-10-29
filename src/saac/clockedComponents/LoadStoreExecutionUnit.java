@@ -4,8 +4,8 @@ import java.awt.Point;
 import java.util.LinkedList;
 import java.util.List;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
@@ -100,12 +100,12 @@ public class LoadStoreExecutionUnit implements ClockedComponent, VisibleComponen
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Load/Store");
-			gc.setFill(Color.BLACK);
+			gc.setColor(Color.BLACK);
 			for( int i = 0; i<buffer.size(); i++)
-				gc.fillText(buffer.get(i).result  + " (" + Integer.toString(buffer.get(i).delay) + ")", 5, 22+10*i);
+				gc.drawString(buffer.get(i).result  + " (" + Integer.toString(buffer.get(i).delay) + ")", 5, 22+10*i);
 			gc.translate(-position.x, -position.y);
 		}
 	}

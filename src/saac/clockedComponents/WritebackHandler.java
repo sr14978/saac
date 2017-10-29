@@ -4,8 +4,8 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Point;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
@@ -74,10 +74,10 @@ public class WritebackHandler implements ClockedComponent, VisibleComponent {
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Write Back Handler", 3*BOX_SIZE, 50);
-			gc.setFill(Color.BLACK);
+			gc.setColor(Color.BLACK);
 			gc.translate(-position.x, -position.y);
 		}
 	}

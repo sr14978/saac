@@ -1,5 +1,6 @@
 package saac.clockedComponents;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -7,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import javafx.scene.canvas.GraphicsContext;
+
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
@@ -180,11 +181,11 @@ public class DepChecker implements VisibleComponent, ClockedComponent{
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Dependency Checker");
 			if(bufferIn != null)
-				gc.fillText("(Hold) " + bufferIn.toString(), 10, 35);
+				gc.drawString("(Hold) " + bufferIn.toString(), 10, 35);
 			
 			gc.translate(-position.x, -position.y);
 		}

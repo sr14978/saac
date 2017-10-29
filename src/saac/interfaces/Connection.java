@@ -4,8 +4,8 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Point;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import saac.utils.DrawingHelper;
 
 public class Connection<T> implements VisibleComponent{
@@ -42,13 +42,13 @@ public class Connection<T> implements VisibleComponent{
 		}
 		
 		@Override
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawArrow(gc, BOX_SIZE/(2*num), -12);
 			DrawingHelper.drawArrow(gc, BOX_SIZE/(2*num), 23);
-			DrawingHelper.drawBox(gc, "", 0, 0, BOX_SIZE/num, 20, Color.LIGHTGRAY, Color.BLACK);
+			DrawingHelper.drawBox(gc, "", 0, 0, BOX_SIZE/num, 20, Color.LIGHT_GRAY, Color.BLACK);
 			if(value != null) {
-				gc.fillText(value.toString(), 5, 15);
+				gc.drawString(value.toString(), 5, 15);
 			}
 			gc.translate(-position.x, -position.y);
 		}

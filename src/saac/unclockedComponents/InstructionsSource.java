@@ -2,7 +2,7 @@ package saac.unclockedComponents;
 
 import java.awt.Point;
 
-import javafx.scene.canvas.GraphicsContext;
+import java.awt.Graphics2D;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
@@ -88,11 +88,11 @@ public class InstructionsSource implements ClockedComponent, VisibleComponent{
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Instruction Source");
 			if(bufferOut != null)
-				gc.fillText(new Instruction(Opcode.fromInt(bufferOut[0]), bufferOut[1], bufferOut[2], bufferOut[3]).toString(), 10, 35);
+				gc.drawString(new Instruction(Opcode.fromInt(bufferOut[0]), bufferOut[1], bufferOut[2], bufferOut[3]).toString(), 10, 35);
 			gc.translate(-position.x, -position.y);
 		}
 	}

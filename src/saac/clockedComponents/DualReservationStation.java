@@ -6,8 +6,8 @@ import java.awt.Point;
 import java.util.LinkedList;
 import java.util.List;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
@@ -63,12 +63,12 @@ public class DualReservationStation implements ClockedComponent, VisibleComponen
 			position = new Point(x, y);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawBox(gc, "Dual Reservation Station", 2*BOX_SIZE, 50);
-			gc.setFill(Color.BLACK);
+			gc.setColor(Color.BLACK);
 			for( int i = 0; i<buffer.size(); i++)
-				gc.fillText(buffer.get(i).toString(), 5, 25+10*i);
+				gc.drawString(buffer.get(i).toString(), 5, 25+10*i);
 			gc.translate(-position.x, -position.y);
 		}
 	}

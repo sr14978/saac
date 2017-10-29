@@ -1,91 +1,74 @@
 package saac;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+
 import saac.interfaces.ComponentView;
 
-public class Main extends Application {
+public class Main extends JFrame {
 	
-	
-	
+	private static final long serialVersionUID = 1L;
+
 	public static void main(String[] args) {
-		launch();
+		Main window = new Main();
+		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 	
 	List<ComponentView> visibleComponents = new ArrayList<>();;
 	Saac saac;
 	boolean stopped = false;
-	GraphicsContext gc;
-	Label rate;
     Main self = this;
 	
+    RateLabel rateLable;
+    Gui gui;
+    
 	public Main() {
 		saac = new Saac(visibleComponents);
-	}
-	
-    @Override
-    public void start(Stage primaryStage) {
-    	
-        primaryStage.setTitle("Saac - Sam's Advanced Architecture Computer");
-        
-        final Canvas canvas = new Canvas(1600,800);
-        gc = canvas.getGraphicsContext2D();
-        
-        Button start = new Button("Start");
-        Button stop = new Button("Stop");
-        Button step = new Button("Step");
-        
-        ButtonHandler buttonHandler = new ButtonHandler(start, stop, step);
-        start.setOnAction(buttonHandler);
-        stop.setOnAction(buttonHandler);
-        step.setOnAction(buttonHandler);
-        
-        Slider slider = new Slider();
-        slider.setMin(10);
-        slider.setMax(1000);
-        slider.setValue(saac.delay);
-        slider.valueProperty().addListener(new ChangeListener<Number>() {
-	        	public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
-	            		saac.delay = new_val.intValue();
-	        	}
-        	});
-        
-        rate = new Label("#rate");
-        
-        HBox topBar= new HBox();
-        topBar.getChildren().addAll(start, stop, step, slider, rate);
-        
-        BorderPane border = new BorderPane();        
-        border.setCenter(canvas);
-        border.setTop(topBar);
-        
-        StackPane root = new StackPane();
-        root.getChildren().add(border);
-        
-        primaryStage.setScene(new Scene(root, 1700, 900));
-        primaryStage.show();
-        
-        //saac.mutex.lock();
-		//stopped = true;
-        
-        new Thread(){
+		setTitle("Saac - Sam's Advanced Architecture Computer");
+		
+		JButton start = new JButton("Start");
+		JButton stop = new JButton("Stop");
+		JButton step = new JButton("Step");
+		
+		start.addActionListener(e -> start());
+		stop.addActionListener(e -> stop());
+		step.addActionListener(e -> step());
+		
+		JSlider slider = new JSlider();
+		slider.setMinimum(10);
+		slider.setMaximum(1000);
+		slider.setValue(saac.delay);
+		slider.addChangeListener(e -> saac.delay = slider.getValue());
+		
+		rateLable = new RateLabel();
+		
+		JPanel toolbar = new JPanel(new FlowLayout());
+		toolbar.add(start);
+		toolbar.add(stop);
+		toolbar.add(step);
+		toolbar.add(slider);
+		toolbar.add(rateLable);
+		
+		setLayout(new BorderLayout());
+		add(toolbar, BorderLayout.NORTH);
+		
+		gui = new Gui();
+		add(gui, BorderLayout.CENTER);
+		
+		setSize(1700, 900);
+		setVisible(true);
+		
+		new Thread(){
 			public void run() {
 				try {
 					saac.worker(self::paint);
@@ -93,65 +76,68 @@ public class Main extends Application {
 					e.printStackTrace();
 				}
 			}
-		}.start();
-        
-    }
+		}.start();		
+	}
+	
+	class RateLabel extends JLabel {
+		@Override
+	    public void paintComponent(Graphics gg) {
+			System.out.println("hi");
+			float rateVal = round((float) Saac.InstructionCounter / saac.cycleCounter);
+			this.setText(String.format("%.2f", rateVal));
+			super.paintComponent(gg);
+		}
+	}
+	
+	class Gui extends JPanel {
+		@Override
+	    public void paintComponent(Graphics gg) {
+			Graphics2D g = (Graphics2D) gg;
+			g.setColor(getBackground());
+			g.fillRect(0, 0, 1700, 900);
+			for(ComponentView cv : visibleComponents)
+				cv.paint(g);
+		}
+	}
     
+	
     int counter = 0;
     public void paint() {
     	counter++;
-    	if(counter<50/saac.delay)
-    		return;
-		counter = 0;
-		
-		for(ComponentView cv : visibleComponents)
-			cv.paint(gc);
-		
-		float rateVal = round((float) Saac.InstructionCounter / saac.cycleCounter);
-		Platform.runLater(()->rate.setText(Float.toString(rateVal)));
+    	if(stopped || counter>50/saac.delay) {
+    		
+			counter = 0;
+			
+			gui.repaint();
+			rateLable.repaint();
+    	}
 	}
     
     static float round(float i) {
     	return (float) Math.round(( i )*100 ) / 100;
     }
     
-    @Override
-    public void stop(){
-        System.exit(0);
+    void start() {
+    	if(stopped) {
+    		saac.mutex.unlock();
+    		stopped = false;
+    	}
     }
     
-    class ButtonHandler implements EventHandler<ActionEvent> {
-
-    	Button start, stop, step;
-    	
-    	ButtonHandler(Button start, Button stop, Button step) {
-    		this.start = start;
-    		this.stop = stop;
-    		this.step = step;
+    void stop() {
+    	if(!stopped) {
+			saac.mutex.lock();
+    		stopped = true;
     	}
-    	
-		@Override
-		public void handle(ActionEvent event) {
-			if(event.getSource().equals(start)) {
-				if(stopped) {
-	        		saac.mutex.unlock();
-	        		stopped = false;
-	        	}
-			} else if(event.getSource().equals(stop)) {
-				if(!stopped) {
-					saac.mutex.lock();
-            		stopped = true;
-            	}
-			} else if(event.getSource().equals(step)) {
-				if(stopped) {
-	            	try {
-	            		saac.step(self::paint);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			} 
-		}
     }
-	
+
+    void step() {
+    	if(stopped) {
+        	try {
+        		saac.step(self::paint);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+    }	
 }

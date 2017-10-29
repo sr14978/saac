@@ -1,38 +1,39 @@
 package saac.utils;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+
+import java.awt.Color;
 
 public class DrawingHelper {
 	
 	public static final int BOX_SIZE = 400;
 	
-	public static void drawBox(GraphicsContext gc, String name) {
+	public static void drawBox(Graphics2D gc, String name) {
 		drawBox(gc, name, BOX_SIZE, 50);
 	}
 	
-	public static void drawBox(GraphicsContext gc, String name, int w, int h) {
+	public static void drawBox(Graphics2D gc, String name, int w, int h) {
 		drawBox(gc, name, 0, 0, w, h);
 	}
 	
-	public static void drawBox(GraphicsContext gc, String name, int x, int y, int w, int h) {
+	public static void drawBox(Graphics2D gc, String name, int x, int y, int w, int h) {
 		drawBox(gc, name, x, y, w, h, Color.GRAY, Color.BLACK);
 	}
 	
-	public static void drawBox(GraphicsContext gc, String name, int x, int y, int w, int h, Color fill, Color line) {
-		gc.setFill(fill);
+	public static void drawBox(Graphics2D gc, String name, int x, int y, int w, int h, Color fill, Color line) {
+		gc.setColor(fill);
 		gc.fillRect(x, y, w, h);
-		gc.setFill(line);
-		gc.strokeRect(x, y, w, h);
-		gc.fillText(name, x+2, y+12);
+		gc.setColor(line);
+		gc.drawRect(x, y, w, h);
+		gc.drawString(name, x+2, y+12);
 	}
 		
-	public static void drawArrow(GraphicsContext gc, int x, int y) {
-		gc.setFill(Color.BLACK);
+	public static void drawArrow(Graphics2D gc, int x, int y) {
+		gc.setColor(Color.BLACK);
 		int width = 20;
 		int height = 10;
-		double[] xCoords = new double[] {x-width/2, x, x+width/2};
-		double[] yCoords = new double[] {y, y+height, y};
+		int[] xCoords = new int[] {x-width/2, x, x+width/2};
+		int[] yCoords = new int[] {y, y+height, y};
 		gc.fillPolygon(xCoords, yCoords, 3);
 	}
 }

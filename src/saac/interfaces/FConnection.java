@@ -4,8 +4,8 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Point;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
+import java.awt.Graphics2D;
+import java.awt.Color;
 import saac.utils.DrawingHelper;
 
 public class FConnection<T> implements VisibleComponent{
@@ -55,18 +55,18 @@ public class FConnection<T> implements VisibleComponent{
 			position = new Point(x + (BOX_SIZE - C_BOX_SIZE)/2, y+15);
 		}
 		
-		public void paint(GraphicsContext gc) {
+		public void paint(Graphics2D gc) {
 			gc.translate(position.x, position.y);
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, -12);
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, 23);
-			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHTGRAY, Color.BLACK);
+			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHT_GRAY, Color.BLACK);
 			if(value != null) {
 				if(value instanceof int[]) {
 					int[] val = (int[]) value;
 					if(val.length > 3)
-						gc.fillText(val[0] + " " + val[1] + " " + val[2] + " " + val[3], 5, 15);
+						gc.drawString(val[0] + " " + val[1] + " " + val[2] + " " + val[3], 5, 15);
 				} else
-					gc.fillText(value.toString(), 5, 15);
+					gc.drawString(value.toString(), 5, 15);
 			}
 			gc.translate(-position.x, -position.y);
 		}
