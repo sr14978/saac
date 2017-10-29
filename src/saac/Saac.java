@@ -13,6 +13,7 @@ import saac.clockedComponents.DepChecker;
 import saac.clockedComponents.DualReservationStation;
 import saac.clockedComponents.ExecutionUnit;
 import saac.clockedComponents.Fetcher;
+import saac.clockedComponents.InstructionsSource;
 import saac.clockedComponents.Issuer;
 import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
@@ -24,7 +25,6 @@ import saac.interfaces.ClockedComponent;
 import saac.interfaces.ComponentView;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
-import saac.unclockedComponents.InstructionsSource;
 import saac.unclockedComponents.Memory;
 import saac.utils.Instructions.Opcode;
 
