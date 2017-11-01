@@ -46,7 +46,7 @@ public class Main extends JFrame {
 		step.addActionListener(e -> step());
 		
 		JSlider slider = new JSlider();
-		slider.setMinimum(10);
+		slider.setMinimum(0);
 		slider.setMaximum(1000);
 		slider.setValue(saac.delay);
 		slider.addChangeListener(e -> saac.delay = slider.getValue());
