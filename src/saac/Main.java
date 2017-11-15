@@ -80,6 +80,7 @@ public class Main extends JFrame {
 		}.start();		
 	}
 	
+	@SuppressWarnings("serial")
 	class RateLabel extends JLabel {
 		@Override
 	    public void paintComponent(Graphics gg) {
@@ -90,6 +91,7 @@ public class Main extends JFrame {
 		}
 	}
 	
+	@SuppressWarnings("serial")
 	class Gui extends JPanel {
 		@Override
 	    public void paintComponent(Graphics gg) {
