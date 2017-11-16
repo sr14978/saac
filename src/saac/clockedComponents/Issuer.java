@@ -120,6 +120,8 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 			if(outputEU.clear()) {
 				outputEU.put(bufferOut);
 				Output.debug.println(bufferOut + " sent to EU reservation station");
+				bufferOut = null;
+				Saac.InstructionCounter++;
 			}
 			break;
 		case Ldma:
@@ -129,6 +131,8 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 			if(outputLS.clear()) {
 				outputLS.put(bufferOut);
 				Output.debug.println(bufferOut + " sent for execution on LSU");
+				bufferOut = null;
+				Saac.InstructionCounter++;
 			}
 			break;
 		case Br:
@@ -138,14 +142,14 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 			if(outputBr.clear()) {
 				outputBr.put(bufferOut);
 				Output.debug.println(bufferOut + " sent for execution on BrU");
+				bufferOut = null;
+				Saac.InstructionCounter++;
 			}
 			break;
 		default:
 			System.err.println(bufferOut.getOpcode());
 			throw new NotImplementedException();
 		}
-		bufferOut = null;
-		Saac.InstructionCounter++;
 	}
 		
 	class View extends ComponentView {
