@@ -12,6 +12,7 @@ import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
+import saac.interfaces.FullChannelException;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Output;
@@ -23,6 +24,9 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 	FConnection<Instruction>.Output input;
 	List<Instruction> buffer = new LinkedList<>();
 	static int bufferLimit = 3;
+	enum EU {left, right}
+	EU lastUsedEU = EU.left;
+	
 	public DualReservationStation(FConnection<Instruction>.Input outputUnit1, FConnection<Instruction>.Input outputUnit2,
 			FConnection<Instruction>.Output input) {
 		this.outputUnit1 = outputUnit1;
@@ -43,17 +47,27 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 	public void tock() throws Exception {
 		if(buffer.size() < 1)
 			return;
+		if( lastUsedEU == EU.right) {
+			if(output(outputUnit1, buffer, "EU 1"))
+				lastUsedEU = EU.left;
+			else if(output(outputUnit2, buffer, "EU 2"))
+				lastUsedEU = EU.right;
+		} else if( lastUsedEU == EU.left)
+			if(output(outputUnit2, buffer, "EU 2"))
+				lastUsedEU = EU.right;
+			else if(output(outputUnit1, buffer, "EU 1"))
+				lastUsedEU = EU.left;
 		
-		if(outputUnit1.clear()) {
+	}
+	
+	public static boolean output(FConnection<Instruction>.Input input, List<Instruction> buffer, String name) throws FullChannelException {
+		if(input.clear()) {
 			Instruction inst = buffer.remove(0);
-			outputUnit1.put(inst);
-			Output.info.println(inst + " sent for execution on EU 1");
-		} else if(outputUnit2.clear()) {
-			Instruction inst = buffer.remove(0);
-			outputUnit2.put(inst);
-			Output.info.println(inst + " sent for execution on EU 2");
+			input.put(inst);
+			Output.info.println(inst + " sent for execution on " + name);
+			return true;
 		}
-		
+		return false;
 	}
 	
 	class View extends ComponentView {

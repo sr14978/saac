@@ -25,6 +25,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	FConnection<RegisterResult>.Input resultOutput;
 	FConnection<Integer>.Input dirtyOutput;
 	
+	//to enforce round robin collection of inputs
+	int nextInput = 0;
+	
 	final static int BUFF_SIZE = 8;
 	InstructionResult[] reorderBuffer = new InstructionResult[BUFF_SIZE];
 	
@@ -52,37 +55,62 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	public void tick() throws Exception {
 		
 		FConnection<InstructionResult>.Output input;
-		if(inputLS.ready())
-			input = inputLS;
-		else if(inputEU_A.ready())
-			input = inputEU_A;
-		else if(inputEU_B.ready())
-			input = inputEU_B;
-		else
-			return;
+		
+		switch(nextInput) {
+		case 0:
+			if(inputLS.ready())
+				input = inputLS;
+			else if(inputEU_A.ready())
+				input = inputEU_A;
+			else if(inputEU_B.ready())
+				input = inputEU_B;
+			else
+				return;
+			break;
+		case 1:
+			if(inputEU_A.ready())
+				input = inputEU_A;
+			else if(inputEU_B.ready())
+				input = inputEU_B;
+			else if(inputLS.ready())
+				input = inputLS;
+			else 
+				return;
+			break;
+		case 2:
+			if(inputEU_B.ready())
+				input = inputEU_B;
+			else if(inputLS.ready())
+				input = inputLS;
+			else if(inputEU_A.ready())
+				input = inputEU_A;
+			else 
+				return;
+			break;
+		default:
+			throw new Exception();
+		}
+		
+		nextInput = (nextInput + 1) % 3;		
 		
 		InstructionResult res = input.peak();
 				
 		if( bufferEmpty || bufferIndexEnd != bufferIndexStart || res.getID() == bufferInstructionStart ) {
-			input.pop();
 			
 			int instructionOffset = res.getID() - bufferInstructionStart;
 			if(instructionOffset > BUFF_SIZE)
-				throw new ReorderBufferFullException();
+				return;
 			
 			int bufferIndex = (bufferIndexStart + instructionOffset) % BUFF_SIZE;
-			if(instructionOffset > BUFF_SIZE - bufferIndexStart && bufferIndex > bufferIndexStart )
-				throw new ReorderBufferFullException();
-			
-			System.out.println("bufferIndex: "+bufferIndex);
+			if(instructionOffset >= BUFF_SIZE - bufferIndexStart && bufferIndex >= bufferIndexStart )
+				return;
+
+			input.pop();
 			
 			reorderBuffer[bufferIndex] = res;
 			
-			System.out.println("1: "+(bufferIndex - bufferIndexStart + BUFF_SIZE + 1) % BUFF_SIZE );
-			System.out.println("2: "+(bufferIndexEnd - bufferIndexStart + BUFF_SIZE) % BUFF_SIZE);
-			
-			if( (bufferIndex - bufferIndexStart + 2*BUFF_SIZE + 1) % (2*BUFF_SIZE )
-					> (bufferIndexEnd - bufferIndexStart + 2*BUFF_SIZE) % (2*BUFF_SIZE )  ) {
+			if( (res.getID() - bufferInstructionStart + 1)
+					> (bufferIndexEnd - bufferIndexStart + BUFF_SIZE) % BUFF_SIZE ) {
 				bufferIndexEnd = (bufferIndex + 1) % BUFF_SIZE;
 				bufferEmpty = false;
 				System.out.println("set: "+bufferIndexEnd);
@@ -127,6 +155,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			for(int i = 0; i<reorderBuffer.length; i++)
 				if(reorderBuffer[i] != null)
 					gc.drawString(Integer.toString(reorderBuffer[i].getID()), i*40 + 20, 30);
+			
+			gc.drawString(Integer.toString(bufferIndexStart), 400, 30);
+			gc.drawString(Integer.toString(bufferIndexEnd), 430, 30);
 		}
 	}
 
