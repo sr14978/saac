@@ -50,36 +50,27 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 	
 	Connection<Integer>.Output readInputA;
 	Connection<Integer>.Input readOutputAReg;
-	Connection<Integer>.Input readOutputAPass;
 	Connection<Integer>.Output readInputB;
 	Connection<Integer>.Input readOutputBReg;
-	Connection<Integer>.Input readOutputBPass;
 	Connection<Integer>.Output readInputC;
 	Connection<Integer>.Input readOutputCReg;
-	Connection<Integer>.Input readOutputCPass;
 	FConnection<RegisterResult>.Output writeInputs;
 	
 	public RegisterFile(
 			Connection<Integer>.Output readInputA,
 			Connection<Integer>.Input readOutputAReg,
-			Connection<Integer>.Input readOutputAPass,
 			Connection<Integer>.Output readInputB,
 			Connection<Integer>.Input readOutputBReg,
-			Connection<Integer>.Input readOutputBPass,
 			Connection<Integer>.Output readInputC,
 			Connection<Integer>.Input readOutputCReg,
-			Connection<Integer>.Input readOutputCPass,
 			FConnection<RegisterResult>.Output writeInputs
 			) {
 		this.readInputA = readInputA;
 		this.readOutputAReg = readOutputAReg;
-		this.readOutputAPass = readOutputAPass;
 		this.readInputB = readInputB;
 		this.readOutputBReg = readOutputBReg;
-		this.readOutputBPass = readOutputBPass;
 		this.readInputC = readInputC;
 		this.readOutputCReg = readOutputCReg;
-		this.readOutputCPass = readOutputCPass;
 		this.writeInputs = writeInputs;
 	}
 	
@@ -89,11 +80,7 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 
 	@Override
 	public void tock() throws Exception {
-		
-		readOutputAPass.put(readInputA.get());
-		readOutputBPass.put(readInputB.get());
-		readOutputCPass.put(readInputC.get());
-		
+				
 		readOutputAReg.put(get(readInputA.get()==null?0:readInputA.get()));
 		readOutputBReg.put(get(readInputB.get()==null?0:readInputB.get()));
 		readOutputCReg.put(get(readInputC.get()==null?0:readInputC.get()));

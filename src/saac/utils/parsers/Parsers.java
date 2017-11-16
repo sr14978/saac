@@ -17,7 +17,7 @@ public class Parsers {
 	public static void main(String[] args) throws IOException, ParserException {
 
 		int[] item = parseInstruction("ldmi 0 1 5");
-		System.out.println(new Instruction(Opcode.fromInt(item[0]), item[1], item[2], item[3]));
+		System.out.println(new Instruction(0, Opcode.fromInt(item[0]), item[1], item[2], item[3]));
 
 	}
 

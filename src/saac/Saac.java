@@ -97,23 +97,16 @@ public class Saac implements ClockedComponentI {
 		Connection<Integer> paramAReg_RegToIssue = new Connection<>();
 		Connection<Integer> paramBReg_RegToIssue = new Connection<>();
 		Connection<Integer> paramCReg_RegToIssue = new Connection<>();
-		
-		Connection<Integer> paramAPass_RegToIssue = new Connection<>();
-		Connection<Integer> paramBPass_RegToIssue = new Connection<>();
-		Connection<Integer> paramCPass_RegToIssue = new Connection<>();
-		
+				
 		FConnection<RegisterResult> WBtoRegister = new FConnection<>();
 				
 		RegisterFile registerFile = new RegisterFile(
 				paramADepToReg.getOutputEnd(),
 				paramAReg_RegToIssue.getInputEnd(),
-				paramAPass_RegToIssue.getInputEnd(),
 				paramBDepToReg.getOutputEnd(),
 				paramBReg_RegToIssue.getInputEnd(),
-				paramBPass_RegToIssue.getInputEnd(),
 				paramCDepToReg.getOutputEnd(),
 				paramCReg_RegToIssue.getInputEnd(),
-				paramCPass_RegToIssue.getInputEnd(),
 				WBtoRegister.getOutputEnd()
 				);
 		
@@ -134,7 +127,7 @@ public class Saac implements ClockedComponentI {
 				instructionOutput.getOutputEnd()
 				);
 		
-		FConnection<Opcode> opcodeDepToIssue = new FConnection<>();
+		FConnection<Instruction> opcodeDepToIssue = new FConnection<>();
 		FConnection<Integer> dirtyWBtoDep = new FConnection<>();
 
 		DepChecker depChecker = new DepChecker(registerFile,
@@ -149,11 +142,8 @@ public class Saac implements ClockedComponentI {
 		Issuer issuer = new Issuer(registerFile,
 				opcodeDepToIssue.getOutputEnd(),
 				paramAReg_RegToIssue.getOutputEnd(),
-				paramAPass_RegToIssue.getOutputEnd(),
 				paramBReg_RegToIssue.getOutputEnd(),
-				paramBPass_RegToIssue.getOutputEnd(),
 				paramCReg_RegToIssue.getOutputEnd(),
-				paramCPass_RegToIssue.getOutputEnd(),
 				issueToDualRS.getInputEnd(),
 				issueToLS.getInputEnd(),
 				issueToBr.getInputEnd()
@@ -204,12 +194,9 @@ public class Saac implements ClockedComponentI {
 		visibleComponents.add(opcodeDepToIssue.createView(BOX_SIZE/2, boxHeight*c));
 		visibleComponents.add(registerFile.createView(middleOffset, boxHeight*c));
 		c++;
-		visibleComponents.add(paramAReg_RegToIssue.createView(middleOffset, boxHeight*c, 6));
-		visibleComponents.add(paramBReg_RegToIssue.createView(middleOffset+BOX_SIZE/6, boxHeight*c, 6));
-		visibleComponents.add(paramCReg_RegToIssue.createView(middleOffset+2*BOX_SIZE/6, boxHeight*c, 6));
-		visibleComponents.add(paramAPass_RegToIssue.createView(middleOffset+3*BOX_SIZE/6, boxHeight*c, 6));
-		visibleComponents.add(paramBPass_RegToIssue.createView(middleOffset+4*BOX_SIZE/6, boxHeight*c, 6));
-		visibleComponents.add(paramCPass_RegToIssue.createView(middleOffset+5*BOX_SIZE/6, boxHeight*c, 6));
+		visibleComponents.add(paramAReg_RegToIssue.createView(middleOffset, boxHeight*c, 3));
+		visibleComponents.add(paramBReg_RegToIssue.createView(middleOffset+BOX_SIZE/3, boxHeight*c, 3));
+		visibleComponents.add(paramCReg_RegToIssue.createView(middleOffset+2*BOX_SIZE/3, boxHeight*c, 3));
 		c++;
 		visibleComponents.add(issuer.createView(middleOffset, boxHeight*c++));
 		

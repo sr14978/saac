@@ -2,6 +2,7 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.function.Function;
 
 import saac.Saac;
 import saac.dataObjects.Instruction;
@@ -18,13 +19,13 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Issuer implements ClockedComponentI, VisibleComponentI{
 	
-	FConnection<Opcode>.Output opcodeIn;
+	static final Function<Opcode, Opcode> sameOp = Function.identity();
+	static final Function<Integer, Integer> sameVal = Function.identity();
+	
+	FConnection<Instruction>.Output opcodeIn;
 	Connection<Integer>.Output paramARegInput;
-	Connection<Integer>.Output paramAPassInput;
 	Connection<Integer>.Output paramBRegInput;
-	Connection<Integer>.Output paramBPassInput;
 	Connection<Integer>.Output paramCRegInput;
-	Connection<Integer>.Output paramCPassInput;
 	FConnection<Instruction>.Input outputEU;
 	FConnection<Instruction>.Input outputLS;
 	FConnection<Instruction>.Input outputBr;
@@ -32,23 +33,17 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 	RegisterFile registerFile;
 	
 	public Issuer(RegisterFile rf,
-			FConnection<Opcode>.Output opcodeIn,
+			FConnection<Instruction>.Output opcodeIn,
 			Connection<Integer>.Output paramARegInput,
-			Connection<Integer>.Output paramAPassInput,
 			Connection<Integer>.Output paramBRegInput,
-			Connection<Integer>.Output paramBPassInput,
 			Connection<Integer>.Output paramCRegInput,
-			Connection<Integer>.Output paramCPassInput,
 			FConnection<Instruction>.Input outputEU,
 			FConnection<Instruction>.Input outputLS,
 			FConnection<Instruction>.Input outputBr) {
 		this.opcodeIn = opcodeIn;
 		this.paramARegInput = paramARegInput;
-		this.paramAPassInput = paramAPassInput;
 		this.paramBRegInput = paramBRegInput;
-		this.paramBPassInput = paramBPassInput;
 		this.paramCRegInput = paramCRegInput;
-		this.paramCPassInput = paramCPassInput;
 		this.outputEU = outputEU;
 		this.outputLS = outputLS;
 		this.outputBr = outputBr;
@@ -58,14 +53,15 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 	@Override
 	public void tick() throws Exception {
 		if(opcodeIn.ready() && bufferOut == null) {
-			boolean paramAreg=false, paramBreg=false, paramCreg=false;
-			Opcode opcode = opcodeIn.get();
-			switch(opcode) {
+			final boolean paramAreg, paramBreg, paramCreg;
+			Instruction inst= opcodeIn.get();
+			switch(inst.getOpcode()) {
 			case Ldc:
 			case Nop:
 			case Br:
 			case Ldma:
 			case Jmp:
+				paramAreg = paramBreg = paramCreg = false;
 				break;
 			case Add:
 			case Sub:
@@ -73,6 +69,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 			case Div:
 			case Ldmi:
 				paramBreg = paramCreg = true;
+				paramAreg = false;
 				break;
 			case Stmi:
 				paramAreg = paramBreg = paramCreg = true;
@@ -85,18 +82,22 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 			case JmpN:
 			case JmpZ:
 				paramBreg = true;
+				paramAreg = paramCreg = false;
 				break;
 			case Stma:
 				paramAreg = true;
+				paramBreg = paramCreg = false;
 				break;
 			default:
 				throw new NotImplementedException();
 			}
 			
-			bufferOut = new Instruction(opcode,
-					paramAreg? paramARegInput.get():paramAPassInput.get(),
-					paramBreg? paramBRegInput.get():paramBPassInput.get(), 		
-					paramCreg? paramCRegInput.get():paramCPassInput.get());
+			bufferOut = inst.transform(
+					sameOp,
+					a -> paramAreg? paramARegInput.get():a,
+					b -> paramBreg? paramBRegInput.get():b,
+					c -> paramCreg? paramCRegInput.get():c
+							);
 			
 		}
 	}

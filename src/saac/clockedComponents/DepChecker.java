@@ -28,8 +28,8 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI{
 	FConnection<Instruction>.Output instructionIn;
 	Instruction bufferIn;
 	FConnection<Integer>.Output dirtyIn;
-	FConnection<Opcode>.Input opcodeOut;
-	Opcode bufferOpOut;
+	FConnection<Instruction>.Input instructionOut;
+	Instruction bufferOpOut;
 	Connection<Integer>.Input paramAOut;
 	Connection<Integer>.Input paramBOut;
 	Connection<Integer>.Input paramCOut;
@@ -39,14 +39,14 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI{
 			RegisterFile rf,
 			FConnection<Instruction>.Output instructionIn,
 			FConnection<Integer>.Output dirtyIn,
-			FConnection<Opcode>.Input opcodeOut,
+			FConnection<Instruction>.Input instructionOut,
 			Connection<Integer>.Input paramAOut,
 			Connection<Integer>.Input paramBOut,
 			Connection<Integer>.Input paramCOut
 			) {
 		this.registerFile = rf;
 		this.instructionIn = instructionIn;
-		this.opcodeOut = opcodeOut;
+		this.instructionOut = instructionOut;
 		this.paramAOut = paramAOut;
 		this.paramBOut = paramBOut;
 		this.paramCOut = paramCOut;
@@ -153,7 +153,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI{
 		paramAOut.put(inst.getParamA());
 		paramBOut.put(inst.getParamB());
 		paramCOut.put(inst.getParamC());
-		bufferOpOut = inst.getOpcode();
+		bufferOpOut = inst;
 		bufferIn = null;
 		
 	}
@@ -166,9 +166,9 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI{
 		
 		if(bufferOpOut == null)
 			return;
-		if(!opcodeOut.clear())
+		if(!instructionOut.clear())
 			return;
-		opcodeOut.put(bufferOpOut);
+		instructionOut.put(bufferOpOut);
 		bufferOpOut = null;
 
 	}

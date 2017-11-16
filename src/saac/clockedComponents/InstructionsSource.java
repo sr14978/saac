@@ -95,7 +95,10 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
 			for(int i = 0; i<bufferOut.size(); i++) {
 				int[] item = bufferOut.get(i).value;
 				int delay = bufferOut.get(i).delay;
-				gc.drawString(new Instruction(Opcode.fromInt(item[0]), item[1], item[2], item[3]).toString() + " (" + delay + ")", 5, 22+10*i);
+				gc.drawString(
+						String.format("Opcode: %s, params: (a,%d), (b,%d), (c,%d)",
+								Opcode.fromInt(item[0]).toString(), item[1], item[2], item[3]) 
+						+ " (" + delay + ")", 5, 22+10*i);
 			}
 		}
 	}
