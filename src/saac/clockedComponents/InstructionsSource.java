@@ -82,7 +82,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
 			return;
 		int pc = addrInput.get();
 		int[] bytes = getInstruction(pc);
-		bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, Instructions.InstructionDelay.get(Opcode.Ldma)));
+		bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, 4/*Instructions.InstructionDelay.get(Opcode.Ldma)*/));
 	}
 	
 	class View extends ComponentView {
