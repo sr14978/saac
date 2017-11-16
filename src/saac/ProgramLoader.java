@@ -22,14 +22,19 @@ public class ProgramLoader {
 		List<String> progam = Files.readAllLines(program.toPath());
 		
 		List<int[]> instructions = new ArrayList<>();
-		
+		int lineNumber = 1;
 		for(String line : progam) {
 			if(line.equals(""))
 				continue;
 			if(line.startsWith("//"))
 				continue;
-			int[] instruction = Parsers.parseInstruction(line);
-			instructions.add(instruction);
+			try {
+				int[] instruction = Parsers.parseInstruction(line);
+				instructions.add(instruction);
+			} catch (ParserException e) {
+				throw new ParserException("Error on line " + lineNumber + ": " + e.getMessage());
+			}
+			lineNumber++;
 		}
 				
 		return instructions.toArray(new int[0][0]);

@@ -70,7 +70,7 @@ public class Parsers {
 	public static int[] parseInstruction(String line) throws ParserException {
 		ParseResult<int[]> result = ParserUtils.either(instructions).parse(line);
 		if (result instanceof ParseFail)
-			throw new ParserException(line);
+			throw new ParserException(String.format("'%s' is not an recognised instruction", line));
 
 		return ((ParseSuccess<int[]>) result).value;
 	}
