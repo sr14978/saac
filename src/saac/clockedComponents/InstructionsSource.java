@@ -69,17 +69,17 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
 
 	@Override
 	public void tock() throws Exception {
-		if(clearInput.ready() && clearInput.get()) {
+		if(clearInput.ready() && clearInput.pop()) {
 			bufferOut.clear();
 			if(addrInput.ready())
-				addrInput.get();
+				addrInput.pop();
 		}
 		
 		if(!addrInput.ready())
 			return;
 		if(bufferOut.size() == BufferSize)
 			return;
-		int pc = addrInput.get();
+		int pc = addrInput.pop();
 		int[] bytes = getInstruction(pc);
 		bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, 4/*Instructions.InstructionDelay.get(Opcode.Ldma)*/));
 	}

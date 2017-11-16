@@ -86,7 +86,7 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 		readOutputCReg.put(get(readInputC.get()==null?0:readInputC.get()));
 				
 		if(writeInputs.ready()) {
-			RegisterResult res = writeInputs.get();
+			RegisterResult res = writeInputs.pop();
 			set(res.getTarget(), res.getValue());
 		}
 	}	

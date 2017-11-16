@@ -30,7 +30,7 @@ public class Decoder implements ClockedComponentI, VisibleComponentI{
 		
 		if(!input.ready())
 			return;
-		int[] data = input.get();
+		int[] data = input.pop();
 		
 		bufferOut = new Instruction(data[4], Opcode.fromInt(data[0]), data[1], data[2], data[3]);
 	}

@@ -35,7 +35,7 @@ public class ExecutionUnit implements ClockedComponentI, VisibleComponentI{
 			return;
 		if(!instructionIn.ready())
 			return;
-		Instruction inst = instructionIn.get();
+		Instruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Ldc:
 			bufferOut = new RegisterResult(inst.getID(), inst.getParamA(), inst.getParamB());

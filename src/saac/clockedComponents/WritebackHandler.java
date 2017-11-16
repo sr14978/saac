@@ -64,7 +64,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		InstructionResult res = input.peak();
 				
 		if( bufferEmpty || bufferIndexEnd != bufferIndexStart || res.getID() == bufferInstructionStart ) {
-			input.get();
+			input.pop();
 			
 			int instructionOffset = res.getID() - bufferInstructionStart;
 			if(instructionOffset > BUFF_SIZE)

@@ -33,7 +33,7 @@ public class FConnection<T> implements VisibleComponentI{
 	}
 	
 	public class Output {
-		public T get() throws FullChannelException {
+		public T pop() throws FullChannelException {
 			if(value == null) {
 				throw new FullChannelException();
 			} else {

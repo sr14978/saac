@@ -54,7 +54,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 	public void tick() throws Exception {
 		if(opcodeIn.ready() && bufferOut == null) {
 			final boolean paramAreg, paramBreg, paramCreg;
-			Instruction inst= opcodeIn.get();
+			Instruction inst= opcodeIn.pop();
 			switch(inst.getOpcode()) {
 			case Ldc:
 			case Nop:

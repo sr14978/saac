@@ -50,7 +50,7 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		
 		if(!instructionIn.ready())
 			return;
-		Instruction inst = instructionIn.get();
+		Instruction inst = instructionIn.pop();
 		
 		InstructionResult res = null;		
 		switch(inst.getOpcode()) {

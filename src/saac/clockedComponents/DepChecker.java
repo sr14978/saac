@@ -60,7 +60,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI{
 		if(bufferIn == null) {
 			if(!instructionIn.ready())
 				return;
-			bufferIn = instructionIn.get();
+			bufferIn = instructionIn.pop();
 		}
 		
 		Instruction inst  = bufferIn;
@@ -162,7 +162,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI{
 	public void tock() throws Exception {
 		
 		if(dirtyIn.ready())
-			registerFile.setDirty(dirtyIn.get(), false);
+			registerFile.setDirty(dirtyIn.pop(), false);
 		
 		if(bufferOpOut == null)
 			return;

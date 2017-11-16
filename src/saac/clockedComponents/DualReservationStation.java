@@ -36,7 +36,7 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 			return;
 		if(!input.ready())
 			return;
-		buffer.add(input.get());
+		buffer.add(input.pop());
 	}
 
 	@Override

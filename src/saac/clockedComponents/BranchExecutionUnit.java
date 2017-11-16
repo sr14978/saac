@@ -30,7 +30,7 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 			return;
 		if(!instructionIn.ready())
 			return;
-		Instruction inst = instructionIn.get();
+		Instruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Br:
 			bufferOut = inst.getParamA();

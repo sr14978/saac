@@ -46,7 +46,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		if(halt) {
 			if(!fromBrUnit.ready())
 				return;
-			Integer newPC = fromBrUnit.get();
+			Integer newPC = fromBrUnit.pop();
 			halt = false;
 			programCounter = newPC;
 		} else if(addrOutput.clear()) {
@@ -64,7 +64,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		if(!output.clear())
 			return;
 		
-		int[] inst = instructionInput.get();
+		int[] inst = instructionInput.pop();
 				
 		switch(Opcode.fromInt(inst[0])) {
 		case Jmp:
