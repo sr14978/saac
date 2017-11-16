@@ -5,6 +5,7 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.dataObjects.InstructionResult;
 import saac.utils.DrawingHelper;
 
 public class FConnection<T> implements VisibleComponentI{
@@ -40,10 +41,15 @@ public class FConnection<T> implements VisibleComponentI{
 				value = null;
 				return val;
 			}
-			
 		}
 		public boolean ready() {
 			return value != null;
+		}
+		public T peak() throws FullChannelException {
+			if(value == null)
+				throw new FullChannelException();
+			else
+				return value;
 		}
 	}
 	

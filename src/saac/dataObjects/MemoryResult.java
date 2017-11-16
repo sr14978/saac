@@ -4,7 +4,8 @@ public class MemoryResult extends InstructionResult {
 	
 	private int value;
 	
-	public MemoryResult(int i) {
+	public MemoryResult(int instructionNumber, int i) {
+		this.instructionNumber = instructionNumber;
 		value = i;
 	}
 
@@ -13,6 +14,6 @@ public class MemoryResult extends InstructionResult {
 	}
 	
 	public String toString() {
-		return "target addr: " + Integer.toString(value); 
+		return super.toString() + "target addr: " + Integer.toString(value); 
 	}
 }

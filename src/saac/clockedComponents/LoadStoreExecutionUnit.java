@@ -55,18 +55,18 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		InstructionResult res = null;		
 		switch(inst.getOpcode()) {
 		case Ldma:
-			res = new RegisterResult(inst.getParamA(), memory.getWord(inst.getParamB()));
+			res = new RegisterResult(inst.getID(), inst.getParamA(), memory.getWord(inst.getParamB()));
 			break;
 		case Stma:
 			memory.setWord(inst.getParamB(), inst.getParamA());
-			res = new MemoryResult(inst.getParamB());
+			res = new MemoryResult(inst.getID(), inst.getParamB());
 			break;
 		case Ldmi:
-			res = new RegisterResult(inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
+			res = new RegisterResult(inst.getID(), inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
 			break;
 		case Stmi:
 			memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
-			res = new MemoryResult(inst.getParamB() + inst.getParamC());
+			res = new MemoryResult(inst.getID(), inst.getParamB() + inst.getParamC());
 			break;
 		default:
 			throw new NotImplementedException();

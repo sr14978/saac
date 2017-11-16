@@ -1,13 +1,14 @@
 package saac.utils.parsers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ParserUtils {
 	
 	public static void main(String[] args) {
-		System.out.println(number.parse("12"));
+		System.out.println(number.parse("12"));	
 	}
-	
+		
 	static <T> Parser<T> pure(T item) {
 		return new Parser<T>((String line) -> new ParseSuccess<T>(item, line));
 	}

@@ -83,7 +83,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		case Ln:
 			halt = true;
 			clearOutput.put(true);
-			inst[4] = instructionCounter++;
+			inst[4] = instructionCounter;
 			output.put(inst);
 			break;
 		default:

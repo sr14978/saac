@@ -3,6 +3,7 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.dataObjects.BlankResult;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
@@ -37,25 +38,26 @@ public class ExecutionUnit implements ClockedComponentI, VisibleComponentI{
 		Instruction inst = instructionIn.get();
 		switch(inst.getOpcode()) {
 		case Ldc:
-			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB());
+			bufferOut = new RegisterResult(inst.getID(), inst.getParamA(), inst.getParamB());
 			break;
 		case Add:
 		case Addi:
-			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() + inst.getParamC());
+			bufferOut = new RegisterResult(inst.getID(), inst.getParamA(), inst.getParamB() + inst.getParamC());
 			break;
 		case Sub:
 		case Subi:
-			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() - inst.getParamC());
+			bufferOut = new RegisterResult(inst.getID(), inst.getParamA(), inst.getParamB() - inst.getParamC());
 			break;
 		case Mul:
 		case Muli:
-			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() * inst.getParamC());
+			bufferOut = new RegisterResult(inst.getID(), inst.getParamA(), inst.getParamB() * inst.getParamC());
 			break;
 		case Nop:
+			bufferOut = new BlankResult(inst.getID());
 			break;
 		case Div:
 		case Divi:
-			bufferOut = new RegisterResult(inst.getParamA(), inst.getParamB() / inst.getParamC());
+			bufferOut = new RegisterResult(inst.getID(), inst.getParamA(), inst.getParamB() / inst.getParamC());
 			break;
 		default:
 			throw new NotImplementedException();
