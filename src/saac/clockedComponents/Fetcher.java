@@ -19,6 +19,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 
 	FConnection<Integer>.Output fromBrUnit;
 	int programCounter = 0;
+	int instructionCounter = 0;
 	FConnection<Integer>.Input addrOutput;
 	FConnection<Boolean>.Input clearOutput;
 	FConnection<int[]>.Output instructionInput;
@@ -82,9 +83,11 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		case Ln:
 			halt = true;
 			clearOutput.put(true);
+			inst[4] = instructionCounter++;
 			output.put(inst);
 			break;
 		default:
+			inst[4] = instructionCounter++;
 			output.put(inst);
 			break;
 		}		

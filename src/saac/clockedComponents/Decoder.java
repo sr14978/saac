@@ -17,7 +17,6 @@ public class Decoder implements ClockedComponentI, VisibleComponentI{
 	FConnection<Instruction>.Input output;
 	FConnection<int[]>.Output input;
 	Instruction bufferOut;
-	int instructionNumber = 0;
 	
 	public Decoder(FConnection<Instruction>.Input output, FConnection<int[]>.Output input) {
 		this.output = output;
@@ -33,7 +32,7 @@ public class Decoder implements ClockedComponentI, VisibleComponentI{
 			return;
 		int[] data = input.get();
 		
-		bufferOut = new Instruction(instructionNumber++, Opcode.fromInt(data[0]), data[1], data[2], data[3]);
+		bufferOut = new Instruction(data[4], Opcode.fromInt(data[0]), data[1], data[2], data[3]);
 	}
 
 	@Override
