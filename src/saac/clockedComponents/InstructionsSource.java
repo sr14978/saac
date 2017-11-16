@@ -13,7 +13,6 @@ import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
-import saac.utils.Instructions;
 import saac.utils.Instructions.Opcode;
 import saac.utils.parsers.ParserException;
 
