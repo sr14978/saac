@@ -8,25 +8,25 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Instructions {
 	public enum Opcode {
-		Nop,	// Nop	.  .  .  -> 
-		Ldc, 	// Ldc 	rI #n .  -> rI = #n  
-		Add, 	// Add 	rI rJ rK -> rI = rJ + rK
-		Addi, 	// Addi	rI rJ #n -> rI = rJ + #n
-		Sub, 	// Sub	rI rJ rK -> rI = rJ - rK
-		Subi, 	// Subi	rI rJ #n -> rI = rJ - #n
-		Mul, 	// Mul	rI rJ rK -> rI = rJ * rK
-		Muli, 	// Muli	rI rJ #n -> rI = rJ * #n
-		Div, 	// Div	rI rJ rK -> rI = rJ / rK
-		Divi, 	// Divi	rI rJ #n -> rI = rJ / #n
-		Ldma,	// Ldma	rI #n .  -> rI = mem[#m] 
-		Stma,	// Stma	rI #n .  -> mem[#m] = rI 
-		Ldmi,	// Ldmi	rI rJ rK -> rI = mem[rJ + rk] 
-		Stmi,	// Stmi	rI rJ rK -> mem[rJ + rk] = rI 
-		Br,  	// Br 	#n .  .  -> pc = #n
-		Ln,  	// Ln 	rK .  .  -> pc = rK
-		Jmp,	// Jmp  #n .  .  -> pc = pc + #n
-		JmpZ,	// Jmp  #n rI .  -> pc = if rI=0 then pc + #n else pc
-		JmpN;	// Jmp  #n rI .  -> pc = if rI<0 then pc + #n else pc
+		Nop,	// nop	.  .  .  -> 
+		Ldc, 	// ldc 	rI #n .  -> rI = #n  
+		Add, 	// add 	rI rJ rK -> rI = rJ + rK
+		Addi, 	// addi	rI rJ #n -> rI = rJ + #n
+		Sub, 	// Ssub	rI rJ rK -> rI = rJ - rK
+		Subi, 	// subi	rI rJ #n -> rI = rJ - #n
+		Mul, 	// mul	rI rJ rK -> rI = rJ * rK
+		Muli, 	// muli	rI rJ #n -> rI = rJ * #n
+		Div, 	// div	rI rJ rK -> rI = rJ / rK
+		Divi, 	// divi	rI rJ #n -> rI = rJ / #n
+		Ldma,	// ldma	rI #n .  -> rI = mem[#m] 
+		Stma,	// stma	rI #n .  -> mem[#m] = rI 
+		Ldmi,	// ldmi	rI rJ rK -> rI = mem[rJ + rk] 
+		Stmi,	// stmi	rI rJ rK -> mem[rJ + rk] = rI 
+		Br,  	// br 	#n .  .  -> pc = #n
+		Ln,  	// ln 	rK .  .  -> pc = rK
+		Jmp,	// jmp  #n .  .  -> pc = pc + #n
+		JmpZ,	// jmpz  #n rI .  -> pc = if rI=0 then pc + #n else pc
+		JmpN;	// jmpn  #n rI .  -> pc = if rI<0 then pc + #n else pc
 		
 		public static Opcode fromInt(int code) {
 			switch(code) {

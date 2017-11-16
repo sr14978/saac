@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,12 +16,14 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 
 import saac.interfaces.ComponentViewI;
+import saac.utils.parsers.ParserException;
 
 public class Main extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException, ParserException {
+		
 		Main window = new Main();
 		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
@@ -33,7 +36,7 @@ public class Main extends JFrame {
     RateLabel rateLable;
     Gui gui;
     
-	public Main() {
+	public Main() throws IOException, ParserException {
 		saac = new Saac(visibleComponents);
 		setTitle("Saac - Sam's Advanced Architecture Computer");
 		

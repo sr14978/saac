@@ -1,9 +1,11 @@
 package saac.clockedComponents;
 
 import java.awt.Graphics2D;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import saac.ProgramLoader;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -13,29 +15,13 @@ import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
 import saac.utils.Instructions.Opcode;
+import saac.utils.parsers.ParserException;
 
 
 public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
-	static final int[][] instructions = new int[][]{
-			/*0*/new int[] {Opcode.toInt(Opcode.Ldc), 0, 0, 0},
-			/*1*/new int[] {Opcode.toInt(Opcode.Ldc), 1, 0, 0},
-			/*2*/new int[] {Opcode.toInt(Opcode.Ldc), 2, 0x10, 0},
-			/*3*/new int[] {Opcode.toInt(Opcode.Ldc), 3, 0x20, 0},
-			/*4*/new int[] {Opcode.toInt(Opcode.Ldc), 7, 0x30, 0},
-			/*5*/new int[] {Opcode.toInt(Opcode.Ldmi), 4, 2, 0},
-			/*6*/new int[] {Opcode.toInt(Opcode.Ldmi), 5, 3, 0},
-			/*7*/new int[] {Opcode.toInt(Opcode.Mul), 4, 4, 5},
-			/*8*/new int[] {Opcode.toInt(Opcode.Stmi), 4, 7, 0},
-			/*9*/new int[] {Opcode.toInt(Opcode.Add), 1, 1, 4},
-			/*A*/new int[] {Opcode.toInt(Opcode.Addi), 0, 0, 1},
-			/*B*/new int[] {Opcode.toInt(Opcode.Subi), 6, 0, 10},
-			/*C*/new int[] {Opcode.toInt(Opcode.JmpZ), 1, 6, 0},
-			/*D*/new int[] {Opcode.toInt(Opcode.Jmp), -9, 0, 0},
-			/*E*/new int[] {Opcode.toInt(Opcode.Addi), 1, 1, 0},
-			/*F*/new int[] {Opcode.toInt(Opcode.Jmp), -2, 0, 0},
-		};
+	int[][] instructions;
 	
-	public static int[] getInstruction(int addr) {
+	private int[] getInstruction(int addr) {
 		if(addr < instructions.length && addr >= 0)
 			return instructions[addr];
 		else 
@@ -62,10 +48,11 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
 			FConnection<Integer>.Output addrInput,
 			FConnection<Boolean>.Output clearInput,
 			FConnection<int[]>.Input instructionOutput
-			) {
+			) throws IOException, ParserException {
 		this.addrInput = addrInput;
 		this.clearInput = clearInput;
 		this.instructionOutput = instructionOutput;
+		instructions = ProgramLoader.loadProgram();
 	}
 
 	@Override

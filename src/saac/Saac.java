@@ -2,6 +2,7 @@ package saac;
 
 import static saac.utils.DrawingHelper.BOX_SIZE;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -27,6 +28,7 @@ import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.unclockedComponents.Memory;
 import saac.utils.Instructions.Opcode;
+import saac.utils.parsers.ParserException;
 
 public class Saac implements ClockedComponentI {
 
@@ -61,7 +63,7 @@ public class Saac implements ClockedComponentI {
 	
 	List<ClockedComponentI> clockedComponents;
 	
-	public Saac(List<ComponentViewI> visibleComponents) {
+	public Saac(List<ComponentViewI> visibleComponents) throws IOException, ParserException {
 		
 		Memory memory = new Memory();
 						
