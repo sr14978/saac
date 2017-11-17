@@ -9,6 +9,7 @@ import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -20,7 +21,7 @@ import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleComponentI{
+public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	static final int LDLimit = 3;
 	private class Item{
 		InstructionResult result;
@@ -110,5 +111,10 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		buffer.clear();
 	}
 }

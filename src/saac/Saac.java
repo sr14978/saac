@@ -23,6 +23,7 @@ import saac.dataObjects.BranchResult;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
@@ -65,6 +66,8 @@ public class Saac implements ClockedComponentI {
 	List<ClockedComponentI> clockedComponents;
 	
 	public Saac(List<ComponentViewI> visibleComponents) throws IOException, ParserException {
+
+		List<ClearableComponent> clearables = new ArrayList<>();
 		
 		Memory memory = new Memory();
 						
@@ -83,10 +86,12 @@ public class Saac implements ClockedComponentI {
 		FConnection<Instruction> issueToBr = new FConnection<>();
 		FConnection<BranchResult> brToFetch = new FConnection<>();
 		FConnection<BranchResult> brToWB = new FConnection<>();
-		BranchExecutionUnit brUnit = new BranchExecutionUnit(issueToBr.getOutputEnd(), brToFetch.getInputEnd(), brToWB.getInputEnd());
+		BranchExecutionUnit brUnit = new BranchExecutionUnit(
+				issueToBr.getOutputEnd(), brToFetch.getInputEnd(), brToWB.getInputEnd());
 		
 		FConnection<Instruction> issueToDualRS = new FConnection<>();
-		DualReservationStation dualRS = new DualReservationStation(dualRSToEU_A.getInputEnd(), dualRSToEU_B.getInputEnd(), issueToDualRS.getOutputEnd());
+		DualReservationStation dualRS = new DualReservationStation(
+				dualRSToEU_A.getInputEnd(), dualRSToEU_B.getInputEnd(), issueToDualRS.getOutputEnd());
 				
 		FConnection<int[]> fetchToDecode = new FConnection<>();
 		FConnection<Instruction> decodeToDep = new FConnection<>();
@@ -121,7 +126,7 @@ public class Saac implements ClockedComponentI {
 				instructionOutput.getInputEnd()
 			);
 		
-		Fetcher fetcher = new Fetcher(registerFile,
+		Fetcher fetcher = new Fetcher(registerFile, clearables,
 				fetchToDecode.getInputEnd(),
 				brToFetch.getOutputEnd(),
 				addrInput.getInputEnd(),
@@ -225,6 +230,27 @@ public class Saac implements ClockedComponentI {
 		visibleComponents.add(WBtoRegister.createView(BOX_SIZE/2, boxHeight*c));
 		visibleComponents.add(dirtyWBtoDep.createView(3*BOX_SIZE/2, boxHeight*c));
 		visibleComponents.add(brToFetch.createView(3*BOX_SIZE, boxHeight*c));
+		
+		clearables.add(decoder);
+		clearables.add(depChecker);
+		clearables.add(issuer);
+		clearables.add(dualRS);
+		clearables.add(executionUnit_A);
+		clearables.add(executionUnit_B);
+		clearables.add(LSEU);
+		clearables.add(brUnit);
+		clearables.add(dualRSToEU_A);
+		clearables.add(EU_AtoWB);
+		clearables.add(dualRSToEU_B);
+		clearables.add(EU_BtoWB);
+		clearables.add(issueToLS);
+		clearables.add(LStoWB);
+		clearables.add(issueToBr);
+		clearables.add(issueToDualRS);
+		clearables.add(fetchToDecode);
+		clearables.add(decodeToDep);
+		clearables.add(instructionOutput);
+		clearables.add(opcodeDepToIssue);
 	}
 	
 	@Override

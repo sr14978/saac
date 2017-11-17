@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import saac.dataObjects.Instruction;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -12,7 +13,7 @@ import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 
-public class Decoder implements ClockedComponentI, VisibleComponentI{
+public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
 	FConnection<Instruction>.Input output;
 	FConnection<int[]>.Output input;
@@ -62,6 +63,11 @@ public class Decoder implements ClockedComponentI, VisibleComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		bufferOut = null;
 	}
 	
 }

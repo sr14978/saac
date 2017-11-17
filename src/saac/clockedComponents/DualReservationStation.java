@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import saac.dataObjects.Instruction;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -18,7 +19,7 @@ import saac.utils.DrawingHelper;
 import saac.utils.Output;
 
 
-public class DualReservationStation implements ClockedComponentI, VisibleComponentI{
+public class DualReservationStation implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	FConnection<Instruction>.Input outputUnit1;
 	FConnection<Instruction>.Input outputUnit2;
 	FConnection<Instruction>.Output input;
@@ -87,5 +88,10 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		buffer.clear();
 	}
 }

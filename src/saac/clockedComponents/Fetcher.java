@@ -2,8 +2,10 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.List;
 
 import saac.dataObjects.BranchResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -24,9 +26,10 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	FConnection<Integer>.Input addrOutput;
 	FConnection<Boolean>.Input clearOutput;
 	FConnection<int[]>.Output instructionInput;
+	List<ClearableComponent> clearables;
 	boolean halt = false;
 	
-	public Fetcher(RegisterFile registerFile,
+	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables,
 			FConnection<int[]>.Input output,
 			FConnection<BranchResult>.Output fromBrUnit,
 			FConnection<Integer>.Input addrOutput,
@@ -39,6 +42,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		this.addrOutput = addrOutput;
 		this.clearOutput = clearOutput;
 		this.instructionInput = instructionInput;
+		this.clearables = clearables;
 	}
 	
 	@Override
@@ -47,9 +51,14 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		if(halt) {
 			if(!fromBrUnit.ready())
 				return;
-			BranchResult newPC = fromBrUnit.pop();
+			BranchResult res = fromBrUnit.pop();
 			halt = false;
-			programCounter = newPC.getPc();
+			programCounter = res.getPc();
+			
+			if(!res.wasCorrect())
+				for(ClearableComponent cc : clearables)
+					cc.clear();
+			
 		} else if(addrOutput.clear()) {
 			addrOutput.put(programCounter);
 			programCounter++;

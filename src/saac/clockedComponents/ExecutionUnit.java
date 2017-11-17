@@ -7,6 +7,7 @@ import saac.dataObjects.BlankResult;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -17,7 +18,7 @@ import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class ExecutionUnit implements ClockedComponentI, VisibleComponentI{
+public class ExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
 	private FConnection<Instruction>.Output instructionIn;
 	private FConnection<InstructionResult>.Input resultOut;
@@ -95,6 +96,11 @@ public class ExecutionUnit implements ClockedComponentI, VisibleComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		bufferOut = null;
 	}
 	
 }

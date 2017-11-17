@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import saac.Saac;
 import saac.dataObjects.Instruction;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -17,7 +18,7 @@ import saac.utils.Instructions.Opcode;
 import saac.utils.Output;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class Issuer implements ClockedComponentI, VisibleComponentI{
+public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	
 	static final Function<Opcode, Opcode> sameOp = Function.identity();
 	static final Function<Integer, Integer> sameVal = Function.identity();
@@ -169,6 +170,11 @@ public class Issuer implements ClockedComponentI, VisibleComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		bufferOut = null;
 	}
 
 }

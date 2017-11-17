@@ -7,7 +7,7 @@ import java.awt.Graphics2D;
 
 import saac.utils.DrawingHelper;
 
-public class FConnection<T> implements VisibleComponentI{
+public class FConnection<T> implements VisibleComponentI, ClearableComponent{
 
 	private T value;
 	
@@ -77,5 +77,10 @@ public class FConnection<T> implements VisibleComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		value = null;
 	}
 }
