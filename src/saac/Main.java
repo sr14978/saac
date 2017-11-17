@@ -33,7 +33,7 @@ public class Main extends JFrame {
 	boolean stopped = false;
     Main self = this;
 	
-    RateLabel rateLable;
+    JLabel rateLable;
     Gui gui;
     
 	public Main() throws IOException, ParserException {
@@ -67,7 +67,7 @@ public class Main extends JFrame {
 				saac.delay = (int) (v*0.25);
 		});
 		
-		rateLable = new RateLabel();
+		rateLable = new JLabel();
 		
 		JPanel toolbar = new JPanel(new FlowLayout());
 		toolbar.add(start);
@@ -99,17 +99,6 @@ public class Main extends JFrame {
 	}
 	
 	@SuppressWarnings("serial")
-	class RateLabel extends JLabel {
-		@Override
-	    public void paintComponent(Graphics gg) {
-			System.out.println("hi");
-			float rateVal = round((float) Saac.InstructionCounter / saac.cycleCounter);
-			this.setText(String.format("%.2f", rateVal));
-			super.paintComponent(gg);
-		}
-	}
-	
-	@SuppressWarnings("serial")
 	class Gui extends JPanel {
 		@Override
 	    public void paintComponent(Graphics gg) {
@@ -132,13 +121,10 @@ public class Main extends JFrame {
     	if(currentTime - lastRepaintTime > 1000/30) {
     		lastRepaintTime = currentTime;	
 			gui.repaint();
+			rateLable.setText(Saac.getRate());
 			rateLable.repaint();
     	}
 	}
-    
-    static float round(float i) {
-    	return (float) Math.round(( i )*100 ) / 100;
-    }
     
     void start() {
     	if(stopped) {

@@ -39,7 +39,7 @@ public class Saac implements ClockedComponentI {
 	//lock used for pausing
 	Lock mutex = new ReentrantLock();
 
-	int cycleCounter = 0;
+	static int CycleCounter = 0;
 	
 	void worker(Runnable f) throws Exception {
 		while(true) {
@@ -57,12 +57,21 @@ public class Saac implements ClockedComponentI {
 			tick();
 		else {
 			tock();
-			cycleCounter++;
-			System.out.println("Rate: " + (float) InstructionCounter / cycleCounter);
+			CycleCounter++;
+			System.out.println(getRate());
 		}
 		paint.run();
 		phase = !phase;
 	}
+	
+	static String getRate() {
+		float rateVal = round((float) InstructionCounter / CycleCounter);
+		return "Rate: " + String.format("%.2f", rateVal);
+	}
+	
+    static float round(float i) {
+    	return (float) Math.round(( i )*100 ) / 100;
+    }
 	
 	List<ClockedComponentI> clockedComponents;
 	

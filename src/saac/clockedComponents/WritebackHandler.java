@@ -12,6 +12,7 @@ import saac.dataObjects.BranchResult;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
+import saac.dataObjects.StopResult;
 import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -19,6 +20,7 @@ import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
+import saac.utils.Output;
 
 public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	FConnection<InstructionResult>.Output inputEU_A; 
@@ -85,7 +87,6 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 					> (bufferIndexEnd - bufferIndexStart + BUFF_SIZE) % BUFF_SIZE ) {
 				bufferIndexEnd = (bufferIndex + 1) % BUFF_SIZE;
 				bufferEmpty = false;
-				System.out.println("set: "+bufferIndexEnd);
 			}
 			
 			if(res instanceof BranchResult) {
@@ -183,9 +184,11 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		} else if(res instanceof RegisterResult) {
 			Saac.InstructionCounter++;
 			RegisterResult rr = (RegisterResult) res;
-			System.out.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget()));
+			Output.info.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget()));
 			resultOutput.put(rr);
 			dirtyOutput.put(rr.getTarget());
+		} else if(res instanceof StopResult) {
+			System.exit(0);
 		}
 		
 		bufferIndexStart = (bufferIndexStart + 1) % BUFF_SIZE;

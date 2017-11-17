@@ -61,6 +61,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 			case Br:
 			case Ldma:
 			case Jmp:
+			case Stop:
 				paramAreg = paramBreg = paramCreg = false;
 				break;
 			case Add:
@@ -117,6 +118,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 		case Muli:
 		case Divi:
 		case Nop:
+		case Stop:
 			if(outputEU.clear()) {
 				outputEU.put(bufferOut);
 				Output.debug.println(bufferOut + " sent to EU reservation station");

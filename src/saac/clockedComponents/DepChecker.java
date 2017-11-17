@@ -111,7 +111,6 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 					return;
 			if(!dirtyMem.isEmpty())
 				return;
-			System.exit(0);
 			break;
 		default:
 			throw new NotImplementedException();

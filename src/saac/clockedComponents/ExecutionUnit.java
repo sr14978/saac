@@ -7,6 +7,7 @@ import saac.dataObjects.BlankResult;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
+import saac.dataObjects.StopResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -55,6 +56,9 @@ public class ExecutionUnit implements ClockedComponentI, VisibleComponentI, Clea
 			break;
 		case Nop:
 			bufferOut = new BlankResult(inst.getID());
+			break;
+		case Stop:
+			bufferOut = new StopResult(inst.getID());
 			break;
 		case Div:
 		case Divi:
