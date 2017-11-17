@@ -45,6 +45,7 @@ public class Saac implements ClockedComponentI {
 		while(true) {
 			mutex.lock();
         	mutex.unlock();
+        	Thread.sleep(delay);
 			step(f);
 		}
 	}
@@ -52,7 +53,6 @@ public class Saac implements ClockedComponentI {
 	int delay = 200;
 	boolean phase = true;
 	void step(Runnable paint) throws Exception {
-		Thread.sleep(delay);
 		if(phase)
 			tick();
 		else {
