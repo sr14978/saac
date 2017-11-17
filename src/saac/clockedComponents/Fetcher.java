@@ -65,6 +65,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			return;
 		
 		int[] inst = instructionInput.pop();
+		inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], 0 }; 
 				
 		switch(Opcode.fromInt(inst[0])) {
 		case Jmp:
@@ -83,14 +84,19 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		case Ln:
 			halt = true;
 			clearOutput.put(true);
-			inst[4] = instructionCounter++;
+			inst[5] = instructionCounter++;
+			inst[4] = prediction(inst);
 			output.put(inst);
 			break;
 		default:
-			inst[4] = instructionCounter++;
+			inst[5] = instructionCounter++;
 			output.put(inst);
 			break;
 		}		
+	}
+
+	private int prediction(int[] inst) {
+		return 1;
 	}
 
 	class View extends ComponentView {

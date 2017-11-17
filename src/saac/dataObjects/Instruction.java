@@ -12,13 +12,15 @@ public class Instruction {
 	private final int paramA; 
 	private final int paramB;
 	private final int paramC;
+	private final int paramD;
 	
-	public Instruction(int instructionNumber, Opcode opcode, int paramA, int paramB, int paramC) {
+	public Instruction(int instructionNumber, Opcode opcode, int paramA, int paramB, int paramC, int paramD) {
 		this.instructionNumber = instructionNumber;
 		this.opcode = opcode;
 		this.paramA = paramA;
 		this.paramB = paramB;
 		this.paramC = paramC;
+		this.paramD = paramD;
 	}
 	
 	public int getID() {
@@ -41,10 +43,14 @@ public class Instruction {
 		return paramC;
 	}
 	
+	public int getParamD() {
+		return paramD;
+	}
+	
 	public Instruction transform(Function<Opcode, Opcode> opcode, Function<Integer, Integer> target,
 			Function<Integer, Integer> sourceA, Function<Integer, Integer> sourceB) {
 		return new Instruction(this.instructionNumber, opcode.apply(this.opcode), target.apply(this.paramA),
-				sourceA.apply(this.paramB), sourceB.apply(this.paramC));
+				sourceA.apply(this.paramB), sourceB.apply(this.paramC), paramD);
 	}
 	
 	public String toString() {
