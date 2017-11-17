@@ -50,9 +50,18 @@ public class Main extends JFrame {
 		
 		JSlider slider = new JSlider();
 		slider.setMinimum(0);
-		slider.setMaximum(1000);
-		slider.setValue(saac.delay);
-		slider.addChangeListener(e -> saac.delay = slider.getValue());
+		slider.setMaximum(900);
+		slider.setValue(450);
+		saac.delay = (int) ((150)*1 + 0.25*300);
+		slider.addChangeListener(e -> {
+			int v = slider.getValue();
+			if(v>600)
+				saac.delay = (int) ((v-600)*4 + 2*300 + 0.25*300);
+			else if(v>300)
+				saac.delay = (int) ((v-300)*1 + 0.25*300);
+			else
+				saac.delay = (int) (v*0.25);
+		});
 		
 		rateLable = new RateLabel();
 		
