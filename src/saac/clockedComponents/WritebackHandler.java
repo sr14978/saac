@@ -5,6 +5,7 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.Main;
 import saac.Saac;
 import saac.Settings;
 import saac.Settings.BranchPrediciton;
@@ -188,7 +189,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			resultOutput.put(rr);
 			dirtyOutput.put(rr.getTarget());
 		} else if(res instanceof StopResult) {
-			System.exit(0);
+			Main.worker.interrupt();
 		}
 		
 		bufferIndexStart = (bufferIndexStart + 1) % BUFF_SIZE;

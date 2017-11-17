@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 
 import saac.interfaces.ComponentViewI;
+import saac.utils.Output;
+import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
 
 public class Main extends JFrame {
@@ -35,6 +37,7 @@ public class Main extends JFrame {
 	
     JLabel rateLable;
     Gui gui;
+    public static Thread worker;
     
 	public Main() throws IOException, ParserException {
 		saac = new Saac(visibleComponents);
@@ -55,8 +58,16 @@ public class Main extends JFrame {
 		JSlider slider = new JSlider();
 		slider.setMinimum(0);
 		slider.setMaximum(900);
-		slider.setValue(450);
-		saac.delay = (int) ((150)*1 + 0.25*300);
+		
+		int i;
+		if(saac.delay>2*300 + 0.25*300)
+			i = (int) (600 + (saac.delay - 2*300 - 0.25*300) / 4);
+		else if(saac.delay>0.25*300)
+			i = (int) (600 + (saac.delay - 0.25*300) / 1);
+		else
+			i = (int) (saac.delay / 0.25);
+		slider.setValue(i);
+		
 		slider.addChangeListener(e -> {
 			int v = slider.getValue();
 			if(v>600)
@@ -87,15 +98,18 @@ public class Main extends JFrame {
 		setSize(1500, 900);
 		setVisible(true);
 		
-		new Thread(){
+		worker = new Thread(){
 			public void run() {
 				try {
 					saac.worker(self::paint);
+				} catch (InterruptedException e) {
+					Output.state.println("Program Finished");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
-		}.start();		
+		};
+		worker.start();		
 	}
 	
 	@SuppressWarnings("serial")
@@ -121,7 +135,7 @@ public class Main extends JFrame {
     	if(currentTime - lastRepaintTime > 1000/30) {
     		lastRepaintTime = currentTime;	
 			gui.repaint();
-			rateLable.setText(Saac.getRate());
+			rateLable.setText(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter));
 			rateLable.repaint();
     	}
 	}
@@ -133,7 +147,7 @@ public class Main extends JFrame {
     	}
     }
     
-    void stop() {
+    public void stop() {
     	if(!stopped) {
 			saac.mutex.lock();
     		stopped = true;

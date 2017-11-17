@@ -40,25 +40,25 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 		Instruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Br:
-			bufferOut = new BranchResult(inst.getID(), inst.getParamA(), true, true);
+			bufferOut = new BranchResult(inst.getID(), inst.getParamA(), true, true, inst.getParamD());
 			break;
 		case Jmp:
-			bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC(), true, true);
+			bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC(), true, true, inst.getParamD());
 			Output.jumping_info.println("jumping to " + bufferOut);
 			break;
 		case JmpN:
 			if(inst.getParamB() < 0) {
-				bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC(), inst.getParamD(), true);
+				bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC(), inst.getParamD(), true, inst.getParamC()-1);
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = new BranchResult(inst.getID(), inst.getParamC(), inst.getParamD(), false);
+				bufferOut = new BranchResult(inst.getID(), inst.getParamC(), inst.getParamD(), false, inst.getParamC()-1);
 			break;
 		case JmpZ:
 			if(inst.getParamB() == 0) {
-				bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC(), inst.getParamD(), true);
+				bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC(), inst.getParamD(), true, inst.getParamC()-1);
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = new BranchResult(inst.getID(), inst.getParamC(), inst.getParamD(), false);
+				bufferOut = new BranchResult(inst.getID(), inst.getParamC(), inst.getParamD(), false, inst.getParamC()-1);
 			break;
 		default:
 			throw new NotImplementedException();

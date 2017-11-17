@@ -29,8 +29,11 @@ import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
+import saac.unclockedComponents.BranchPredictor;
 import saac.unclockedComponents.Label;
 import saac.unclockedComponents.Memory;
+import saac.utils.Output;
+import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
 
 public class Saac implements ClockedComponentI {
@@ -50,7 +53,7 @@ public class Saac implements ClockedComponentI {
 		}
 	}
 	
-	int delay = 200;
+	int delay = 10;
 	boolean phase = true;
 	void step(Runnable paint) throws Exception {
 		if(phase)
@@ -58,20 +61,15 @@ public class Saac implements ClockedComponentI {
 		else {
 			tock();
 			CycleCounter++;
-			System.out.println(getRate());
+			Output.state.println(RateUtils.getRate(InstructionCounter, CycleCounter));
 		}
 		paint.run();
 		phase = !phase;
+		if(Thread.interrupted())
+			throw new InterruptedException();
 	}
 	
-	static String getRate() {
-		float rateVal = round((float) InstructionCounter / CycleCounter);
-		return "Rate: " + String.format("%.2f", rateVal);
-	}
 	
-    static float round(float i) {
-    	return (float) Math.round(( i )*100 ) / 100;
-    }
 	
 	List<ClockedComponentI> clockedComponents;
 	
@@ -136,7 +134,9 @@ public class Saac implements ClockedComponentI {
 				instructionOutput.getInputEnd()
 			);
 		
-		Fetcher fetcher = new Fetcher(registerFile, clearables,
+		BranchPredictor branchPredictor = new BranchPredictor();
+		
+		Fetcher fetcher = new Fetcher(registerFile, clearables, branchPredictor,
 				fetchToDecode.getInputEnd(),
 				brToFetch.getOutputEnd(),
 				addrInput.getInputEnd(),
@@ -195,6 +195,7 @@ public class Saac implements ClockedComponentI {
 		int c = 0;
 		visibleComponents.add(fetcher.createView(middleOffset, boxHeight*c));
 		visibleComponents.add(addrInput.createView(0, boxHeight*c));
+		visibleComponents.add(branchPredictor.createView(3*BOX_SIZE, boxHeight*c));	
 		c++;
 		visibleComponents.add(instructionSource.createView(0, boxHeight*c));
 		visibleComponents.add(fetchToDecode.createView(middleOffset, boxHeight*c));

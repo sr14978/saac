@@ -14,9 +14,10 @@ public class ProgramLoader {
 
 	final static String programDirectory = "programs/";
 	//final static String programName = "depend.program";
-	final static String programName = "inner_product_stop.program";
+	//final static String programName = "inner_product_stop.program";
 	//final static String programName = "reorder.program";
-	//final static String programName = "branch_pred.program";
+	//final static String programName = "static_branch_pred.program";
+	final static String programName = "dynamic_branch_pred.program";
 	
 	public static int[][] loadProgram() throws IOException, ParserException {
 		File program = new File(programDirectory + programName);

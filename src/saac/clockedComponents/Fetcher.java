@@ -30,10 +30,10 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	FConnection<Boolean>.Input clearOutput;
 	FConnection<int[]>.Output instructionInput;
 	List<ClearableComponent> clearables;
-	BranchPredictor predictor = new BranchPredictor();
 	boolean halt = false;
+	BranchPredictor predictor;
 	
-	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables,
+	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables, BranchPredictor predictor,
 			FConnection<int[]>.Input output,
 			FConnection<BranchResult>.Output fromBrUnit,
 			FConnection<Integer>.Input addrOutput,
@@ -47,6 +47,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		this.clearOutput = clearOutput;
 		this.instructionInput = instructionInput;
 		this.clearables = clearables;
+		this.predictor = predictor;
 	}
 	
 	@Override
@@ -57,17 +58,17 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			if(!fromBrUnit.ready())
 				return;
 			BranchResult res = fromBrUnit.pop();
-			programCounter = res.getPc();
+			programCounter = res.getNewPc();
 			halt = false;
 		} else if(fromBrUnit.ready()) {
 			
 			BranchResult res = fromBrUnit.pop();
-			
+			predictor.update(res);
 			if(!res.wasCorrect()) {
 				for(ClearableComponent cc : clearables)
 					cc.clear();
 				instructionCounter = res.getID();
-				programCounter = res.getPc();
+				programCounter = res.getNewPc();
 			}
 		} else if(addrOutput.clear()) {
 			addrOutput.put(programCounter);
