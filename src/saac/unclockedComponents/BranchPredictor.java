@@ -39,6 +39,7 @@ public class BranchPredictor implements VisibleComponentI{
 		}
 	}; 
 	
+	private final static int numberOfBits = 1;
 	private final static int MAX_STORAGE_SIZE = 4;
 	Storage dynamicStorage = new Storage();
 	
@@ -63,9 +64,12 @@ public class BranchPredictor implements VisibleComponentI{
 			if(dynamicStorage.size() == MAX_STORAGE_SIZE) {
 				dynamicStorage.remove((int) Math.random()*MAX_STORAGE_SIZE);
 			}
-			dynamicStorage.add(new Item(addr, br.wasTaken()?2:1));
+			if(br.wasTaken())
+				dynamicStorage.add(new Item(addr, 1 << (numberOfBits-1)));
+			else
+				dynamicStorage.add(new Item(addr, (1 << (numberOfBits-1))-1));
 		} else {
-			if(br.wasTaken() && i.value < 3)
+			if(br.wasTaken() && i.value < (1<<numberOfBits) -1)
 				i.value++;
 			else if(!br.wasTaken() && i.value >0)
 				i.value--;
@@ -79,7 +83,7 @@ public class BranchPredictor implements VisibleComponentI{
 		Item i = dynamicStorage.find(inst[4]);
 		if(i == null)
 			return predictStatic(inst);
-		return i.value>=2;
+		return i.value>= 1 << (numberOfBits-1);
 	}
 
 	private boolean predictStatic(int[] inst) {
