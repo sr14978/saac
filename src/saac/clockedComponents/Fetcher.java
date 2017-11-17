@@ -125,7 +125,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	}
 
 	private boolean prediction(int[] inst) {
-		return true;
+		return false;
 	}
 
 	class View extends ComponentView {

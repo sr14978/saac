@@ -1,16 +1,16 @@
-ldc 0 0
-ldc 1 0
-ldc 2 0x10
-ldc 3 0x20
-ldc 7 0x30
-ldmi 4 2 0
-ldmi 5 3 0
-mul 4 4 5
-stmi 4 7 0
-add 1 1 4
-addi 0 0 1
-subi 6 0 10
-jmpz 1 6
+ldc r0 0
+ldc r1 0
+ldc r2 0x10
+ldc r3 0x20
+ldc r7 0x30
+ldmi r4 r2 0
+ldmi r5 r3 0
+mul r4 r4 r5
+stmi r4 r7 0
+add r1 r1 r4
+addi r0 r0 1
+subi r6 r0 10
+jmpz 1 r6
 jmp -9
-addi 1 1 0
+addi r1 r1 0
 jmp -2
