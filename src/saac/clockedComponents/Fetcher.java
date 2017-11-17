@@ -3,6 +3,7 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.dataObjects.BranchResult;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -17,7 +18,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	RegisterFile registerFile;
 	FConnection<int[]>.Input output;
 
-	FConnection<Integer>.Output fromBrUnit;
+	FConnection<BranchResult>.Output fromBrUnit;
 	int programCounter = 0;
 	int instructionCounter = 0;
 	FConnection<Integer>.Input addrOutput;
@@ -27,7 +28,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	
 	public Fetcher(RegisterFile registerFile,
 			FConnection<int[]>.Input output,
-			FConnection<Integer>.Output fromBrUnit,
+			FConnection<BranchResult>.Output fromBrUnit,
 			FConnection<Integer>.Input addrOutput,
 			FConnection<Boolean>.Input clearOutput,
 			FConnection<int[]>.Output instructionInput
@@ -46,14 +47,13 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		if(halt) {
 			if(!fromBrUnit.ready())
 				return;
-			Integer newPC = fromBrUnit.pop();
+			BranchResult newPC = fromBrUnit.pop();
 			halt = false;
-			programCounter = newPC;
+			programCounter = newPC.getPc();
 		} else if(addrOutput.clear()) {
 			addrOutput.put(programCounter);
 			programCounter++;
 		}
-		
 	}
 	
 	@Override
@@ -83,7 +83,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		case Ln:
 			halt = true;
 			clearOutput.put(true);
-			inst[4] = instructionCounter;
+			inst[4] = instructionCounter++;
 			output.put(inst);
 			break;
 		default:

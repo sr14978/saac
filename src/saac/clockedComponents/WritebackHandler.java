@@ -5,10 +5,10 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.dataObjects.BranchResult;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
-import saac.dataObjects.ReorderBufferFullException;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -20,6 +20,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	FConnection<InstructionResult>.Output inputEU_A; 
 	FConnection<InstructionResult>.Output inputEU_B; 
 	FConnection<InstructionResult>.Output inputLS;
+	FConnection<BranchResult>.Output inputBr;
 	RegisterFile registerFile;
 	DepChecker depChecker;
 	FConnection<RegisterResult>.Input resultOutput;
@@ -40,11 +41,13 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			FConnection<InstructionResult>.Output inputEU_A, 
 			FConnection<InstructionResult>.Output inputEU_B, 
 			FConnection<InstructionResult>.Output inputLS,
+			FConnection<BranchResult>.Output inputBr,
 			FConnection<RegisterResult>.Input resultOutput,
 			FConnection<Integer>.Input dirtyOutput) {
 		this.inputEU_A = inputEU_A;
 		this.inputEU_B = inputEU_B;
 		this.inputLS = inputLS;
+		this.inputBr = inputBr;
 		this.registerFile = rf;
 		this.depChecker = depChecker;
 		this.resultOutput = resultOutput;
@@ -54,44 +57,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	@Override
 	public void tick() throws Exception {
 		
-		FConnection<InstructionResult>.Output input;
-		
-		switch(nextInput) {
-		case 0:
-			if(inputLS.ready())
-				input = inputLS;
-			else if(inputEU_A.ready())
-				input = inputEU_A;
-			else if(inputEU_B.ready())
-				input = inputEU_B;
-			else
-				return;
-			break;
-		case 1:
-			if(inputEU_A.ready())
-				input = inputEU_A;
-			else if(inputEU_B.ready())
-				input = inputEU_B;
-			else if(inputLS.ready())
-				input = inputLS;
-			else 
-				return;
-			break;
-		case 2:
-			if(inputEU_B.ready())
-				input = inputEU_B;
-			else if(inputLS.ready())
-				input = inputLS;
-			else if(inputEU_A.ready())
-				input = inputEU_A;
-			else 
-				return;
-			break;
-		default:
-			throw new Exception();
-		}
-		
-		nextInput = (nextInput + 1) % 3;		
+		FConnection<? extends InstructionResult>.Output input = getInput();
+		if(input == null)
+			return;
 		
 		InstructionResult res = input.peak();
 				
@@ -117,6 +85,66 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			}
 		}
 		
+	}
+
+	private FConnection<? extends InstructionResult>.Output getInput() throws Exception {
+		FConnection<? extends InstructionResult>.Output input;
+		
+		switch(nextInput) {
+		case 0:
+			if(inputLS.ready())
+				input = inputLS;
+			else if(inputEU_A.ready())
+				input = inputEU_A;
+			else if(inputEU_B.ready())
+				input = inputEU_B;
+			else if(inputBr.ready())
+				input = inputBr;
+			else
+				return null;
+			break;
+		case 1:
+			if(inputEU_A.ready())
+				input = inputEU_A;
+			else if(inputEU_B.ready())
+				input = inputEU_B;
+			else if(inputBr.ready())
+				input = inputBr;
+			else if(inputLS.ready())
+				input = inputLS;
+			else 
+				return null;
+			break;
+		case 2:
+			if(inputEU_B.ready())
+				input = inputEU_B;
+			else if(inputBr.ready())
+				input = inputBr;
+			else if(inputLS.ready())
+				input = inputLS;
+			else if(inputEU_A.ready())
+				input = inputEU_A;
+			else 
+				return null;
+			break;
+		case 3:
+			if(inputBr.ready())
+				input = inputBr;
+			else if(inputEU_B.ready())
+				input = inputEU_B;
+			else if(inputLS.ready())
+				input = inputLS;
+			else if(inputEU_A.ready())
+				input = inputEU_A;
+			else 
+				return null;
+			break;
+		default:
+			throw new Exception();
+		}
+		
+		nextInput = (nextInput + 1) % 4;
+		return input;
 	}
 
 	@Override

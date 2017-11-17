@@ -3,6 +3,7 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.dataObjects.BranchResult;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -16,12 +17,17 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI{
 	private FConnection<Instruction>.Output instructionIn;
-	FConnection<Integer>.Input output;
-	Integer bufferOut;
+	FConnection<BranchResult>.Input outputToFetch;
+	FConnection<BranchResult>.Input outputToWB;
+	BranchResult bufferOut;
 	
-	public BranchExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<Integer>.Input output) {
+	public BranchExecutionUnit(
+			FConnection<Instruction>.Output instructionIn,
+			FConnection<BranchResult>.Input outputToFetch,
+			FConnection<BranchResult>.Input outputToWB) {
 		this.instructionIn = instructionIn;
-		this.output = output;
+		this.outputToFetch = outputToFetch;
+		this.outputToWB = outputToWB;
 	}
 	
 	@Override
@@ -33,25 +39,25 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 		Instruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Br:
-			bufferOut = inst.getParamA();
+			bufferOut = new BranchResult(inst.getID(), inst.getParamA());
 			break;
 		case Jmp:
-			bufferOut = inst.getParamA() + inst.getParamC();
+			bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC());
 			Output.jumping_info.println("jumping to " + bufferOut);
 			break;
 		case JmpN:
 			if(inst.getParamB() < 0) {
-				bufferOut = inst.getParamA() + inst.getParamC();
+				bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC());
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = inst.getParamC();
+				bufferOut = new BranchResult(inst.getID(), inst.getParamC());
 			break;
 		case JmpZ:
 			if(inst.getParamB() == 0) {
-				bufferOut = inst.getParamA() + inst.getParamC();
+				bufferOut = new BranchResult(inst.getID(), inst.getParamA() + inst.getParamC());
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = inst.getParamC();
+				bufferOut = new BranchResult(inst.getID(), inst.getParamC());
 			break;
 		default:
 			throw new NotImplementedException();
@@ -63,8 +69,9 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 	public void tock() throws FullChannelException {
 		if(bufferOut == null)
 			return;
-		else if(output.clear()) {
-			output.put(bufferOut);
+		else if(outputToFetch.clear() && outputToWB.clear()) {
+			outputToFetch.put(bufferOut);
+			outputToWB.put(bufferOut);
 			bufferOut = null;
 		}
 	}

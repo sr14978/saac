@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import saac.ProgramLoader;
-import saac.dataObjects.Instruction;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;

@@ -19,6 +19,7 @@ import saac.clockedComponents.Issuer;
 import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
 import saac.clockedComponents.WritebackHandler;
+import saac.dataObjects.BranchResult;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
@@ -80,8 +81,9 @@ public class Saac implements ClockedComponentI {
 		LoadStoreExecutionUnit LSEU = new LoadStoreExecutionUnit(issueToLS.getOutputEnd(), LStoWB.getInputEnd(), memory);
 		
 		FConnection<Instruction> issueToBr = new FConnection<>();
-		FConnection<Integer> brToFetch = new FConnection<>();
-		BranchExecutionUnit brUnit = new BranchExecutionUnit(issueToBr.getOutputEnd(), brToFetch.getInputEnd());
+		FConnection<BranchResult> brToFetch = new FConnection<>();
+		FConnection<BranchResult> brToWB = new FConnection<>();
+		BranchExecutionUnit brUnit = new BranchExecutionUnit(issueToBr.getOutputEnd(), brToFetch.getInputEnd(), brToWB.getInputEnd());
 		
 		FConnection<Instruction> issueToDualRS = new FConnection<>();
 		DualReservationStation dualRS = new DualReservationStation(dualRSToEU_A.getInputEnd(), dualRSToEU_B.getInputEnd(), issueToDualRS.getOutputEnd());
@@ -153,6 +155,7 @@ public class Saac implements ClockedComponentI {
 				EU_AtoWB.getOutputEnd(),
 				EU_BtoWB.getOutputEnd(),
 				LStoWB.getOutputEnd(),
+				brToWB.getOutputEnd(),
 				WBtoRegister.getInputEnd(),
 				dirtyWBtoDep.getInputEnd()
 			);

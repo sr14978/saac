@@ -1,6 +1,5 @@
 package saac.utils.parsers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ParserUtils {
