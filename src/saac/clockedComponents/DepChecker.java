@@ -105,6 +105,14 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			break;
 		case Jmp:
 			break;
+		case Stop:
+			for(int i = 0; i<RegisterFile.registerNum; i++)
+				if(registerFile.isDirty(i))
+					return;
+			if(!dirtyMem.isEmpty())
+				return;
+			System.exit(0);
+			break;
 		default:
 			throw new NotImplementedException();
 		}

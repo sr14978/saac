@@ -5,23 +5,16 @@ import static saac.utils.parsers.ParserUtils.padded;
 import static saac.utils.parsers.ParserUtils.pure;
 import static saac.utils.parsers.ParserUtils.string;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import saac.dataObjects.Instruction;
 import saac.utils.Instructions.Opcode;
 
 public class Parsers {
 
-	public static void main(String[] args) throws IOException, ParserException {
-
-		int[] item = parseInstruction("ldmi 0 1 5");
-		System.out.println(new Instruction(0, Opcode.fromInt(item[0]), item[1], item[2], item[3]));
-
+	static Parser<int[]> constant(String inst, Opcode op) {
+		return padded(string(inst)).thenSecond(pure(new int[] { Opcode.toInt(op), 0, 0, 0 }));
 	}
-
-	static Parser<int[]> nop = padded(string("nop")).thenSecond(pure(new int[] { Opcode.toInt(Opcode.Nop), 0, 0, 0 }));
 		
 	static Parser<int[]> unary(String inst, Opcode op) {
 		return padded(string(inst)).thenSecond(
@@ -46,7 +39,8 @@ public class Parsers {
 	
 	static List<Parser<int[]>> instructions = new ArrayList<Parser<int[]>>();
 	static {
-		instructions.add(nop);
+		instructions.add(constant("nop", Opcode.Nop));
+		instructions.add(constant("stop", Opcode.Stop));
 		instructions.add(binary("ldc", Opcode.Ldc));
 		instructions.add(tertiary("add", Opcode.Add));
 		instructions.add(tertiary("addi", Opcode.Addi));

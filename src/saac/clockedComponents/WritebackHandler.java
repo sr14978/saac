@@ -5,6 +5,7 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.Saac;
 import saac.Settings;
 import saac.Settings.BranchPrediciton;
 import saac.dataObjects.BranchResult;
@@ -87,16 +88,20 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				System.out.println("set: "+bufferIndexEnd);
 			}
 			
-			if(res instanceof BranchResult && Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
-				BranchResult br = (BranchResult) res;
-				if(!br.wasCorrect()) {
-					reorderBuffer[bufferIndex] = null;
-					for(int i = bufferIndex; i<bufferIndexEnd; i++)
-						reorderBuffer[i] = null;
+			if(res instanceof BranchResult) {
+				Saac.InstructionCounter++;
+				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
+			
+					BranchResult br = (BranchResult) res;
+					if(!br.wasCorrect()) {
+						reorderBuffer[bufferIndex] = null;
+						for(int i = bufferIndex; i<bufferIndexEnd; i++)
+							reorderBuffer[i] = null;
+					}
+					bufferIndexEnd = bufferIndex;
+					if(bufferIndexStart == bufferIndexEnd)
+						bufferEmpty = true;
 				}
-				bufferIndexEnd = bufferIndex;
-				if(bufferIndexStart == bufferIndexEnd)
-					bufferEmpty = true;
 			}
 			
 		}
@@ -172,9 +177,11 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		reorderBuffer[bufferIndexStart] = null;
 		
 		if(res instanceof MemoryResult) {
+			Saac.InstructionCounter++;
 			MemoryResult mr = (MemoryResult) res;
 			depChecker.dirtyMem.remove(mr.getValue());
 		} else if(res instanceof RegisterResult) {
+			Saac.InstructionCounter++;
 			RegisterResult rr = (RegisterResult) res;
 			System.out.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget()));
 			resultOutput.put(rr);

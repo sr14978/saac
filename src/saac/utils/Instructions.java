@@ -26,7 +26,8 @@ public class Instructions {
 		Ln,  	// ln 	rK .  .  -> pc = rK
 		Jmp,	// jmp  #n .  .  -> pc = pc + #n
 		JmpZ,	// jmpz  #n rI .  -> pc = if rI=0 then pc + #n else pc
-		JmpN;	// jmpn  #n rI .  -> pc = if rI<0 then pc + #n else pc
+		JmpN,	// jmpn  #n rI .  -> pc = if rI<0 then pc + #n else pc
+		Stop;
 		
 		public static Opcode fromInt(int code) {
 			switch(code) {
@@ -48,6 +49,7 @@ public class Instructions {
 			case 0xF: return Jmp;
 			case 0x10: return JmpZ;
 			case 0x11: return JmpN;
+			case 0x12: return Stop;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -72,6 +74,7 @@ public class Instructions {
 			case Jmp: return 0xF;
 			case JmpZ: return 0x10;
 			case JmpN: return 0x11;
+			case Stop: return 0x12;
 			default: throw new NotImplementedException();
 			}
 		}

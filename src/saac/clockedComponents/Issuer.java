@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.function.Function;
 
-import saac.Saac;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -122,7 +121,6 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 				outputEU.put(bufferOut);
 				Output.debug.println(bufferOut + " sent to EU reservation station");
 				bufferOut = null;
-				Saac.InstructionCounter++;
 			}
 			break;
 		case Ldma:
@@ -133,7 +131,6 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 				outputLS.put(bufferOut);
 				Output.debug.println(bufferOut + " sent for execution on LSU");
 				bufferOut = null;
-				Saac.InstructionCounter++;
 			}
 			break;
 		case Br:
@@ -144,7 +141,6 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 				outputBr.put(bufferOut);
 				Output.debug.println(bufferOut + " sent for execution on BrU");
 				bufferOut = null;
-				Saac.InstructionCounter++;
 			}
 			break;
 		default:

@@ -98,14 +98,16 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			return;
 		case JmpN:
 		case JmpZ:
-			clearOutput.put(true);
 			boolean prediction = prediction(inst);				
 			inst[3] = inst[4] + 1;
 			inst[4] = prediction?1:0;
 			inst[5] = instructionCounter++;
 			if(prediction)
-				programCounter = inst[1] + inst[3];
+				programCounter = inst[3] + inst[1];
+			else
+				programCounter = inst[3];
 			output.put(inst);
+			clearOutput.put(true);
 			if(Settings.BRANCH_PREDICTION_MODE == BranchPrediciton.Blocking)
 				halt = true;
 			break;
