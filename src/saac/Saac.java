@@ -23,6 +23,7 @@ import saac.dataObjects.BranchResult;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
+import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
@@ -135,7 +136,7 @@ public class Saac implements ClockedComponentI {
 				);
 		
 		FConnection<Instruction> opcodeDepToIssue = new FConnection<>();
-		FConnection<Integer> dirtyWBtoDep = new FConnection<>();
+		BufferedConnection<Integer> dirtyWBtoDep = new BufferedConnection<>(WritebackHandler.BUFF_SIZE);
 
 		DepChecker depChecker = new DepChecker(registerFile,
 				decodeToDep.getOutputEnd(),
@@ -231,8 +232,10 @@ public class Saac implements ClockedComponentI {
 		visibleComponents.add(dirtyWBtoDep.createView(3*BOX_SIZE/2, boxHeight*c));
 		visibleComponents.add(brToFetch.createView(3*BOX_SIZE, boxHeight*c));
 		
+		clearables.add(instructionSource);
 		clearables.add(decoder);
 		clearables.add(depChecker);
+		clearables.add(registerFile);
 		clearables.add(issuer);
 		clearables.add(dualRS);
 		clearables.add(executionUnit_A);
@@ -251,6 +254,9 @@ public class Saac implements ClockedComponentI {
 		clearables.add(decodeToDep);
 		clearables.add(instructionOutput);
 		clearables.add(opcodeDepToIssue);
+		clearables.add(addrInput);
+		clearables.add(clearInput);
+		clearables.add(instructionOutput);
 	}
 	
 	@Override

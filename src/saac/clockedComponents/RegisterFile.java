@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -13,7 +14,7 @@ import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
 
-public class RegisterFile implements VisibleComponentI, ClockedComponentI{
+public class RegisterFile implements VisibleComponentI, ClockedComponentI, ClearableComponent{
 
 	static final int registerNum = 12;
 	static final int PC = registerNum;
@@ -109,5 +110,12 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		for(int i = 0; i<dirtyBits.length; i++) {
+			dirtyBits[i] = false;
+		}
 	}
 }

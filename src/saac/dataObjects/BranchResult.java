@@ -26,7 +26,7 @@ public class BranchResult extends InstructionResult {
 	}
 	
 	public String toString() {
-		return super.toString() + "";
+		return super.toString() + (wasCorrect()?"correct":"wrong");
 	}
 	
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import saac.dataObjects.Instruction;
+import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -28,7 +29,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 	RegisterFile registerFile;
 	FConnection<Instruction>.Output instructionIn;
 	Instruction bufferIn;
-	FConnection<Integer>.Output dirtyIn;
+	BufferedConnection<Integer>.Output dirtyIn;
 	FConnection<Instruction>.Input instructionOut;
 	Instruction bufferOpOut;
 	Connection<Integer>.Input paramAOut;
@@ -39,7 +40,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 	public DepChecker(
 			RegisterFile rf,
 			FConnection<Instruction>.Output instructionIn,
-			FConnection<Integer>.Output dirtyIn,
+			BufferedConnection<Integer>.Output dirtyIn,
 			FConnection<Instruction>.Input instructionOut,
 			Connection<Integer>.Input paramAOut,
 			Connection<Integer>.Input paramBOut,

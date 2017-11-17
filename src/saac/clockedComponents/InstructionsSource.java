@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import saac.ProgramLoader;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -16,7 +17,7 @@ import saac.utils.Instructions.Opcode;
 import saac.utils.parsers.ParserException;
 
 
-public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
+public class InstructionsSource implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	int[][] instructions;
 	
 	private int[] getInstruction(int addr) {
@@ -105,6 +106,11 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear() {
+		bufferOut.clear();
 	}
 	
 }

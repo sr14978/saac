@@ -5,10 +5,12 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.dataObjects.BlankResult;
 import saac.dataObjects.BranchResult;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
+import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -24,12 +26,12 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	RegisterFile registerFile;
 	DepChecker depChecker;
 	FConnection<RegisterResult>.Input resultOutput;
-	FConnection<Integer>.Input dirtyOutput;
+	BufferedConnection<Integer>.Input dirtyOutput;
 	
 	//to enforce round robin collection of inputs
 	int nextInput = 0;
 	
-	final static int BUFF_SIZE = 8;
+	public final static int BUFF_SIZE = 8;
 	InstructionResult[] reorderBuffer = new InstructionResult[BUFF_SIZE];
 	
 	int bufferIndexStart = 0;
@@ -43,7 +45,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			FConnection<InstructionResult>.Output inputLS,
 			FConnection<BranchResult>.Output inputBr,
 			FConnection<RegisterResult>.Input resultOutput,
-			FConnection<Integer>.Input dirtyOutput) {
+			BufferedConnection<Integer>.Input dirtyOutput) {
 		this.inputEU_A = inputEU_A;
 		this.inputEU_B = inputEU_B;
 		this.inputLS = inputLS;
@@ -83,6 +85,19 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				bufferEmpty = false;
 				System.out.println("set: "+bufferIndexEnd);
 			}
+			
+			if(res instanceof BranchResult) {
+				BranchResult br = (BranchResult) res;
+				if(!br.wasCorrect()) {
+					reorderBuffer[bufferIndex] = null;
+					for(int i = bufferIndex; i<bufferIndexEnd; i++)
+						reorderBuffer[i] = null;
+				}
+				bufferIndexEnd = bufferIndex;
+				if(bufferIndexStart == bufferIndexEnd)
+					bufferEmpty = true;
+			}
+			
 		}
 		
 	}
@@ -183,9 +198,12 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			for(int i = 0; i<reorderBuffer.length; i++)
 				if(reorderBuffer[i] != null)
 					gc.drawString(Integer.toString(reorderBuffer[i].getID()), i*40 + 20, 30);
+				else
+					gc.drawString("|X|", i*40 + 20, 30);
 			
-			gc.drawString(Integer.toString(bufferIndexStart), 400, 30);
-			gc.drawString(Integer.toString(bufferIndexEnd), 430, 30);
+			gc.drawString("start index: " + Integer.toString(bufferIndexStart), 400, 30);
+			gc.drawString("end index: " + Integer.toString(bufferIndexEnd), 500, 30);
+			gc.drawString("start inst: " + Integer.toString(bufferInstructionStart), 600, 30);
 		}
 	}
 

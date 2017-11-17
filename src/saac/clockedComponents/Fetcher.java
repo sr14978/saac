@@ -27,6 +27,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	FConnection<Boolean>.Input clearOutput;
 	FConnection<int[]>.Output instructionInput;
 	List<ClearableComponent> clearables;
+	
 	boolean halt = false;
 	
 	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables,
@@ -48,17 +49,22 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	@Override
 	public void tick() throws Exception {
 		
+		
 		if(halt) {
 			if(!fromBrUnit.ready())
 				return;
 			BranchResult res = fromBrUnit.pop();
-			halt = false;
 			programCounter = res.getPc();
+		} else if(fromBrUnit.ready()) {
 			
-			if(!res.wasCorrect())
+			BranchResult res = fromBrUnit.pop();
+			
+			if(!res.wasCorrect()) {
 				for(ClearableComponent cc : clearables)
 					cc.clear();
-			
+				instructionCounter = res.getID();
+				programCounter = res.getPc();
+			}
 		} else if(addrOutput.clear()) {
 			addrOutput.put(programCounter);
 			programCounter++;
@@ -89,13 +95,20 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			return;
 		case JmpN:
 		case JmpZ:
+			clearOutput.put(true);
+			boolean prediction = prediction(inst);				
 			inst[3] = inst[4] + 1;
+			inst[4] = prediction?1:0;
+			inst[5] = instructionCounter++;
+			if(prediction)
+				programCounter = inst[1] + inst[3];
+			output.put(inst);
+			break;
 		case Ln:
-			halt = true;
 			clearOutput.put(true);
 			inst[5] = instructionCounter++;
-			inst[4] = prediction(inst);
 			output.put(inst);
+			halt = true;
 			break;
 		default:
 			inst[5] = instructionCounter++;
@@ -104,8 +117,8 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		}		
 	}
 
-	private int prediction(int[] inst) {
-		return 1;
+	private boolean prediction(int[] inst) {
+		return true;
 	}
 
 	class View extends ComponentView {
@@ -118,6 +131,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			DrawingHelper.drawBox(gc, "Fetcher");
 			gc.setColor(Color.BLACK);
 			gc.drawString("pc: " + Integer.toString(programCounter), 10, 35);
+			gc.drawString("inst count: " + Integer.toString(instructionCounter), 60, 35);
 		}
 	}
 
