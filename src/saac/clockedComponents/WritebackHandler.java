@@ -193,7 +193,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		}
 		
 		public void paint(Graphics2D gc) {
-			DrawingHelper.drawBox(gc, "Write Back Handler", 3*BOX_SIZE, 50);
+			DrawingHelper.drawBox(gc, "Write Back Handler", 4*BOX_SIZE, 50);
 			gc.setPaint(Color.BLACK);
 			for(int i = 0; i<reorderBuffer.length; i++)
 				if(reorderBuffer[i] != null)

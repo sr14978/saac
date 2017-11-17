@@ -78,7 +78,7 @@ public class Main extends JFrame {
 		gui = new Gui();
 		add(gui, BorderLayout.CENTER);
 		
-		setSize(1700, 900);
+		setSize(1500, 900);
 		setVisible(true);
 		
 		new Thread(){
@@ -109,7 +109,7 @@ public class Main extends JFrame {
 	    public void paintComponent(Graphics gg) {
 			Graphics2D g = (Graphics2D) gg;
 			g.setColor(getBackground());
-			g.fillRect(0, 0, 1700, 900);
+			g.fillRect(0, 0, 1500, 900);
 			for(ComponentViewI cv : visibleComponents) {
 				Point pos = cv.getPosition();
 				g.translate(pos.x, pos.y);

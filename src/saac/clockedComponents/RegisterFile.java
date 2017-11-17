@@ -102,7 +102,9 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			DrawingHelper.drawBox(gc, "Register File");
 			gc.setColor(Color.BLACK);
 			for( int i = 0; i<registerNum; i++) {
-				gc.drawString(Integer.toString(values[i]) + (dirtyBits[i]?"(d)":"  "), 33*i+5, 30);
+				gc.drawString(Integer.toString(values[i]), 25*i+5, 40);
+				if(dirtyBits[i])
+					gc.drawString("(d)", 25*i+5, 25);
 			}
 		}
 	}

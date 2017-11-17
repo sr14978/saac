@@ -225,12 +225,13 @@ public class Saac implements ClockedComponentI {
 		visibleComponents.add(EU_AtoWB.createView(0, boxHeight*c));
 		visibleComponents.add(EU_BtoWB.createView(BOX_SIZE, boxHeight*c));
 		visibleComponents.add(LStoWB.createView(2*BOX_SIZE, boxHeight*c));
+		visibleComponents.add(brToWB.createView(3*BOX_SIZE, boxHeight*c));
+		visibleComponents.add(brToFetch.createView(4*BOX_SIZE, boxHeight*c));
 		c++;
 		visibleComponents.add(writeBack.createView(0, boxHeight*c));
 		c++;
 		visibleComponents.add(WBtoRegister.createView(BOX_SIZE/2, boxHeight*c));
 		visibleComponents.add(dirtyWBtoDep.createView(3*BOX_SIZE/2, boxHeight*c));
-		visibleComponents.add(brToFetch.createView(3*BOX_SIZE, boxHeight*c));
 		
 		clearables.add(instructionSource);
 		clearables.add(decoder);

@@ -6,7 +6,7 @@ import java.awt.Color;
 
 public class DrawingHelper {
 	
-	public static final int BOX_SIZE = 400;
+	public static final int BOX_SIZE = 300;
 	
 	public static void drawBox(Graphics2D gc, String name) {
 		drawBox(gc, name, BOX_SIZE, 50);
