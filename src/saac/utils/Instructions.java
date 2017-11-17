@@ -38,18 +38,19 @@ public class Instructions {
 			case 0x4: return Sub;
 			case 0x5: return Subi;
 			case 0x6: return Mul;
-			case 0x7: return Div;
-			case 0x8: return Divi;
-			case 0x9: return Ldma;
-			case 0xA: return Stma;
-			case 0xB: return Ldmi;
-			case 0xC: return Stmi;
-			case 0xD: return Br;
-			case 0xE: return Ln;
-			case 0xF: return Jmp;
-			case 0x10: return JmpZ;
-			case 0x11: return JmpN;
-			case 0x12: return Stop;
+			case 0x7: return Muli;
+			case 0x8: return Div;
+			case 0x9: return Divi;
+			case 0xA: return Ldma;
+			case 0xB: return Stma;
+			case 0xC: return Ldmi;
+			case 0xD: return Stmi;
+			case 0xE: return Br;
+			case 0xF: return Ln;
+			case 0x10: return Jmp;
+			case 0x11: return JmpZ;
+			case 0x12: return JmpN;
+			case 0x13: return Stop;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -63,18 +64,19 @@ public class Instructions {
 			case Sub: return 0x4;
 			case Subi: return 0x5;
 			case Mul: return 0x6;
-			case Div: return 0x7;
-			case Divi: return 0x8;
-			case Ldma: return 0x9;
-			case Stma: return 0xA;
-			case Ldmi: return 0xB;
-			case Stmi: return 0xC;
-			case Br: return 0xD;
-			case Ln: return 0xE;
-			case Jmp: return 0xF;
-			case JmpZ: return 0x10;
-			case JmpN: return 0x11;
-			case Stop: return 0x12;
+			case Muli: return 0x7;
+			case Div: return 0x8;
+			case Divi: return 0x9;
+			case Ldma: return 0xA;
+			case Stma: return 0xB;
+			case Ldmi: return 0xC;
+			case Stmi: return 0xD;
+			case Br: return 0xE;
+			case Ln: return 0xF;
+			case Jmp: return 0x10;
+			case JmpZ: return 0x11;
+			case JmpN: return 0x12;
+			case Stop: return 0x13;
 			default: throw new NotImplementedException();
 			}
 		}

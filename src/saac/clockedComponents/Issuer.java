@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.function.Function;
 
+import saac.Settings;
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -27,6 +28,8 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	Connection<Integer>.Output paramBRegInput;
 	Connection<Integer>.Output paramCRegInput;
 	FConnection<Instruction>.Input outputEU;
+	FConnection<Instruction>.Input toEU_A;
+	Connection<Boolean>.Output dualToIssuer;
 	FConnection<Instruction>.Input outputLS;
 	FConnection<Instruction>.Input outputBr;
 	Instruction bufferOut;
@@ -38,6 +41,8 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 			Connection<Integer>.Output paramBRegInput,
 			Connection<Integer>.Output paramCRegInput,
 			FConnection<Instruction>.Input outputEU,
+			FConnection<Instruction>.Input toEU_A,
+			Connection<Boolean>.Output dualToIssuer,
 			FConnection<Instruction>.Input outputLS,
 			FConnection<Instruction>.Input outputBr) {
 		this.opcodeIn = opcodeIn;
@@ -45,6 +50,8 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 		this.paramBRegInput = paramBRegInput;
 		this.paramCRegInput = paramCRegInput;
 		this.outputEU = outputEU;
+		this.toEU_A = toEU_A;
+		this.dualToIssuer = dualToIssuer;
 		this.outputLS = outputLS;
 		this.outputBr = outputBr;
 		this.registerFile = rf;
@@ -120,7 +127,13 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 		case Nop:
 		case Stop:
 			if(outputEU.clear()) {
-				outputEU.put(bufferOut);
+				
+				//bypassing
+				if(Settings.RESERVATION_STATION_BYPASS_ENABLED && toEU_A.clear() && dualToIssuer.get() == true)
+					toEU_A.put(bufferOut);
+				else
+					outputEU.put(bufferOut);
+				
 				Output.debug.println(bufferOut + " sent to EU reservation station");
 				bufferOut = null;
 			}

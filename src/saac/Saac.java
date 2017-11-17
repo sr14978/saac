@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import saac.clockedComponents.BranchExecutionUnit;
 import saac.clockedComponents.Decoder;
@@ -53,7 +54,7 @@ public class Saac implements ClockedComponentI {
 		}
 	}
 	
-	int delay = 10;
+	int delay = 0;
 	boolean phase = true;
 	void step(Runnable paint) throws Exception {
 		if(phase)
@@ -78,28 +79,35 @@ public class Saac implements ClockedComponentI {
 		List<ClearableComponent> clearables = new ArrayList<>();
 		
 		Memory memory = new Memory();
-						
-		FConnection<Instruction> dualRSToEU_A = new FConnection<>();
-		FConnection<InstructionResult> EU_AtoWB = new FConnection<>();
-		ExecutionUnit executionUnit_A = new ExecutionUnit(dualRSToEU_A.getOutputEnd(), EU_AtoWB.getInputEnd());
 		
-		FConnection<Instruction> dualRSToEU_B = new FConnection<>();
-		FConnection<InstructionResult> EU_BtoWB = new FConnection<>();
-		ExecutionUnit executionUnit_B = new ExecutionUnit(dualRSToEU_B.getOutputEnd(), EU_BtoWB.getInputEnd());
-		
+		List<FConnection<Instruction>> dualRSToEUs = new ArrayList<>();
+		List<FConnection<InstructionResult>> EUToWBs = new ArrayList<>();
+		List<ExecutionUnit> EUs = new ArrayList<>();
+		for(int i = 0; i<Settings.NUMBER_OF_EXECUTION_UNITS; i++) {
+			FConnection<Instruction> dualRSToEU = new FConnection<>();
+			FConnection<InstructionResult> EUtoWB = new FConnection<>();
+			EUs.add(new ExecutionUnit(dualRSToEU.getOutputEnd(), EUtoWB.getInputEnd()));
+			dualRSToEUs.add(dualRSToEU);
+			EUToWBs.add(EUtoWB);
+		}
+	
 		FConnection<Instruction> issueToLS = new FConnection<>();
 		FConnection<InstructionResult> LStoWB = new FConnection<>();
 		LoadStoreExecutionUnit LSEU = new LoadStoreExecutionUnit(issueToLS.getOutputEnd(), LStoWB.getInputEnd(), memory);
 		
 		FConnection<Instruction> issueToBr = new FConnection<>();
 		FConnection<BranchResult> brToFetch = new FConnection<>();
-		FConnection<BranchResult> brToWB = new FConnection<>();
+		FConnection<InstructionResult> brToWB = new FConnection<>();
 		BranchExecutionUnit brUnit = new BranchExecutionUnit(
 				issueToBr.getOutputEnd(), brToFetch.getInputEnd(), brToWB.getInputEnd());
 		
 		FConnection<Instruction> issueToDualRS = new FConnection<>();
+		Connection<Boolean> dualToIssuer = new Connection<>();
 		DualReservationStation dualRS = new DualReservationStation(
-				dualRSToEU_A.getInputEnd(), dualRSToEU_B.getInputEnd(), issueToDualRS.getOutputEnd());
+				dualRSToEUs.stream().map(x->x.getInputEnd()).collect(Collectors.toList()),
+				issueToDualRS.getOutputEnd(), 
+				dualToIssuer.getInputEnd()
+			);
 				
 		FConnection<int[]> fetchToDecode = new FConnection<>();
 		FConnection<Instruction> decodeToDep = new FConnection<>();
@@ -123,7 +131,7 @@ public class Saac implements ClockedComponentI {
 				paramCDepToReg.getOutputEnd(),
 				paramCReg_RegToIssue.getInputEnd(),
 				WBtoRegister.getOutputEnd()
-				);
+			);
 		
 		FConnection<Integer> addrInput = new FConnection<>();
 		FConnection<Boolean> clearInput = new FConnection<>();
@@ -142,7 +150,7 @@ public class Saac implements ClockedComponentI {
 				addrInput.getInputEnd(),
 				clearInput.getInputEnd(),
 				instructionOutput.getOutputEnd()
-				);
+			);
 		
 		FConnection<Instruction> opcodeDepToIssue = new FConnection<>();
 		BufferedConnection<Integer> dirtyWBtoDep = new BufferedConnection<>(WritebackHandler.BUFF_SIZE);
@@ -162,13 +170,14 @@ public class Saac implements ClockedComponentI {
 				paramBReg_RegToIssue.getOutputEnd(),
 				paramCReg_RegToIssue.getOutputEnd(),
 				issueToDualRS.getInputEnd(),
+				dualRSToEUs.get(0).getInputEnd(),
+				dualToIssuer.getOutputEnd(),
 				issueToLS.getInputEnd(),
 				issueToBr.getInputEnd()
 			);
 		
 		WritebackHandler writeBack = new WritebackHandler(registerFile, depChecker,
-				EU_AtoWB.getOutputEnd(),
-				EU_BtoWB.getOutputEnd(),
+				EUToWBs.stream().map(x->x.getOutputEnd()).collect(Collectors.toList()),
 				LStoWB.getOutputEnd(),
 				brToWB.getOutputEnd(),
 				WBtoRegister.getInputEnd(),
@@ -184,8 +193,8 @@ public class Saac implements ClockedComponentI {
 		clockedComponents.add(depChecker);
 		clockedComponents.add(issuer);
 		clockedComponents.add(dualRS);
-		clockedComponents.add(executionUnit_A);
-		clockedComponents.add(executionUnit_B);
+		for(ExecutionUnit eu : EUs)
+			clockedComponents.add(eu);
 		clockedComponents.add(LSEU);
 		clockedComponents.add(brUnit);
 		clockedComponents.add(writeBack);
@@ -224,16 +233,19 @@ public class Saac implements ClockedComponentI {
 		visibleComponents.add(issueToBr.createView(3*BOX_SIZE, boxHeight*c));
 		c++;
 		visibleComponents.add(dualRS.createView(0, boxHeight*c++));
-		visibleComponents.add(dualRSToEU_A.createView(0, boxHeight*c));
-		visibleComponents.add(dualRSToEU_B.createView(BOX_SIZE, boxHeight*c));
+		visibleComponents.add(dualRSToEUs.get(0).createView(0, boxHeight*c));
+		if(Settings.NUMBER_OF_EXECUTION_UNITS>1)
+			visibleComponents.add(dualRSToEUs.get(1).createView(BOX_SIZE, boxHeight*c));
 		c++;
-		visibleComponents.add(executionUnit_A.createView(0, boxHeight*c));
-		visibleComponents.add(executionUnit_B.createView(BOX_SIZE, boxHeight*c));
+		visibleComponents.add(EUs.get(0).createView(0, boxHeight*c));
+		if(Settings.NUMBER_OF_EXECUTION_UNITS>1)
+			visibleComponents.add(EUs.get(1).createView(BOX_SIZE, boxHeight*c));
 		visibleComponents.add(LSEU.createView(2*BOX_SIZE, boxHeight*c));
 		visibleComponents.add(brUnit.createView(7*BOX_SIZE/2, boxHeight*c));
 		c++;
-		visibleComponents.add(EU_AtoWB.createView(0, boxHeight*c));
-		visibleComponents.add(EU_BtoWB.createView(BOX_SIZE, boxHeight*c));
+		visibleComponents.add(EUToWBs.get(0).createView(0, boxHeight*c));
+		if(Settings.NUMBER_OF_EXECUTION_UNITS>1)
+			visibleComponents.add(EUToWBs.get(1).createView(BOX_SIZE, boxHeight*c));
 		visibleComponents.add(LStoWB.createView(2*BOX_SIZE, boxHeight*c));
 		visibleComponents.add(brToWB.createView(3*BOX_SIZE, boxHeight*c));
 		visibleComponents.add(brToFetch.createView(4*BOX_SIZE, boxHeight*c));
@@ -253,14 +265,17 @@ public class Saac implements ClockedComponentI {
 		clearables.add(registerFile);
 		clearables.add(issuer);
 		clearables.add(dualRS);
-		clearables.add(executionUnit_A);
-		clearables.add(executionUnit_B);
+		clearables.add(EUs.get(0));
+		if(Settings.NUMBER_OF_EXECUTION_UNITS>1)
+			clearables.add(EUs.get(1));
 		clearables.add(LSEU);
 		clearables.add(brUnit);
-		clearables.add(dualRSToEU_A);
-		clearables.add(EU_AtoWB);
-		clearables.add(dualRSToEU_B);
-		clearables.add(EU_BtoWB);
+		clearables.add(dualRSToEUs.get(0));
+		clearables.add(EUToWBs.get(0));
+		if(Settings.NUMBER_OF_EXECUTION_UNITS>1) {
+			clearables.add(dualRSToEUs.get(1));
+			clearables.add(EUToWBs.get(1));
+		}
 		clearables.add(issueToLS);
 		clearables.add(LStoWB);
 		clearables.add(issueToBr);

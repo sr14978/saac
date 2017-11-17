@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 
 import saac.dataObjects.BranchResult;
 import saac.dataObjects.Instruction;
+import saac.dataObjects.InstructionResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -19,16 +20,16 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	private FConnection<Instruction>.Output instructionIn;
 	FConnection<BranchResult>.Input outputToFetch;
-	FConnection<BranchResult>.Input outputToWB;
+	FConnection<InstructionResult>.Input outputToWB;
 	BranchResult bufferOut;
 	
 	public BranchExecutionUnit(
 			FConnection<Instruction>.Output instructionIn,
 			FConnection<BranchResult>.Input outputToFetch,
-			FConnection<BranchResult>.Input outputToWB) {
+			FConnection<InstructionResult>.Input input) {
 		this.instructionIn = instructionIn;
 		this.outputToFetch = outputToFetch;
-		this.outputToWB = outputToWB;
+		this.outputToWB = input;
 	}
 	
 	@Override

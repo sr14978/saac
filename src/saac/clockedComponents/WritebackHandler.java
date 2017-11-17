@@ -4,6 +4,8 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import saac.Main;
 import saac.Saac;
@@ -24,8 +26,7 @@ import saac.utils.DrawingHelper;
 import saac.utils.Output;
 
 public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
-	FConnection<InstructionResult>.Output inputEU_A; 
-	FConnection<InstructionResult>.Output inputEU_B; 
+	List<FConnection<InstructionResult>.Output> inputs;
 	FConnection<InstructionResult>.Output inputLS;
 	FConnection<BranchResult>.Output inputBr;
 	RegisterFile registerFile;
@@ -45,16 +46,14 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	boolean bufferEmpty = true;
 	
 	public WritebackHandler(RegisterFile rf, DepChecker depChecker,
-			FConnection<InstructionResult>.Output inputEU_A, 
-			FConnection<InstructionResult>.Output inputEU_B, 
+			List<FConnection<InstructionResult>.Output> inputEUs,
 			FConnection<InstructionResult>.Output inputLS,
-			FConnection<BranchResult>.Output inputBr,
+			FConnection<InstructionResult>.Output inputBr,
 			FConnection<RegisterResult>.Input resultOutput,
 			BufferedConnection<Integer>.Input dirtyOutput) {
-		this.inputEU_A = inputEU_A;
-		this.inputEU_B = inputEU_B;
-		this.inputLS = inputLS;
-		this.inputBr = inputBr;
+		this.inputs = new ArrayList<>(inputEUs);
+		this.inputs.add(inputLS);
+		this.inputs.add(inputBr);
 		this.registerFile = rf;
 		this.depChecker = depChecker;
 		this.resultOutput = resultOutput;
@@ -111,62 +110,16 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	}
 
 	private FConnection<? extends InstructionResult>.Output getInput() throws Exception {
-		FConnection<? extends InstructionResult>.Output input;
-		
-		switch(nextInput) {
-		case 0:
-			if(inputLS.ready())
-				input = inputLS;
-			else if(inputEU_A.ready())
-				input = inputEU_A;
-			else if(inputEU_B.ready())
-				input = inputEU_B;
-			else if(inputBr.ready())
-				input = inputBr;
-			else
-				return null;
-			break;
-		case 1:
-			if(inputEU_A.ready())
-				input = inputEU_A;
-			else if(inputEU_B.ready())
-				input = inputEU_B;
-			else if(inputBr.ready())
-				input = inputBr;
-			else if(inputLS.ready())
-				input = inputLS;
-			else 
-				return null;
-			break;
-		case 2:
-			if(inputEU_B.ready())
-				input = inputEU_B;
-			else if(inputBr.ready())
-				input = inputBr;
-			else if(inputLS.ready())
-				input = inputLS;
-			else if(inputEU_A.ready())
-				input = inputEU_A;
-			else 
-				return null;
-			break;
-		case 3:
-			if(inputBr.ready())
-				input = inputBr;
-			else if(inputEU_B.ready())
-				input = inputEU_B;
-			else if(inputLS.ready())
-				input = inputLS;
-			else if(inputEU_A.ready())
-				input = inputEU_A;
-			else 
-				return null;
-			break;
-		default:
-			throw new Exception();
+		FConnection<? extends InstructionResult>.Output input = null;
+		for(int i = 0; i<inputs.size(); i++) {
+			int j = nextInput;
+			nextInput = (nextInput + 1) % inputs.size();
+			if(inputs.get(j).ready()) {
+				input = inputs.get(j);
+				break;
+			}
 		}
 		
-		nextInput = (nextInput + 1) % 4;
 		return input;
 	}
 

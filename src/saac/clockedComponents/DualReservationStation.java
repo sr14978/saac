@@ -12,6 +12,7 @@ import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
+import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.FullChannelException;
 import saac.interfaces.VisibleComponentI;
@@ -20,19 +21,20 @@ import saac.utils.Output;
 
 
 public class DualReservationStation implements ClockedComponentI, VisibleComponentI, ClearableComponent{
-	FConnection<Instruction>.Input outputUnit1;
-	FConnection<Instruction>.Input outputUnit2;
+
+	List<FConnection<Instruction>.Input> outputUnits;	
 	FConnection<Instruction>.Output input;
+	Connection<Boolean>.Input emptyFlag;
 	List<Instruction> buffer = new LinkedList<>();
 	static int bufferLimit = 3;
-	enum EU {left, right}
-	EU lastUsedEU = EU.left;
+	int nextOutputToUse = 0;
 	
-	public DualReservationStation(FConnection<Instruction>.Input outputUnit1, FConnection<Instruction>.Input outputUnit2,
-			FConnection<Instruction>.Output input) {
-		this.outputUnit1 = outputUnit1;
-		this.outputUnit2 = outputUnit2;
+	public DualReservationStation(List<FConnection<Instruction>.Input> outputUnits,
+			FConnection<Instruction>.Output input, Connection<Boolean>.Input emptyFlag) {
+		this.outputUnits = outputUnits;
 		this.input = input;
+		this.emptyFlag = emptyFlag;
+		emptyFlag.put(true);
 	}
 
 	@Override
@@ -42,23 +44,22 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 		if(!input.ready())
 			return;
 		buffer.add(input.pop());
+		if(buffer.size() != 0)
+			emptyFlag.put(false);
 	}
 
 	@Override
 	public void tock() throws Exception {
 		if(buffer.size() < 1)
 			return;
-		if( lastUsedEU == EU.right) {
-			if(output(outputUnit1, buffer, "EU 1"))
-				lastUsedEU = EU.left;
-			else if(output(outputUnit2, buffer, "EU 2"))
-				lastUsedEU = EU.right;
-		} else if( lastUsedEU == EU.left)
-			if(output(outputUnit2, buffer, "EU 2"))
-				lastUsedEU = EU.right;
-			else if(output(outputUnit1, buffer, "EU 1"))
-				lastUsedEU = EU.left;
-		
+		for(int i = 0; i<outputUnits.size(); i++) {
+			int j = nextOutputToUse;
+			nextOutputToUse = (nextOutputToUse + 1) % outputUnits.size();
+			if(output(outputUnits.get(j), buffer, "EU " + j))
+				break;
+		}
+		if(buffer.size() == 0)
+			emptyFlag.put(true);
 	}
 	
 	public static boolean output(FConnection<Instruction>.Input input, List<Instruction> buffer, String name) throws FullChannelException {
