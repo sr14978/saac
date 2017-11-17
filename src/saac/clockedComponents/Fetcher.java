@@ -13,6 +13,7 @@ import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponentI;
+import saac.unclockedComponents.BranchPredictor;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 import saac.utils.Output;
@@ -29,7 +30,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	FConnection<Boolean>.Input clearOutput;
 	FConnection<int[]>.Output instructionInput;
 	List<ClearableComponent> clearables;
-	
+	BranchPredictor predictor = new BranchPredictor();
 	boolean halt = false;
 	
 	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables,
@@ -98,18 +99,21 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			return;
 		case JmpN:
 		case JmpZ:
-			boolean prediction = prediction(inst);				
 			inst[3] = inst[4] + 1;
-			inst[4] = prediction?1:0;
 			inst[5] = instructionCounter++;
-			if(prediction)
-				programCounter = inst[3] + inst[1];
-			else
-				programCounter = inst[3];
 			output.put(inst);
 			clearOutput.put(true);
-			if(Settings.BRANCH_PREDICTION_MODE == BranchPrediciton.Blocking)
+			
+			if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
+				boolean prediction = predictor.predict(inst);
+				inst[4] = prediction?1:0;
+				if(prediction)
+					programCounter = inst[3] + inst[1];
+				else
+					programCounter = inst[3];
+			} else {
 				halt = true;
+			}
 			break;
 		case Ln:
 			clearOutput.put(true);
@@ -122,10 +126,6 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			output.put(inst);
 			break;
 		}		
-	}
-
-	private boolean prediction(int[] inst) {
-		return false;
 	}
 
 	class View extends ComponentView {
