@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.List;
 
+import saac.Settings;
+import saac.Settings.BranchPrediciton;
 import saac.dataObjects.BranchResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -55,6 +57,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				return;
 			BranchResult res = fromBrUnit.pop();
 			programCounter = res.getPc();
+			halt = false;
 		} else if(fromBrUnit.ready()) {
 			
 			BranchResult res = fromBrUnit.pop();
@@ -103,6 +106,8 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			if(prediction)
 				programCounter = inst[1] + inst[3];
 			output.put(inst);
+			if(Settings.BRANCH_PREDICTION_MODE == BranchPrediciton.Blocking)
+				halt = true;
 			break;
 		case Ln:
 			clearOutput.put(true);

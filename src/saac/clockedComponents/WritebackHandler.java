@@ -5,7 +5,8 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-import saac.dataObjects.BlankResult;
+import saac.Settings;
+import saac.Settings.BranchPrediciton;
 import saac.dataObjects.BranchResult;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
@@ -86,7 +87,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				System.out.println("set: "+bufferIndexEnd);
 			}
 			
-			if(res instanceof BranchResult) {
+			if(res instanceof BranchResult && Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
 				BranchResult br = (BranchResult) res;
 				if(!br.wasCorrect()) {
 					reorderBuffer[bufferIndex] = null;
