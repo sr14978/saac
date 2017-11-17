@@ -29,8 +29,8 @@ import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
+import saac.unclockedComponents.Label;
 import saac.unclockedComponents.Memory;
-import saac.utils.Instructions.Opcode;
 import saac.utils.parsers.ParserException;
 
 public class Saac implements ClockedComponentI {
@@ -220,7 +220,7 @@ public class Saac implements ClockedComponentI {
 		visibleComponents.add(executionUnit_A.createView(0, boxHeight*c));
 		visibleComponents.add(executionUnit_B.createView(BOX_SIZE, boxHeight*c));
 		visibleComponents.add(LSEU.createView(2*BOX_SIZE, boxHeight*c));
-		visibleComponents.add(brUnit.createView(3*BOX_SIZE, boxHeight*c));
+		visibleComponents.add(brUnit.createView(7*BOX_SIZE/2, boxHeight*c));
 		c++;
 		visibleComponents.add(EU_AtoWB.createView(0, boxHeight*c));
 		visibleComponents.add(EU_BtoWB.createView(BOX_SIZE, boxHeight*c));
@@ -229,9 +229,13 @@ public class Saac implements ClockedComponentI {
 		visibleComponents.add(brToFetch.createView(4*BOX_SIZE, boxHeight*c));
 		c++;
 		visibleComponents.add(writeBack.createView(0, boxHeight*c));
+		visibleComponents.add(new Label(4*BOX_SIZE, boxHeight*c, "to fetch"));
 		c++;
 		visibleComponents.add(WBtoRegister.createView(BOX_SIZE/2, boxHeight*c));
 		visibleComponents.add(dirtyWBtoDep.createView(3*BOX_SIZE/2, boxHeight*c));
+		c++;
+		visibleComponents.add(new Label(BOX_SIZE/2, boxHeight*c, "to registers"));
+		visibleComponents.add(new Label(3*BOX_SIZE/2, boxHeight*c, "to dep checker"));
 		
 		clearables.add(instructionSource);
 		clearables.add(decoder);
