@@ -32,7 +32,8 @@ public class Main extends JFrame {
 	
 	List<ComponentViewI> visibleComponents = new ArrayList<>();;
 	Saac saac;
-	boolean stopped = false;
+	boolean paused = false;
+	public static boolean finished = false;
     Main self = this;
 	
     JLabel rateLable;
@@ -58,25 +59,8 @@ public class Main extends JFrame {
 		JSlider slider = new JSlider();
 		slider.setMinimum(0);
 		slider.setMaximum(900);
-		
-		int i;
-		if(saac.delay>2*300 + 0.25*300)
-			i = (int) (600 + (saac.delay - 2*300 - 0.25*300) / 4);
-		else if(saac.delay>0.25*300)
-			i = (int) (600 + (saac.delay - 0.25*300) / 1);
-		else
-			i = (int) (saac.delay / 0.25);
-		slider.setValue(i);
-		
-		slider.addChangeListener(e -> {
-			int v = slider.getValue();
-			if(v>600)
-				saac.delay = (int) ((v-600)*4 + 2*300 + 0.25*300);
-			else if(v>300)
-				saac.delay = (int) ((v-300)*1 + 0.25*300);
-			else
-				saac.delay = (int) (v*0.25);
-		});
+		slider.setValue(calculateSliderValue(saac.delay));
+		slider.addChangeListener(e -> saac.delay = calculateDelay(slider.getValue()) );
 		
 		rateLable = new JLabel();
 		
@@ -111,7 +95,25 @@ public class Main extends JFrame {
 		};
 		worker.start();		
 	}
+
+	private int calculateSliderValue(int delay) {
+		if(delay>2*300 + 0.25*300)
+			return (int) (600 + (delay - 2*300 - 0.25*300) / 4);
+		else if(delay>0.25*300)
+			return (int) (600 + (delay - 0.25*300) / 1);
+		else
+			return (int) (delay / 0.25);
+	}
 	
+	private int calculateDelay(int sliderValue) {
+		if(sliderValue>600)
+			return (int) ((sliderValue-600)*4 + 2*300 + 0.25*300);
+		else if(sliderValue>300)
+			return (int) ((sliderValue-300)*1 + 0.25*300);
+		else
+			return (int) (sliderValue*0.25);
+	}
+		
 	@SuppressWarnings("serial")
 	class Gui extends JPanel {
 		@Override
@@ -141,23 +143,23 @@ public class Main extends JFrame {
 	}
     
     void start() {
-    	if(stopped) {
+    	if(paused && !finished) {
     		saac.mutex.unlock();
-    		stopped = false;
+    		paused = false;
     	}
     }
     
-    public void stop() {
-    	if(!stopped) {
+    void stop() {
+    	if(!paused) {
 			saac.mutex.lock();
-    		stopped = true;
+    		paused = true;
     	}
     }
 
     void step(int n) {
-    	if(stopped) {
+    	if(paused && !finished) {
     		try {
-	    		for(int i = 0; i<n; i++)
+	    		for(int i = 0; i<n && !finished; i++)
 		        	saac.step(()->{});
 	    		paint();
     		} catch (Exception e) {

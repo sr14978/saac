@@ -143,6 +143,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			dirtyOutput.put(rr.getTarget());
 		} else if(res instanceof StopResult) {
 			Main.worker.interrupt();
+			Main.finished = true;
 		}
 		
 		bufferIndexStart = (bufferIndexStart + 1) % BUFF_SIZE;

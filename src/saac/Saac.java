@@ -54,7 +54,7 @@ public class Saac implements ClockedComponentI {
 		}
 	}
 	
-	int delay = 0;
+	int delay = 100;
 	boolean phase = true;
 	void step(Runnable paint) throws Exception {
 		if(phase)
