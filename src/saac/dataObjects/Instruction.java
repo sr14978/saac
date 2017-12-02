@@ -49,8 +49,27 @@ public class Instruction {
 	
 	public Instruction transform(Function<Opcode, Opcode> opcode, Function<Integer, Integer> target,
 			Function<Integer, Integer> sourceA, Function<Integer, Integer> sourceB) {
-		return new Instruction(this.instructionNumber, opcode.apply(this.opcode), target.apply(this.paramA),
-				sourceA.apply(this.paramB), sourceB.apply(this.paramC), paramD);
+		return transformOp(opcode).transformParamA(target).transformParamB(sourceA).transformParamC(sourceB);
+	}
+		
+	public Instruction transformOp(Function<Opcode, Opcode> f) {
+		return new Instruction(this.instructionNumber, f.apply(this.opcode), this.paramA, this.paramB, this.paramC, paramD);
+	}
+	
+	public Instruction transformParamA(Function<Integer, Integer> f) {
+		return new Instruction(this.instructionNumber, this.opcode, f.apply(this.paramA), this.paramB, this.paramC, paramD);
+	}
+	
+	public Instruction transformParamB(Function<Integer, Integer> f) {
+		return new Instruction(this.instructionNumber, this.opcode, this.paramA, f.apply(this.paramB), this.paramC, paramD);
+	}
+	
+	public Instruction transformParamC(Function<Integer, Integer> f) {
+		return new Instruction(this.instructionNumber, this.opcode, this.paramA, this.paramB, f.apply(this.paramC), paramD);
+	}
+	
+	public Instruction transformParamD(Function<Integer, Integer> f) {
+		return new Instruction(this.instructionNumber, this.opcode, this.paramA, this.paramB, this.paramC, f.apply(paramD));
 	}
 	
 	public String toString() {
