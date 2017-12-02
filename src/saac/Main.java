@@ -25,7 +25,7 @@ public class Main extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) throws IOException, ParserException {
-		
+				
 		Main window = new Main();
 		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
@@ -95,23 +95,31 @@ public class Main extends JFrame {
 		};
 		worker.start();		
 	}
-
-	private int calculateSliderValue(int delay) {
-		if(delay>2*300 + 0.25*300)
-			return (int) (600 + (delay - 2*300 - 0.25*300) / 4);
-		else if(delay>0.25*300)
-			return (int) (600 + (delay - 0.25*300) / 1);
+	private static final double s0 = 0.25;
+	private static final double s1 = 1;
+	private static final double s2 = 4;
+	private static final int x1 = 300;
+	private static final int x2 = 600;
+	private static final int dx = 300;
+	private static final int y1 = (int) (s0*dx);
+	private static final int y2 = (int) (s0*dx + s1*dx);
+	
+	private static int calculateSliderValue(int delay) {
+		if(delay>y2)
+			return (int) (x2 + (delay - y2) / s2);
+		else if(delay>y1)
+			return (int) (x1 + (delay - y1) / s1);
 		else
-			return (int) (delay / 0.25);
+			return (int) (delay / s0);
 	}
 	
-	private int calculateDelay(int sliderValue) {
-		if(sliderValue>600)
-			return (int) ((sliderValue-600)*4 + 2*300 + 0.25*300);
-		else if(sliderValue>300)
-			return (int) ((sliderValue-300)*1 + 0.25*300);
+	private static int calculateDelay(int sliderValue) {
+		if(sliderValue>x2)
+			return (int) ((sliderValue-x2)*s2 + s1*dx + s0*dx);
+		else if(sliderValue>x1)
+			return (int) ((sliderValue-x1)*s1 + s0*dx);
 		else
-			return (int) (sliderValue*0.25);
+			return (int) (sliderValue*s0);
 	}
 		
 	@SuppressWarnings("serial")
