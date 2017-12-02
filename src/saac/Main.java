@@ -85,9 +85,10 @@ public class Main extends JFrame {
 		worker = new Thread(){
 			public void run() {
 				try {
-					saac.worker(self::paint);
+					saac.worker(self::flagRepaint);
 				} catch (InterruptedException e) {
 					Output.state.println("Program Finished");
+					paint();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -140,15 +141,19 @@ public class Main extends JFrame {
     
 	
     long lastRepaintTime = 0;
-    public void paint() {
+    public void flagRepaint() {
     	long currentTime = System.currentTimeMillis();
     	if(currentTime - lastRepaintTime > 1000/30) {
     		lastRepaintTime = currentTime;	
-			gui.repaint();
-			rateLable.setText(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter));
-			rateLable.repaint();
+    		paint();
     	}
 	}
+    
+    private void paint() {
+    	gui.repaint();
+		rateLable.setText(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter));
+		rateLable.repaint();
+    }
     
     void start() {
     	if(paused && !finished) {
@@ -169,7 +174,7 @@ public class Main extends JFrame {
     		try {
 	    		for(int i = 0; i<n && !finished; i++)
 		        	saac.step(()->{});
-	    		paint();
+	    		flagRepaint();
     		} catch (Exception e) {
 				e.printStackTrace();
 			}
