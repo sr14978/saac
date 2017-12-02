@@ -2,6 +2,8 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.LinkedList;
+import java.util.List;
 
 import saac.dataObjects.Instruction;
 import saac.interfaces.ClearableComponent;
@@ -16,33 +18,42 @@ import saac.utils.Instructions.Opcode;
 public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
 	FConnection<Instruction>.Input output;
-	FConnection<int[]>.Output input;
-	Instruction bufferOut;
+	FConnection<int[][]>.Output input;
+	Instruction[] bufferOut;
+	List<Instruction> outInsts;
 	
-	public Decoder(FConnection<Instruction>.Input output, FConnection<int[]>.Output input) {
+	public Decoder(FConnection<Instruction>.Input output, FConnection<int[][]>.Output input) {
 		this.output = output;
 		this.input = input;
 	}
 
 	@Override
 	public void tick() throws Exception {
-		if(bufferOut != null)
+		//if(bufferOut != null)
+		if(outInsts != null)
 			return;
 		
 		if(!input.ready())
 			return;
-		int[] data = input.pop();
-		
-		bufferOut = new Instruction(data[5], Opcode.fromInt(data[0]), data[1], data[2], data[3], data[4]);
+		int[][] data = input.pop();
+		outInsts = new LinkedList<>();
+		for(int i = 0; i<data.length; i++) {
+			int[] inst = data[i];
+			outInsts.add(new Instruction(inst[5], Opcode.fromInt(inst[0]), inst[1], inst[2], inst[3], inst[4]));
+		}
+		//bufferOut = outInsts.toArray(new Instruction[0]);
 	}
 
 	@Override
 	public void tock() throws Exception {
-		if(bufferOut == null)
+		//if(bufferOut == null)
+		if(outInsts == null)
 			return;
 		if(output.clear()) {
-			output.put(bufferOut);
-			bufferOut = null;
+			output.put(outInsts.remove(0));
+			//bufferOut = null;
+			if(outInsts.isEmpty())
+				outInsts = null;
 		}
 	}
 		

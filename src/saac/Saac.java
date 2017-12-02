@@ -109,7 +109,7 @@ public class Saac implements ClockedComponentI {
 				dualToIssuer.getInputEnd()
 			);
 				
-		FConnection<int[]> fetchToDecode = new FConnection<>();
+		FConnection<int[][]> fetchToDecode = new FConnection<>();
 		FConnection<Instruction> decodeToDep = new FConnection<>();
 		Decoder decoder = new Decoder(decodeToDep.getInputEnd(), fetchToDecode.getOutputEnd());
 				
@@ -135,7 +135,7 @@ public class Saac implements ClockedComponentI {
 		
 		FConnection<Integer> addrInput = new FConnection<>();
 		FConnection<Boolean> clearInput = new FConnection<>();
-		FConnection<int[]> instructionOutput = new FConnection<>();
+		FConnection<int[][]> instructionOutput = new FConnection<>();
 		InstructionsSource instructionSource = new InstructionsSource(
 				addrInput.getOutputEnd(),
 				clearInput.getOutputEnd(),

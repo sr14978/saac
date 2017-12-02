@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import saac.ProgramLoader;
+import saac.Settings;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -29,7 +30,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	
 	FConnection<Integer>.Output addrInput;
 	FConnection<Boolean>.Output clearInput;
-	FConnection<int[]>.Input instructionOutput;
+	FConnection<int[][]>.Input instructionOutput;
 	
 	private class Item{
 		int[] value;
@@ -41,12 +42,12 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	}
 	
 	List<Item> bufferOut = new LinkedList<>();
-	static final int BufferSize = 4;
+	static final int BufferSize = 8;
 	
 	public InstructionsSource(
 			FConnection<Integer>.Output addrInput,
 			FConnection<Boolean>.Output clearInput,
-			FConnection<int[]>.Input instructionOutput
+			FConnection<int[][]>.Input instructionOutput
 			) throws IOException, ParserException {
 		this.addrInput = addrInput;
 		this.clearInput = clearInput;
@@ -61,7 +62,13 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 		if(bufferOut.isEmpty())
 			return;
 		if(bufferOut.get(0).delay == 0)
-			instructionOutput.put(bufferOut.remove(0).value);
+			instructionOutput.put(
+					new int[][] {
+						bufferOut.remove(0).value,
+						bufferOut.remove(0).value,
+						bufferOut.remove(0).value,
+						bufferOut.remove(0).value,
+						});
 		
 		for(Item item : bufferOut)
 			item.delay = item.delay > 0? item.delay-1 : 0;		
@@ -77,11 +84,13 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 		
 		if(!addrInput.ready())
 			return;
-		if(bufferOut.size() == BufferSize)
+		if(bufferOut.size() > BufferSize - Settings.SUPERSCALER_WIDTH)
 			return;
 		int pc = addrInput.pop();
-		int[] bytes = getInstruction(pc);
-		bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, 4/*Instructions.InstructionDelay.get(Opcode.Ldma)*/));
+		for(int i = pc; i<pc+4; i++) {
+			int[] bytes = getInstruction(i);
+			bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, 4));
+		}
 	}
 	
 	class View extends ComponentView {

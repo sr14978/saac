@@ -2,6 +2,7 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.LinkedList;
 import java.util.List;
 
 import saac.Settings;
@@ -21,24 +22,24 @@ import saac.utils.Output;
 public class Fetcher implements ClockedComponentI, VisibleComponentI {
 
 	RegisterFile registerFile;
-	FConnection<int[]>.Input output;
+	FConnection<int[][]>.Input output;
 
 	FConnection<BranchResult>.Output fromBrUnit;
 	int programCounter = 0;
 	int instructionCounter = 0;
 	FConnection<Integer>.Input addrOutput;
 	FConnection<Boolean>.Input clearOutput;
-	FConnection<int[]>.Output instructionInput;
+	FConnection<int[][]>.Output instructionInput;
 	List<ClearableComponent> clearables;
 	boolean halt = false;
 	BranchPredictor predictor;
 	
 	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables, BranchPredictor predictor,
-			FConnection<int[]>.Input output,
+			FConnection<int[][]>.Input output,
 			FConnection<BranchResult>.Output fromBrUnit,
 			FConnection<Integer>.Input addrOutput,
 			FConnection<Boolean>.Input clearOutput,
-			FConnection<int[]>.Output instructionInput
+			FConnection<int[][]>.Output instructionInput
 			) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
@@ -72,7 +73,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			}
 		} else if(addrOutput.clear()) {
 			addrOutput.put(programCounter);
-			programCounter++;
+			programCounter += Settings.SUPERSCALER_WIDTH;
 		}
 	}
 	
@@ -84,49 +85,59 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		if(!output.clear())
 			return;
 		
-		int[] inst = instructionInput.pop();
-		inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], 0 }; 
+		int[][] insts = instructionInput.pop();
+		List<int[]> outInsts = new LinkedList<>();
+		for(int i = 0; i<insts.length; i++) {
+			int[] inst = insts[i];
+			inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], 0 }; 
+			boolean stop = false;
+			switch(Opcode.fromInt(inst[0])) {
+			case Jmp:
+				programCounter = inst[4] + 1 + inst[1];
+				Output.jumping_info.println("Fetch is jumping");
+				clearOutput.put(true);
+				stop = true;
+				break;
+			case Br:
+				programCounter = inst[1];
+				Output.jumping_info.println("Fetch is Branching");
+				clearOutput.put(true);
+				stop = true;
+				break;
+			case JmpN:
+			case JmpZ:
+				inst[3] = inst[4] + 1;
+				inst[5] = instructionCounter++;
+				outInsts.add(inst);
 				
-		switch(Opcode.fromInt(inst[0])) {
-		case Jmp:
-			programCounter = inst[4] + 1 + inst[1];
-			Output.jumping_info.println("Fetch is jumping");
-			clearOutput.put(true);
-			return;
-		case Br:
-			programCounter = inst[1];
-			Output.jumping_info.println("Fetch is Branching");
-			clearOutput.put(true);
-			return;
-		case JmpN:
-		case JmpZ:
-			inst[3] = inst[4] + 1;
-			inst[5] = instructionCounter++;
-			output.put(inst);
-			clearOutput.put(true);
-			
-			if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
-				boolean prediction = predictor.predict(inst);
-				inst[4] = prediction?1:0;
-				if(prediction)
-					programCounter = inst[3] + inst[1];
-				else
-					programCounter = inst[3];
-			} else {
+				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
+					boolean prediction = predictor.predict(inst);
+					inst[4] = prediction?1:0;
+					if(prediction)
+						programCounter = inst[3] + inst[1];
+					else
+						programCounter = inst[3];
+				} else {
+					halt = true;
+					return;
+				}
+				break;
+			case Ln:
+				clearOutput.put(true);
+				inst[5] = instructionCounter++;
+				outInsts.add(inst);
 				halt = true;
+				stop = true;
+				return;
+			default:
+				inst[5] = instructionCounter++;
+				outInsts.add(inst);
+				break;
 			}
-			break;
-		case Ln:
-			clearOutput.put(true);
-			inst[5] = instructionCounter++;
-			output.put(inst);
-			halt = true;
-			break;
-		default:
-			inst[5] = instructionCounter++;
-			output.put(inst);
-			break;
-		}		
+			if(stop)
+				break;
+		}
+		output.put(outInsts.toArray(new int[0][]));
 	}
 
 	class View extends ComponentView {
