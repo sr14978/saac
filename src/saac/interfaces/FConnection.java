@@ -4,7 +4,9 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.Arrays;
 
+import saac.dataObjects.Instruction;
 import saac.utils.DrawingHelper;
 
 public class FConnection<T> implements VisibleComponentI, ClearableComponent{
@@ -64,11 +66,19 @@ public class FConnection<T> implements VisibleComponentI, ClearableComponent{
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, 23);
 			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHT_GRAY, Color.BLACK);
 			if(value != null) {
-				if(value instanceof int[]) {
-					int[] val = (int[]) value;
-					if(val.length > 3)
-						gc.drawString(val[0] + " " + val[1] + " " + val[2] + " " + val[3], 5, 15);
-				} else
+				if(value instanceof int[][]) {
+					int[][] vals = (int[][]) value;
+					StringBuilder sb = new StringBuilder();
+					sb.append("[");
+					for(int[] val : vals)
+						if(val.length > 3)
+							sb.append(val[0] + " " + val[1] + " " + val[2] + " " + val[3] + ", ");
+					sb.append("]");
+					gc.drawString(sb.toString(), 5, 15);
+				} else if(value instanceof Instruction[]) {
+					Instruction[] vals = (Instruction[]) value;
+					gc.drawString(Arrays.toString(vals), 5, 15);
+				} else 
 					gc.drawString(value.toString(), 5, 15);
 			}
 		}

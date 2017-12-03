@@ -49,21 +49,21 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			throw new ArrayIndexOutOfBoundsException();
 	}
 	
-	Connection<Integer>.Output readInputA;
-	Connection<Integer>.Input readOutputAReg;
-	Connection<Integer>.Output readInputB;
-	Connection<Integer>.Input readOutputBReg;
-	Connection<Integer>.Output readInputC;
-	Connection<Integer>.Input readOutputCReg;
+	Connection<Integer[]>.Output readInputA;
+	Connection<Integer[]>.Input readOutputAReg;
+	Connection<Integer[]>.Output readInputB;
+	Connection<Integer[]>.Input readOutputBReg;
+	Connection<Integer[]>.Output readInputC;
+	Connection<Integer[]>.Input readOutputCReg;
 	FConnection<RegisterResult>.Output writeInputs;
 	
 	public RegisterFile(
-			Connection<Integer>.Output readInputA,
-			Connection<Integer>.Input readOutputAReg,
-			Connection<Integer>.Output readInputB,
-			Connection<Integer>.Input readOutputBReg,
-			Connection<Integer>.Output readInputC,
-			Connection<Integer>.Input readOutputCReg,
+			Connection<Integer[]>.Output readInputA,
+			Connection<Integer[]>.Input readOutputAReg,
+			Connection<Integer[]>.Output readInputB,
+			Connection<Integer[]>.Input readOutputBReg,
+			Connection<Integer[]>.Output readInputC,
+			Connection<Integer[]>.Input readOutputCReg,
 			FConnection<RegisterResult>.Output writeInputs
 			) {
 		this.readInputA = readInputA;
@@ -81,11 +81,27 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 
 	@Override
 	public void tock() throws Exception {
-				
-		readOutputAReg.put(get(readInputA.get()==null?0:readInputA.get()));
-		readOutputBReg.put(get(readInputB.get()==null?0:readInputB.get()));
-		readOutputCReg.put(get(readInputC.get()==null?0:readInputC.get()));
-				
+		Integer[] a = readInputA.get();
+		if(a != null)
+			for(int i = 0; i<a.length; i++)
+				if(a[i] != null)
+					a[i] = get(a[i]);
+		readOutputAReg.put(a);
+		
+		Integer[] b = readInputB.get();
+		if(b != null)
+			for(int i = 0; i<b.length; i++)
+				if(b[i] != null)
+					b[i] = get(b[i]);
+		readOutputBReg.put(b);
+		
+		Integer[] c = readInputC.get();
+		if(c != null)
+			for(int i = 0; i<c.length; i++)
+				if(c[i] != null)
+					c[i] = get(c[i]);
+		readOutputCReg.put(c);
+		
 		if(writeInputs.ready()) {
 			RegisterResult res = writeInputs.pop();
 			set(res.getTarget(), res.getValue());

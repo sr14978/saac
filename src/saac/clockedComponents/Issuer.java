@@ -2,6 +2,9 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 
 import saac.Settings;
@@ -23,29 +26,29 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	static final Function<Opcode, Opcode> sameOp = Function.identity();
 	static final Function<Integer, Integer> sameVal = Function.identity();
 	
-	FConnection<Instruction>.Output opcodeIn;
-	Connection<Integer>.Output paramARegInput;
-	Connection<Integer>.Output paramBRegInput;
-	Connection<Integer>.Output paramCRegInput;
+	FConnection<Instruction[]>.Output instructionIn;
+	Connection<Integer[]>.Output paramARegInput;
+	Connection<Integer[]>.Output paramBRegInput;
+	Connection<Integer[]>.Output paramCRegInput;
 	FConnection<Instruction>.Input outputEU;
 	FConnection<Instruction>.Input toEU_A;
 	Connection<Boolean>.Output dualToIssuer;
 	FConnection<Instruction>.Input outputLS;
 	FConnection<Instruction>.Input outputBr;
-	Instruction bufferOut;
+	Instruction[] bufferOut;
 	RegisterFile registerFile;
 	
 	public Issuer(RegisterFile rf,
-			FConnection<Instruction>.Output opcodeIn,
-			Connection<Integer>.Output paramARegInput,
-			Connection<Integer>.Output paramBRegInput,
-			Connection<Integer>.Output paramCRegInput,
+			FConnection<Instruction[]>.Output instructionIn,
+			Connection<Integer[]>.Output paramARegInput,
+			Connection<Integer[]>.Output paramBRegInput,
+			Connection<Integer[]>.Output paramCRegInput,
 			FConnection<Instruction>.Input outputEU,
 			FConnection<Instruction>.Input toEU_A,
 			Connection<Boolean>.Output dualToIssuer,
 			FConnection<Instruction>.Input outputLS,
 			FConnection<Instruction>.Input outputBr) {
-		this.opcodeIn = opcodeIn;
+		this.instructionIn = instructionIn;
 		this.paramARegInput = paramARegInput;
 		this.paramBRegInput = paramBRegInput;
 		this.paramCRegInput = paramCRegInput;
@@ -59,54 +62,61 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	
 	@Override
 	public void tick() throws Exception {
-		if(opcodeIn.ready() && bufferOut == null) {
-			final boolean paramAreg, paramBreg, paramCreg;
-			Instruction inst= opcodeIn.pop();
-			switch(inst.getOpcode()) {
-			case Ldc:
-			case Nop:
-			case Br:
-			case Ldma:
-			case Jmp:
-			case Stop:
-				paramAreg = paramBreg = paramCreg = false;
-				break;
-			case Add:
-			case Sub:
-			case Mul:
-			case Div:
-			case Ldmi:
-				paramBreg = paramCreg = true;
-				paramAreg = false;
-				break;
-			case Stmi:
-				paramAreg = paramBreg = paramCreg = true;
-				break;
-			case Addi:
-			case Subi:
-			case Muli:
-			case Divi:
-			case Ln:
-			case JmpN:
-			case JmpZ:
-				paramBreg = true;
-				paramAreg = paramCreg = false;
-				break;
-			case Stma:
-				paramAreg = true;
-				paramBreg = paramCreg = false;
-				break;
-			default:
-				throw new NotImplementedException();
+		if(instructionIn.ready() && bufferOut == null) {
+			Instruction[] insts= instructionIn.pop();
+			List<Instruction> instructionsOut = new LinkedList<>();
+			for(int i = 0; i<insts.length; i++) {
+				Instruction inst = insts[i];
+				final boolean paramAreg, paramBreg, paramCreg;
+				switch(inst.getOpcode()) {
+				case Ldc:
+				case Nop:
+				case Br:
+				case Ldma:
+				case Jmp:
+				case Stop:
+					paramAreg = paramBreg = paramCreg = false;
+					break;
+				case Add:
+				case Sub:
+				case Mul:
+				case Div:
+				case Ldmi:
+					paramBreg = paramCreg = true;
+					paramAreg = false;
+					break;
+				case Stmi:
+					paramAreg = paramBreg = paramCreg = true;
+					break;
+				case Addi:
+				case Subi:
+				case Muli:
+				case Divi:
+				case Ln:
+				case JmpN:
+				case JmpZ:
+					paramBreg = true;
+					paramAreg = paramCreg = false;
+					break;
+				case Stma:
+					paramAreg = true;
+					paramBreg = paramCreg = false;
+					break;
+				default:
+					throw new NotImplementedException();
+				}
+				final int areg = paramARegInput.get()[i];
+				final int breg = paramBRegInput.get()[i];
+				final int creg = paramCRegInput.get()[i];
+				instructionsOut.add(inst.transform(
+						sameOp,
+						a -> paramAreg? areg:a,
+						b -> paramBreg? breg:b,
+						c -> paramCreg? creg:c
+								)
+						);
 			}
-			
-			bufferOut = inst.transform(
-					sameOp,
-					a -> paramAreg? paramARegInput.get():a,
-					b -> paramBreg? paramBRegInput.get():b,
-					c -> paramCreg? paramCRegInput.get():c
-							);
-			
+			bufferOut = instructionsOut.toArray(new Instruction[0]);
 		}
 	}
 	
@@ -114,54 +124,62 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	public void tock() throws Exception {
 		if(bufferOut == null)
 			return;
-		switch(bufferOut.getOpcode()) {
-		case Ldc:
-		case Add:
-		case Sub:
-		case Mul:
-		case Div:
-		case Addi:
-		case Subi:
-		case Muli:
-		case Divi:
-		case Nop:
-		case Stop:
-			if(outputEU.clear()) {
-				
-				//bypassing
-				if(Settings.RESERVATION_STATION_BYPASS_ENABLED && toEU_A.clear() && dualToIssuer.get() == true)
-					toEU_A.put(bufferOut);
-				else
-					outputEU.put(bufferOut);
-				
-				Output.debug.println(bufferOut + " sent to EU reservation station");
-				bufferOut = null;
+		List<Instruction> out = new LinkedList<>(Arrays.asList(bufferOut));
+		for(int i = 0; i<out.size(); i++) {
+			Instruction inst = out.get(i);
+			switch(inst.getOpcode()) {
+			case Ldc:
+			case Add:
+			case Sub:
+			case Mul:
+			case Div:
+			case Addi:
+			case Subi:
+			case Muli:
+			case Divi:
+			case Nop:
+			case Stop:
+				if(outputEU.clear()) {
+					
+					//bypassing
+					if(Settings.RESERVATION_STATION_BYPASS_ENABLED && toEU_A.clear() && dualToIssuer.get() == true)
+						toEU_A.put(inst);
+					else
+						outputEU.put(inst);
+					
+					Output.debug.println(inst + " sent to EU reservation station");
+					out.remove(i--);
+				}
+				break;
+			case Ldma:
+			case Stmi:
+			case Stma:
+			case Ldmi:
+				if(outputLS.clear()) {
+					outputLS.put(inst);
+					Output.debug.println(bufferOut + " sent for execution on LSU");
+					out.remove(i--);
+				}
+				break;
+			case Br:
+			case Jmp:
+			case JmpN:
+			case JmpZ:
+				if(outputBr.clear()) {
+					outputBr.put(inst);
+					Output.debug.println(bufferOut + " sent for execution on BrU");
+					out.remove(i--);
+				}
+				break;
+			default:
+				System.err.println(inst.getOpcode());
+				throw new NotImplementedException();
 			}
-			break;
-		case Ldma:
-		case Stmi:
-		case Stma:
-		case Ldmi:
-			if(outputLS.clear()) {
-				outputLS.put(bufferOut);
-				Output.debug.println(bufferOut + " sent for execution on LSU");
-				bufferOut = null;
-			}
-			break;
-		case Br:
-		case Jmp:
-		case JmpN:
-		case JmpZ:
-			if(outputBr.clear()) {
-				outputBr.put(bufferOut);
-				Output.debug.println(bufferOut + " sent for execution on BrU");
-				bufferOut = null;
-			}
-			break;
-		default:
-			System.err.println(bufferOut.getOpcode());
-			throw new NotImplementedException();
 		}
+		if(out.isEmpty())
+			bufferOut = null;
+		else
+			bufferOut = out.toArray(new Instruction[0]);
 	}
 		
 	class View extends ComponentView {
@@ -174,7 +192,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 			DrawingHelper.drawBox(gc, "Issuer");
 			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
-				gc.drawString(bufferOut.toString(), 10, 35);
+				gc.drawString(Arrays.toString(bufferOut), 10, 35);
 		}
 	}
 

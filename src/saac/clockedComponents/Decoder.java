@@ -2,6 +2,7 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,43 +18,39 @@ import saac.utils.Instructions.Opcode;
 
 public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
-	FConnection<Instruction>.Input output;
+	FConnection<Instruction[]>.Input output;
 	FConnection<int[][]>.Output input;
 	Instruction[] bufferOut;
-	List<Instruction> outInsts;
 	
-	public Decoder(FConnection<Instruction>.Input output, FConnection<int[][]>.Output input) {
+	
+	public Decoder(FConnection<Instruction[]>.Input output, FConnection<int[][]>.Output input) {
 		this.output = output;
 		this.input = input;
 	}
 
 	@Override
 	public void tick() throws Exception {
-		//if(bufferOut != null)
-		if(outInsts != null)
+		if(bufferOut != null)
 			return;
 		
 		if(!input.ready())
 			return;
 		int[][] data = input.pop();
-		outInsts = new LinkedList<>();
+		List<Instruction> outInsts = new LinkedList<>();
 		for(int i = 0; i<data.length; i++) {
 			int[] inst = data[i];
 			outInsts.add(new Instruction(inst[5], Opcode.fromInt(inst[0]), inst[1], inst[2], inst[3], inst[4]));
 		}
-		//bufferOut = outInsts.toArray(new Instruction[0]);
+		bufferOut = outInsts.toArray(new Instruction[0]);
 	}
 
 	@Override
 	public void tock() throws Exception {
-		//if(bufferOut == null)
-		if(outInsts == null)
+		if(bufferOut == null)
 			return;
 		if(output.clear()) {
-			output.put(outInsts.remove(0));
-			//bufferOut = null;
-			if(outInsts.isEmpty())
-				outInsts = null;
+			output.put(bufferOut);
+			bufferOut = null;
 		}
 	}
 		
@@ -67,7 +64,7 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 			DrawingHelper.drawBox(gc, "Decoder");
 			gc.setColor(Color.BLACK);
 			if(bufferOut != null)
-				gc.drawString(bufferOut.toString(), 10, 30);
+				gc.drawString(Arrays.toString(bufferOut), 10, 30);
 		}
 	}
 

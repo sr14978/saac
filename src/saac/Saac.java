@@ -110,16 +110,16 @@ public class Saac implements ClockedComponentI {
 			);
 				
 		FConnection<int[][]> fetchToDecode = new FConnection<>();
-		FConnection<Instruction> decodeToDep = new FConnection<>();
+		FConnection<Instruction[]> decodeToDep = new FConnection<>();
 		Decoder decoder = new Decoder(decodeToDep.getInputEnd(), fetchToDecode.getOutputEnd());
 				
-		Connection<Integer> paramADepToReg = new Connection<>();
-		Connection<Integer> paramBDepToReg = new Connection<>();
-		Connection<Integer> paramCDepToReg = new Connection<>();
+		Connection<Integer[]> paramADepToReg = new Connection<>();
+		Connection<Integer[]> paramBDepToReg = new Connection<>();
+		Connection<Integer[]> paramCDepToReg = new Connection<>();
 		
-		Connection<Integer> paramAReg_RegToIssue = new Connection<>();
-		Connection<Integer> paramBReg_RegToIssue = new Connection<>();
-		Connection<Integer> paramCReg_RegToIssue = new Connection<>();
+		Connection<Integer[]> paramAReg_RegToIssue = new Connection<>();
+		Connection<Integer[]> paramBReg_RegToIssue = new Connection<>();
+		Connection<Integer[]> paramCReg_RegToIssue = new Connection<>();
 				
 		FConnection<RegisterResult> WBtoRegister = new FConnection<>();
 				
@@ -152,7 +152,7 @@ public class Saac implements ClockedComponentI {
 				instructionOutput.getOutputEnd()
 			);
 		
-		FConnection<Instruction> opcodeDepToIssue = new FConnection<>();
+		FConnection<Instruction[]> opcodeDepToIssue = new FConnection<>();
 		BufferedConnection<Integer> dirtyWBtoDep = new BufferedConnection<>(WritebackHandler.BUFF_SIZE);
 
 		DepChecker depChecker = new DepChecker(registerFile,

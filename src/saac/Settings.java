@@ -8,5 +8,5 @@ public class Settings {
 	
 	public static final int NUMBER_OF_EXECUTION_UNITS = 2;
 	
-	public static final int SUPERSCALER_WIDTH = 4; 
+	public static final int SUPERSCALER_WIDTH = 2; 
 }

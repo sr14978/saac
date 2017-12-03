@@ -61,15 +61,12 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 			return;
 		if(bufferOut.isEmpty())
 			return;
-		if(bufferOut.get(0).delay == 0)
-			instructionOutput.put(
-					new int[][] {
-						bufferOut.remove(0).value,
-						bufferOut.remove(0).value,
-						bufferOut.remove(0).value,
-						bufferOut.remove(0).value,
-						});
-		
+		if(bufferOut.get(0).delay == 0) {
+			int[][] insts = new int[Settings.SUPERSCALER_WIDTH][];
+			for(int i = 0; i<Settings.SUPERSCALER_WIDTH; i++)
+				insts[i] = bufferOut.remove(0).value;
+			instructionOutput.put(insts);
+		}
 		for(Item item : bufferOut)
 			item.delay = item.delay > 0? item.delay-1 : 0;		
 	}
@@ -87,7 +84,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 		if(bufferOut.size() > BufferSize - Settings.SUPERSCALER_WIDTH)
 			return;
 		int pc = addrInput.pop();
-		for(int i = pc; i<pc+4; i++) {
+		for(int i = pc; i<pc+Settings.SUPERSCALER_WIDTH; i++) {
 			int[] bytes = getInstruction(i);
 			bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, 4));
 		}

@@ -137,7 +137,8 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			if(stop)
 				break;
 		}
-		output.put(outInsts.toArray(new int[0][]));
+		if(outInsts.size() > 0)
+			output.put(outInsts.toArray(new int[0][]));
 	}
 
 	class View extends ComponentView {
