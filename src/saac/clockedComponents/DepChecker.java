@@ -176,7 +176,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 		}
 		if(instructionsOut.isEmpty())
 			return;
-		System.out.println(instructionsOut);
+
 		bufferOut = instructionsOut.toArray(new Instruction[0]);
 		paramAOut.put(paramsOutA.toArray(new Integer[0]));
 		paramBOut.put(paramsOutB.toArray(new Integer[0]));

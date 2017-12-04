@@ -55,7 +55,8 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 		for(int i = 0; i<outputUnits.size(); i++) {
 			int j = nextOutputToUse;
 			nextOutputToUse = (nextOutputToUse + 1) % outputUnits.size();
-			if(output(outputUnits.get(j), buffer, "EU " + j))
+			output(outputUnits.get(j), buffer, "EU " + j);
+			if(buffer.isEmpty())
 				break;
 		}
 		if(buffer.size() == 0)
