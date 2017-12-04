@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
+import saac.Settings;
 import saac.dataObjects.Instruction;
 import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
@@ -72,7 +73,8 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 		List<Integer> paramsOutB = new LinkedList<>();
 		List<Integer> paramsOutC = new LinkedList<>();
 		List<Instruction> ins = new LinkedList<>(Arrays.asList(bufferIn));
-		List<Integer> dirties = new LinkedList<>();
+		List<Integer> acceptedDirties = new LinkedList<>();
+		List<Integer> allDirties = new LinkedList<>();
 		inst:
 		for(int k = 0; k< bufferIn.length; k++) {
 			Instruction inst  = bufferIn[k];
@@ -124,23 +126,28 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			default:
 				throw new NotImplementedException();
 			}
-			
+						
 			List<Character> paramDependances = new ArrayList<>();
-			if( (dependOnA || dirtyA) && (registerFile.isDirty(inst.getParamA()) || dirties.contains(inst.getParamA()))) {
+			if( (dependOnA || dirtyA) && (registerFile.isDirty(inst.getParamA()) || allDirties.contains(inst.getParamA()))) {
 				paramDependances.add('A');
 			}
-			if( dependOnB && (registerFile.isDirty(inst.getParamB()) || dirties.contains(inst.getParamB())) ) {
+			if( dependOnB && (registerFile.isDirty(inst.getParamB()) || allDirties.contains(inst.getParamB())) ) {
 				paramDependances.add('B');
 			}
-			if( dependOnC && (registerFile.isDirty(inst.getParamC()) || dirties.contains(inst.getParamC())) ) {
+			if( dependOnC && (registerFile.isDirty(inst.getParamC()) || allDirties.contains(inst.getParamC())) ) {
 				paramDependances.add('C');
 			}
+			if(dirtyA)
+				allDirties.add(inst.getParamA());
 			if(!paramDependances.isEmpty()) {
 				Output.info.println(inst + " is blocked by " + paramDependances);
-				break;
+				if(Settings.OUT_OF_ORDER_ENABLED == false)
+					break;
+				else
+					continue;
 			}
 			
-			
+			/*
 			int addr;
 			switch(inst.getOpcode()) {
 			case Ldmi:
@@ -164,9 +171,10 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			default:
 				break;
 			}
+			*/
 			
 			if(dirtyA)
-				dirties.add(inst.getParamA());
+				acceptedDirties.add(inst.getParamA());
 			
 			paramsOutA.add(inst.getParamA());
 			paramsOutB.add(inst.getParamB());
@@ -182,7 +190,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 		paramAOut.put(paramsOutA.toArray(new Integer[0]));
 		paramBOut.put(paramsOutB.toArray(new Integer[0]));
 		paramCOut.put(paramsOutC.toArray(new Integer[0]));
-		for(Integer r : dirties)
+		for(Integer r : acceptedDirties)
 			registerFile.setDirty(r, true);
 		if(ins.size() == 0)
 			bufferIn = null;
