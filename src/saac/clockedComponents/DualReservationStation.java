@@ -4,6 +4,7 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,14 +24,14 @@ import saac.utils.Output;
 public class DualReservationStation implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
 	List<FConnection<Instruction>.Input> outputUnits;	
-	FConnection<Instruction>.Output input;
+	FConnection<Instruction[]>.Output input;
 	Connection<Boolean>.Input emptyFlag;
 	List<Instruction> buffer = new LinkedList<>();
 	static int bufferLimit = 3;
 	int nextOutputToUse = 0;
 	
 	public DualReservationStation(List<FConnection<Instruction>.Input> outputUnits,
-			FConnection<Instruction>.Output input, Connection<Boolean>.Input emptyFlag) {
+			FConnection<Instruction[]>.Output input, Connection<Boolean>.Input emptyFlag) {
 		this.outputUnits = outputUnits;
 		this.input = input;
 		this.emptyFlag = emptyFlag;
@@ -43,7 +44,7 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 			return;
 		if(!input.ready())
 			return;
-		buffer.add(input.pop());
+		buffer.addAll(Arrays.asList(input.pop()));
 		if(buffer.size() != 0)
 			emptyFlag.put(false);
 	}

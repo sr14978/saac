@@ -101,7 +101,7 @@ public class Saac implements ClockedComponentI {
 		BranchExecutionUnit brUnit = new BranchExecutionUnit(
 				issueToBr.getOutputEnd(), brToFetch.getInputEnd(), brToWB.getInputEnd());
 		
-		FConnection<Instruction> issueToDualRS = new FConnection<>();
+		FConnection<Instruction[]> issueToDualRS = new FConnection<>();
 		Connection<Boolean> dualToIssuer = new Connection<>();
 		DualReservationStation dualRS = new DualReservationStation(
 				dualRSToEUs.stream().map(x->x.getInputEnd()).collect(Collectors.toList()),

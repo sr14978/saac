@@ -30,7 +30,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	Connection<Integer[]>.Output paramARegInput;
 	Connection<Integer[]>.Output paramBRegInput;
 	Connection<Integer[]>.Output paramCRegInput;
-	FConnection<Instruction>.Input outputEU;
+	FConnection<Instruction[]>.Input outputEU;
 	FConnection<Instruction>.Input toEU_A;
 	Connection<Boolean>.Output dualToIssuer;
 	FConnection<Instruction>.Input outputLS;
@@ -43,7 +43,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 			Connection<Integer[]>.Output paramARegInput,
 			Connection<Integer[]>.Output paramBRegInput,
 			Connection<Integer[]>.Output paramCRegInput,
-			FConnection<Instruction>.Input outputEU,
+			FConnection<Instruction[]>.Input outputEU,
 			FConnection<Instruction>.Input toEU_A,
 			Connection<Boolean>.Output dualToIssuer,
 			FConnection<Instruction>.Input outputLS,
@@ -125,6 +125,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 		if(bufferOut == null)
 			return;
 		List<Instruction> out = new LinkedList<>(Arrays.asList(bufferOut));
+		List<Instruction> outEUs = new LinkedList<>();
 		for(int i = 0; i<out.size(); i++) {
 			Instruction inst = out.get(i);
 			switch(inst.getOpcode()) {
@@ -145,7 +146,7 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 					if(Settings.RESERVATION_STATION_BYPASS_ENABLED && toEU_A.clear() && dualToIssuer.get() == true)
 						toEU_A.put(inst);
 					else
-						outputEU.put(inst);
+						outEUs.add(inst);
 					
 					Output.debug.println(inst + " sent to EU reservation station");
 					out.remove(i--);
@@ -180,6 +181,9 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 			bufferOut = null;
 		else
 			bufferOut = out.toArray(new Instruction[0]);
+		
+		if(!outEUs.isEmpty())
+			outputEU.put(outEUs.toArray(new Instruction[0]));
 	}
 		
 	class View extends ComponentView {

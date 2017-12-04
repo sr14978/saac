@@ -61,8 +61,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 	public void tick() throws Exception {
 		if(bufferOut != null)
 			return;
-		if(!instructionOut.clear())
-			return;
+		
 		if(bufferIn == null) {
 			if(!instructionIn.ready())
 				return;
@@ -73,6 +72,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 		List<Integer> paramsOutB = new LinkedList<>();
 		List<Integer> paramsOutC = new LinkedList<>();
 		List<Instruction> ins = new LinkedList<>(Arrays.asList(bufferIn));
+		List<Integer> dirties = new LinkedList<>();
 		inst:
 		for(int k = 0; k< bufferIn.length; k++) {
 			Instruction inst  = bufferIn[k];
@@ -126,13 +126,13 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			}
 			
 			List<Character> paramDependances = new ArrayList<>();
-			if( (dependOnA || dirtyA) && registerFile.isDirty(inst.getParamA()) ) {
+			if( (dependOnA || dirtyA) && (registerFile.isDirty(inst.getParamA()) || dirties.contains(inst.getParamA()))) {
 				paramDependances.add('A');
 			}
-			if( dependOnB && registerFile.isDirty(inst.getParamB()) ) {
+			if( dependOnB && (registerFile.isDirty(inst.getParamB()) || dirties.contains(inst.getParamB())) ) {
 				paramDependances.add('B');
 			}
-			if( dependOnC && registerFile.isDirty(inst.getParamC()) ) {
+			if( dependOnC && (registerFile.isDirty(inst.getParamC()) || dirties.contains(inst.getParamC())) ) {
 				paramDependances.add('C');
 			}
 			if(!paramDependances.isEmpty()) {
@@ -166,7 +166,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			}
 			
 			if(dirtyA)
-				registerFile.setDirty(inst.getParamA(), true);
+				dirties.add(inst.getParamA());
 			
 			paramsOutA.add(inst.getParamA());
 			paramsOutB.add(inst.getParamB());
@@ -176,11 +176,14 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 		}
 		if(instructionsOut.isEmpty())
 			return;
-
+		if(!instructionOut.clear())
+			return;
 		bufferOut = instructionsOut.toArray(new Instruction[0]);
 		paramAOut.put(paramsOutA.toArray(new Integer[0]));
 		paramBOut.put(paramsOutB.toArray(new Integer[0]));
 		paramCOut.put(paramsOutC.toArray(new Integer[0]));
+		for(Integer r : dirties)
+			registerFile.setDirty(r, true);
 		if(ins.size() == 0)
 			bufferIn = null;
 		else
