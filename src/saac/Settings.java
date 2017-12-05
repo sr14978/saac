@@ -12,5 +12,7 @@ public class Settings {
 	
 	public static final boolean OUT_OF_ORDER_ENABLED = false;
 	
+	public static final int VIRTUAL_ADDRESS_NUM = 32;
+	
 	
 }
