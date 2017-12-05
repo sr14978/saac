@@ -13,6 +13,7 @@ import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.unclockedComponents.BranchPredictor;
 import saac.utils.DrawingHelper;
@@ -22,24 +23,24 @@ import saac.utils.Output;
 public class Fetcher implements ClockedComponentI, VisibleComponentI {
 
 	RegisterFile registerFile;
-	FConnection<int[][]>.Input output;
+	FListConnection<int[]>.Input output;
 
 	FConnection<BranchResult>.Output fromBrUnit;
 	int programCounter = 0;
 	int instructionCounter = 0;
 	FConnection<Integer>.Input addrOutput;
 	FConnection<Boolean>.Input clearOutput;
-	FConnection<int[][]>.Output instructionInput;
+	FListConnection<int[]>.Output instructionInput;
 	List<ClearableComponent> clearables;
 	boolean halt = false;
 	BranchPredictor predictor;
 	
 	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables, BranchPredictor predictor,
-			FConnection<int[][]>.Input output,
+			FListConnection<int[]>.Input output,
 			FConnection<BranchResult>.Output fromBrUnit,
 			FConnection<Integer>.Input addrOutput,
 			FConnection<Boolean>.Input clearOutput,
-			FConnection<int[][]>.Output instructionInput
+			FListConnection<int[]>.Output instructionInput
 			) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
@@ -67,7 +68,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			predictor.update(res);
 			if(!res.wasCorrect()) {
 				for(ClearableComponent cc : clearables)
-					cc.clear();
+					cc.clear(res.getID());
 				instructionCounter = res.getID();
 				programCounter = res.getNewPc();
 			}

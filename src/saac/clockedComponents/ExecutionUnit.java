@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import saac.dataObjects.BlankResult;
-import saac.dataObjects.Instruction;
+import saac.dataObjects.FilledInInstruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
 import saac.dataObjects.StopResult;
@@ -21,12 +21,12 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class ExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
-	private FConnection<Instruction>.Output instructionIn;
+	private FConnection<FilledInInstruction>.Output instructionIn;
 	private FConnection<InstructionResult>.Input resultOut;
 	private InstructionResult bufferOut;
 	private int instructionDelay = 0;
 	
-	public ExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut) {
+	public ExecutionUnit(FConnection<FilledInInstruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut) {
 		this.instructionIn = instructionIn;
 		this.resultOut = resultOut;
 	}
@@ -37,7 +37,7 @@ public class ExecutionUnit implements ClockedComponentI, VisibleComponentI, Clea
 			return;
 		if(!instructionIn.ready())
 			return;
-		Instruction inst = instructionIn.pop();
+		FilledInInstruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Ldc:
 			bufferOut = new RegisterResult(inst.getID(), inst.getParamA(), inst.getParamB());
@@ -103,8 +103,9 @@ public class ExecutionUnit implements ClockedComponentI, VisibleComponentI, Clea
 	}
 
 	@Override
-	public void clear() {
-		bufferOut = null;
+	public void clear(int i) {
+		if(bufferOut != null && bufferOut.getID() > i)
+			bufferOut = null;
 	}
 	
 }

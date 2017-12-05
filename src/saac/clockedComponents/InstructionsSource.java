@@ -12,6 +12,7 @@ import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
@@ -30,7 +31,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	
 	FConnection<Integer>.Output addrInput;
 	FConnection<Boolean>.Output clearInput;
-	FConnection<int[][]>.Input instructionOutput;
+	FListConnection<int[]>.Input instructionOutput;
 	
 	private class Item{
 		int[] value;
@@ -47,7 +48,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	public InstructionsSource(
 			FConnection<Integer>.Output addrInput,
 			FConnection<Boolean>.Output clearInput,
-			FConnection<int[][]>.Input instructionOutput
+			FListConnection<int[]>.Input instructionOutput
 			) throws IOException, ParserException {
 		this.addrInput = addrInput;
 		this.clearInput = clearInput;
@@ -115,7 +116,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	}
 
 	@Override
-	public void clear() {
+	public void clear(int i) {
 		bufferOut.clear();
 	}
 	

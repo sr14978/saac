@@ -3,27 +3,32 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import saac.dataObjects.Instruction;
+import saac.dataObjects.VirtualInstruction;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
-	FConnection<Instruction[]>.Input output;
-	FConnection<int[][]>.Output input;
-	Instruction[] bufferOut;
+	FListConnection<VirtualInstruction>.Input output;
+	FListConnection<int[]>.Output input;
+	VirtualInstruction[] bufferOut;
+	Map<Integer, Integer> virtualAddresses = new HashMap<>();
 	
-	
-	public Decoder(FConnection<Instruction[]>.Input output, FConnection<int[][]>.Output input) {
+	public Decoder(FListConnection<VirtualInstruction>.Input output, FListConnection<int[]>.Output input) {
 		this.output = output;
 		this.input = input;
 	}
@@ -35,13 +40,85 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 		
 		if(!input.ready())
 			return;
-		int[][] data = input.pop();
-		List<Instruction> outInsts = new LinkedList<>();
-		for(int i = 0; i<data.length; i++) {
-			int[] inst = data[i];
-			outInsts.add(new Instruction(inst[5], Opcode.fromInt(inst[0]), inst[1], inst[2], inst[3], inst[4]));
+		int[][] datas = input.pop();
+		List<VirtualInstruction> outInsts = new LinkedList<>();
+		for(int i = 0; i<datas.length; i++) {
+			int[] data = datas[i];
+			Instruction inst = new Instruction(data[5], Opcode.fromInt(data[0]), data[1], data[2], data[3], data[4]);
+			VirtualInstruction vinst = rename(inst);
+			outInsts.add(vinst);
 		}
-		bufferOut = outInsts.toArray(new Instruction[0]);
+		bufferOut = outInsts.toArray(new VirtualInstruction[0]);
+	}
+
+	private VirtualInstruction rename(Instruction inst) {
+		final boolean dependOnA, dependOnB, dependOnC, dirtyA;
+		switch(inst.getOpcode()) {
+		case Ldc:
+			dirtyA = true;
+			dependOnA = dependOnB = dependOnC = false;
+			break;
+		case Add:
+		case Sub:
+		case Mul:
+		case Div:
+		case Ldmi:
+			dirtyA = dependOnB = dependOnC = true;
+			dependOnA = false;
+			break;
+		case Stmi:
+			dependOnA = dependOnB = dependOnC = true;
+			dirtyA = false;
+			break;
+		case Addi:
+		case Subi:
+		case Muli:
+		case Divi:
+			dirtyA = dependOnB = true;
+			dependOnA = dependOnC = false;
+			break;
+		case Nop:
+			dependOnA = dependOnB = dependOnC = dirtyA = false;
+			break;
+		case Ldma:
+			dirtyA = true;
+			dependOnA = dependOnB = dependOnC = false;
+			break;
+		case Stma:
+			dependOnA = true;
+			dependOnB = dependOnC = dirtyA = false;
+			break;
+		case Br:
+			dependOnA = dependOnB = dependOnC = dirtyA = false;
+			break;
+		case Ln:
+		case JmpN:
+		case JmpZ:
+			dependOnB = true;
+			dependOnA = dependOnC = dirtyA = false;
+			break;
+		case Jmp:
+		case Stop:
+			dependOnA = dependOnB = dependOnC = dirtyA = false;
+			break;
+		default:
+			throw new NotImplementedException();
+		}
+		
+		VirtualInstruction vinst = inst.virtualize(
+				x->dependOnA?virtualAddresses.get(x):(dirtyA?inst.getID():x),
+				x->dependOnB?virtualAddresses.get(x):x,
+				x->dependOnC?virtualAddresses.get(x):x,
+				x->x
+			);
+		
+		if(dirtyA) {
+			virtualAddresses.put(inst.getParamA(), inst.getID());
+			///if address not available - crash 
+		}
+		
+		return vinst;
+
 	}
 
 	@Override
@@ -74,8 +151,17 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 	}
 
 	@Override
-	public void clear() {
-		bufferOut = null;
+	public void clear(int i) {
+		if(bufferOut == null)
+			return;
+		List<VirtualInstruction> insts = new LinkedList<>();
+		for(VirtualInstruction inst : bufferOut)
+			if(inst.getID() <= i)
+				insts.add(inst);
+		if(insts.isEmpty())
+			bufferOut = null;
+		else
+			bufferOut = insts.toArray(new VirtualInstruction[0]);
 	}
 	
 }

@@ -89,7 +89,7 @@ public class BufferedConnection<T> implements VisibleComponentI, ClearableCompon
 	}
 
 	@Override
-	public void clear() {
+	public void clear(int i) {
 		buffer.clear();
 	}
 }

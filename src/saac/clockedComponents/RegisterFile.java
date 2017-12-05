@@ -3,8 +3,12 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
+import saac.Saac;
+import saac.Settings;
+import saac.Settings.BranchPrediciton;
+import saac.dataObjects.BranchResult;
+import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
-import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -14,13 +18,86 @@ import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
 
-public class RegisterFile implements VisibleComponentI, ClockedComponentI, ClearableComponent{
+public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 
 	static final int registerNum = 12;
 	static final int PC = registerNum;
 	private int[] values = new int[registerNum];
 	private boolean[] dirtyBits = new boolean[registerNum];
+	
+	public final static int BUFF_SIZE = Settings.VIRTUAL_ADDRESS_NUM;
+	InstructionResult[] reorderBuffer = new InstructionResult[BUFF_SIZE];
+	int bufferIndexStart = 0;
+	int bufferIndexEnd = 0;
+	int bufferInstructionStart = 0;
+	
+	public static class RegItem {
+		Integer value;
+		Reg type;
+		RegItem(Integer value, Reg type) {
+			this.value = value;
+			this.type = type;
+		}
+		public String toString() { return value.toString() + (type==Reg.Virtual?"(v)":""); }
+	}
+	public enum Reg {Architectural, Virtual};
+	
+	public boolean insert(InstructionResult res) throws Exception {
+		if(res.getID() < bufferInstructionStart + BUFF_SIZE) {
+			
+			int instructionOffset = res.getID() - bufferInstructionStart;
+			if(instructionOffset > BUFF_SIZE)
+				return false;
+			
+			int bufferIndex = (bufferIndexStart + instructionOffset) % BUFF_SIZE;
+			if(instructionOffset >= BUFF_SIZE - bufferIndexStart && bufferIndex >= bufferIndexStart )
+				return false;
 
+			
+			reorderBuffer[bufferIndex] = res;
+			
+			if( (res.getID() - bufferInstructionStart + 1)
+					> (bufferIndexEnd - bufferIndexStart + BUFF_SIZE) % BUFF_SIZE ) {
+				bufferIndexEnd = (bufferIndex + 1) % BUFF_SIZE;
+			}
+			
+			if(res instanceof BranchResult) {
+				Saac.InstructionCounter++;
+				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
+			
+					BranchResult br = (BranchResult) res;
+					if(!br.wasCorrect()) {
+						reorderBuffer[bufferIndex] = null;
+						for(int i = bufferIndex; i<bufferIndexEnd; i++)
+							reorderBuffer[i] = null;
+					}
+					bufferIndexEnd = bufferIndex;
+				}
+			}
+			
+			return true;
+		} else 
+			throw new Exception("Reorder buffer overflow");
+	}
+	
+	public InstructionResult getFirst() {
+		return reorderBuffer[bufferIndexStart];
+	}
+	
+	public void clearFirst() {
+		reorderBuffer[bufferIndexStart] = null;
+		bufferIndexStart = (bufferIndexStart + 1) % BUFF_SIZE;
+		bufferInstructionStart++;
+	}
+	
+	public InstructionResult getOffsetted(int offset) {
+		return reorderBuffer[(bufferIndexStart+(offset-bufferInstructionStart)) % BUFF_SIZE];
+	}
+	
+	public boolean inReorderBuffer(int addr) {
+		return addr >= bufferInstructionStart && addr < bufferInstructionStart + BUFF_SIZE;
+	}
+	
 	public void set(int index, int value) {
 		if(index < registerNum && index >= 0)
 			values[index] = value;
@@ -28,11 +105,29 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			throw new ArrayIndexOutOfBoundsException();
 	}
 	
-	public int get(int index) {
-		if(index < registerNum && index >= 0)
-			return values[index];
-		else 
-			return 0;
+	public int get(int index, Reg type) {
+		switch(type) {
+		case Architectural:
+			if(index < registerNum && index >= 0)
+				return values[index];
+			else 
+				return 0;
+		case Virtual:
+			if(index < bufferInstructionStart)
+				return 0;
+			int instructionOffset = index - bufferInstructionStart;
+			if(instructionOffset > BUFF_SIZE)
+				return 0;
+			int bufferIndex = (bufferIndexStart + instructionOffset) % BUFF_SIZE;
+			if(instructionOffset >= BUFF_SIZE - bufferIndexStart && bufferIndex >= bufferIndexStart )
+				return 0;
+			Object obj = reorderBuffer[bufferIndex];
+			if(obj == null)
+				return 0;
+			
+			return ((RegisterResult) obj).getValue();				
+		}
+		throw new RuntimeException();
 	}
 	
 	public void setDirty(int index, boolean bool) {
@@ -49,20 +144,20 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			throw new ArrayIndexOutOfBoundsException();
 	}
 	
-	Connection<Integer[]>.Output readInputA;
+	Connection<RegItem[]>.Output readInputA;
 	Connection<Integer[]>.Input readOutputAReg;
-	Connection<Integer[]>.Output readInputB;
+	Connection<RegItem[]>.Output readInputB;
 	Connection<Integer[]>.Input readOutputBReg;
-	Connection<Integer[]>.Output readInputC;
+	Connection<RegItem[]>.Output readInputC;
 	Connection<Integer[]>.Input readOutputCReg;
 	FConnection<RegisterResult>.Output writeInputs;
 	
 	public RegisterFile(
-			Connection<Integer[]>.Output readInputA,
+			Connection<RegItem[]>.Output readInputA,
 			Connection<Integer[]>.Input readOutputAReg,
-			Connection<Integer[]>.Output readInputB,
+			Connection<RegItem[]>.Output readInputB,
 			Connection<Integer[]>.Input readOutputBReg,
-			Connection<Integer[]>.Output readInputC,
+			Connection<RegItem[]>.Output readInputC,
 			Connection<Integer[]>.Input readOutputCReg,
 			FConnection<RegisterResult>.Output writeInputs
 			) {
@@ -77,34 +172,40 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 	
 	@Override
 	public void tick() throws Exception {
+		if(writeInputs.ready()) {
+			RegisterResult res = writeInputs.pop();
+			set(res.getTarget(), res.getValue());
+		}
 	}
 
 	@Override
 	public void tock() throws Exception {
-		Integer[] a = readInputA.get();
-		if(a != null)
-			for(int i = 0; i<a.length; i++)
-				if(a[i] != null)
-					a[i] = get(a[i]);
-		readOutputAReg.put(a);
+		RegItem[] a_in = readInputA.get();
+		if(a_in != null) {
+			Integer[] a_out = new Integer[a_in.length];
+			for(int i = 0; i<a_in.length; i++)
+				if(a_in[i] != null)
+					a_out[i] = get(a_in[i].value, a_in[i].type);
+			readOutputAReg.put(a_out);
+		}
 		
-		Integer[] b = readInputB.get();
-		if(b != null)
-			for(int i = 0; i<b.length; i++)
-				if(b[i] != null)
-					b[i] = get(b[i]);
-		readOutputBReg.put(b);
+		RegItem[] b_in = readInputB.get();
+		if(b_in != null) {
+			Integer[] b_out = new Integer[b_in.length];
+
+			for(int i = 0; i<b_in.length; i++)
+				if(b_in[i] != null)
+					b_out[i] = get(b_in[i].value, b_in[i].type);
+			readOutputBReg.put(b_out);
+		}
 		
-		Integer[] c = readInputC.get();
-		if(c != null)
-			for(int i = 0; i<c.length; i++)
-				if(c[i] != null)
-					c[i] = get(c[i]);
-		readOutputCReg.put(c);
-		
-		if(writeInputs.ready()) {
-			RegisterResult res = writeInputs.pop();
-			set(res.getTarget(), res.getValue());
+		RegItem[] c_in = readInputC.get();
+		if(c_in != null) {
+			Integer[] c_out = new Integer[c_in.length];
+			for(int i = 0; i<c_in.length; i++)
+				if(c_in[i] != null)
+					c_out[i] = get(c_in[i].value, c_in[i].type);
+			readOutputCReg.put(c_out);
 		}
 	}	
 	
@@ -130,10 +231,4 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 		return new View(x, y);
 	}
 
-	@Override
-	public void clear() {
-		for(int i = 0; i<dirtyBits.length; i++) {
-			dirtyBits[i] = false;
-		}
-	}
 }

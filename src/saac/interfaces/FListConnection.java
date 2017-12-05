@@ -5,13 +5,15 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import saac.dataObjects.InstructionI;
 import saac.utils.DrawingHelper;
 
-public class FConnection<T extends Object> implements VisibleComponentI, ClearableComponent{
+public class FListConnection<T extends Object> implements VisibleComponentI, ClearableComponent{
 
-	private T value;
+	private T[] value;
 	
 	public Input getInputEnd() {
 		return new Input();
@@ -22,7 +24,7 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 	}
 	
 	public class Input {
-		public <H extends T> void put(H val) throws FullChannelException {
+		public <H extends T> void put(H[] val) throws FullChannelException {
 			if(value == null)
 				value = val;
 			else
@@ -34,11 +36,11 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 	}
 	
 	public class Output {
-		public T pop() throws FullChannelException {
+		public T[] pop() throws FullChannelException {
 			if(value == null) {
 				throw new FullChannelException();
 			} else {
-				T val = value;
+				T[] val = value;
 				value = null;
 				return val;
 			}
@@ -46,7 +48,7 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 		public boolean ready() {
 			return value != null;
 		}
-		public T peak() throws FullChannelException {
+		public T[] peak() throws FullChannelException {
 			if(value == null)
 				throw new FullChannelException();
 			else
@@ -89,13 +91,19 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 		return new View(x, y);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void clear(int i) {
 		if(value == null)
 			return;
-		if(value instanceof InstructionI && ((InstructionI) value).getID() > i)
-				value = null;
-		else if(value instanceof int[])
+		if(value instanceof InstructionI[]) {
+			List<T> keeps = new LinkedList<>();
+			for(T val : value)
+				if(((InstructionI) val).getID() <= i)
+					keeps.add(val);
+			if(!keeps.isEmpty())
+				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
+		} else if(value instanceof int[][])
 			value = null;
 		else
 			throw new RuntimeException(value.toString());

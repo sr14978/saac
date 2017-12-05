@@ -19,6 +19,7 @@ public class ProgramLoader {
 	//final static String programName = "static_branch_pred.program";
 	//final static String programName = "dynamic_branch_pred.program";
 	//final static String programName = "out of order dependancies test.program";
+	//final static String programName = "reoder test.program";
 	
 	
 	public static int[][] loadProgram() throws IOException, ParserException {

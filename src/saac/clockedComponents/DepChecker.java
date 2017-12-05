@@ -10,14 +10,16 @@ import java.util.Set;
 import java.util.function.Function;
 
 import saac.Settings;
-import saac.dataObjects.Instruction;
+import saac.clockedComponents.RegisterFile.Reg;
+import saac.clockedComponents.RegisterFile.RegItem;
+import saac.dataObjects.VirtualInstruction;
 import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
-import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
@@ -30,24 +32,24 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 	static final Function<Integer, Integer> sameVal = Function.identity();
 		
 	RegisterFile registerFile;
-	FConnection<Instruction[]>.Output instructionIn;
-	Instruction[] bufferIn;
+	FListConnection<VirtualInstruction>.Output instructionIn;
+	VirtualInstruction[] bufferIn;
 	BufferedConnection<Integer>.Output dirtyIn;
-	FConnection<Instruction[]>.Input instructionOut;
-	Instruction[] bufferOut;
-	Connection<Integer[]>.Input paramAOut;
-	Connection<Integer[]>.Input paramBOut;
-	Connection<Integer[]>.Input paramCOut;
+	FListConnection<VirtualInstruction>.Input instructionOut;
+	VirtualInstruction[] bufferOut;
+	Connection<RegItem[]>.Input paramAOut;
+	Connection<RegItem[]>.Input paramBOut;
+	Connection<RegItem[]>.Input paramCOut;
 	Set<Integer> dirtyMem = new HashSet<>();
 
 	public DepChecker(
 			RegisterFile rf,
-			FConnection<Instruction[]>.Output instructionIn,
+			FListConnection<VirtualInstruction>.Output instructionIn,
 			BufferedConnection<Integer>.Output dirtyIn,
-			FConnection<Instruction[]>.Input instructionOut,
-			Connection<Integer[]>.Input paramAOut,
-			Connection<Integer[]>.Input paramBOut,
-			Connection<Integer[]>.Input paramCOut
+			FListConnection<VirtualInstruction>.Input instructionOut,
+			Connection<RegItem[]>.Input paramAOut,
+			Connection<RegItem[]>.Input paramBOut,
+			Connection<RegItem[]>.Input paramCOut
 			) {
 		this.registerFile = rf;
 		this.instructionIn = instructionIn;
@@ -68,16 +70,15 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 				return;
 			bufferIn = instructionIn.pop();
 		}
-		List<Instruction> instructionsOut = new LinkedList<>();
-		List<Integer> paramsOutA = new LinkedList<>();
-		List<Integer> paramsOutB = new LinkedList<>();
-		List<Integer> paramsOutC = new LinkedList<>();
-		List<Instruction> ins = new LinkedList<>(Arrays.asList(bufferIn));
-		List<Integer> acceptedDirties = new LinkedList<>();
+		List<VirtualInstruction> instructionsOut = new LinkedList<>();
+		List<RegItem> paramsOutA = new LinkedList<>();
+		List<RegItem> paramsOutB = new LinkedList<>();
+		List<RegItem> paramsOutC = new LinkedList<>();
+		List<VirtualInstruction> ins = new LinkedList<>(Arrays.asList(bufferIn));
 		List<Integer> allDirties = new LinkedList<>();
-		inst:
+		
 		for(int k = 0; k< bufferIn.length; k++) {
-			Instruction inst  = bufferIn[k];
+			VirtualInstruction inst  = bufferIn[k];
 			boolean dependOnA = false, dependOnB = false, dependOnC = false, dirtyA = false;
 			switch(inst.getOpcode()) {
 			case Ldc:
@@ -126,19 +127,29 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			default:
 				throw new NotImplementedException();
 			}
-						
+		
 			List<Character> paramDependances = new ArrayList<>();
-			if( (dependOnA || dirtyA) && (registerFile.isDirty(inst.getParamA()) || allDirties.contains(inst.getParamA()))) {
-				paramDependances.add('A');
+			RegisterFile rf = registerFile;
+			
+			if(dependOnA) {
+				if(allDirties.contains(inst.getVirtualParamA()) || 
+						(rf.inReorderBuffer(inst.getVirtualParamA()) && rf.getOffsetted(inst.getVirtualParamA()) == null))
+					paramDependances.add('A');
 			}
-			if( dependOnB && (registerFile.isDirty(inst.getParamB()) || allDirties.contains(inst.getParamB())) ) {
-				paramDependances.add('B');
+			if(dependOnB) {
+				if(allDirties.contains(inst.getVirtualParamB()) ||
+						(rf.inReorderBuffer(inst.getVirtualParamB()) && rf.getOffsetted(inst.getVirtualParamB()) == null))
+					paramDependances.add('B');
 			}
-			if( dependOnC && (registerFile.isDirty(inst.getParamC()) || allDirties.contains(inst.getParamC())) ) {
-				paramDependances.add('C');
+			if(dependOnC) {
+				if(allDirties.contains(inst.getVirtualParamC()) ||
+						(rf.inReorderBuffer(inst.getVirtualParamC()) && rf.getOffsetted(inst.getVirtualParamC()) == null))
+					paramDependances.add('C');
 			}
+			
 			if(dirtyA)
-				allDirties.add(inst.getParamA());
+				allDirties.add(inst.getID());
+			
 			if(!paramDependances.isEmpty()) {
 				Output.info.println(inst + " is blocked by " + paramDependances);
 				if(Settings.OUT_OF_ORDER_ENABLED == false)
@@ -146,39 +157,24 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 				else
 					continue;
 			}
-			
 			/*
-			int addr;
-			switch(inst.getOpcode()) {
-			case Ldmi:
-				addr = registerFile.get(inst.getParamB()) + registerFile.get(inst.getParamC());
-				if(dirtyMem.contains(addr))
-					break inst;
-				break;
-			case Stmi:
-				addr = registerFile.get(inst.getParamB()) + registerFile.get(inst.getParamC());
-				dirtyMem.add(addr);
-				break;
-			case Ldma:
-				addr = registerFile.get(inst.getParamB());
-				if(dirtyMem.contains(addr))
-					break inst;
-				break;
-			case Stma:
-				addr = registerFile.get(inst.getParamB());
-				dirtyMem.add(addr);
-				break;
-			default:
-				break;
+			if(dirtyA) {
+				acceptedDirties.add(inst.getParamA());
 			}
 			*/
+			if(rf.inReorderBuffer(inst.getVirtualParamA()))
+				paramsOutA.add(new RegItem(inst.getVirtualParamA(), Reg.Virtual));
+			else
+				paramsOutA.add(new RegItem(inst.getArchParamA(), Reg.Architectural));
+			if(rf.inReorderBuffer(inst.getVirtualParamB()))
+				paramsOutB.add(new RegItem(inst.getVirtualParamB(), Reg.Virtual));
+			else
+				paramsOutB.add(new RegItem(inst.getArchParamB(), Reg.Architectural));
+			if(rf.inReorderBuffer(inst.getVirtualParamC()))
+				paramsOutC.add(new RegItem(inst.getVirtualParamC(), Reg.Virtual));
+			else
+				paramsOutC.add(new RegItem(inst.getArchParamC(), Reg.Architectural));
 			
-			if(dirtyA)
-				acceptedDirties.add(inst.getParamA());
-			
-			paramsOutA.add(inst.getParamA());
-			paramsOutB.add(inst.getParamB());
-			paramsOutC.add(inst.getParamC());
 			instructionsOut.add(inst);
 			ins.remove(inst);
 		}
@@ -186,16 +182,18 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			return;
 		if(!instructionOut.clear())
 			return;
-		bufferOut = instructionsOut.toArray(new Instruction[0]);
-		paramAOut.put(paramsOutA.toArray(new Integer[0]));
-		paramBOut.put(paramsOutB.toArray(new Integer[0]));
-		paramCOut.put(paramsOutC.toArray(new Integer[0]));
+		bufferOut = instructionsOut.toArray(new VirtualInstruction[0]);
+		paramAOut.put(paramsOutA.toArray(new RegItem[0]));
+		paramBOut.put(paramsOutB.toArray(new RegItem[0]));
+		paramCOut.put(paramsOutC.toArray(new RegItem[0]));
+		/*
 		for(Integer r : acceptedDirties)
 			registerFile.setDirty(r, true);
+		*/
 		if(ins.size() == 0)
 			bufferIn = null;
 		else
-			bufferIn = ins.toArray(new Instruction[0]);
+			bufferIn = ins.toArray(new VirtualInstruction[0]);
 	}
 
 	@Override
@@ -234,8 +232,27 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 	}
 
 	@Override
-	public void clear() {
-		bufferIn = null;
-		bufferOut = null;
+	public void clear(int i) {
+		List<VirtualInstruction> insts;
+		if(bufferOut != null) {
+			insts = new LinkedList<>();
+			for(VirtualInstruction inst : bufferOut)
+				if(inst.getID() <= i)
+					insts.add(inst);
+			if(insts.isEmpty())
+				bufferOut = null;
+			else
+				bufferOut = insts.toArray(new VirtualInstruction[0]);
+		}
+		if(bufferIn != null) {
+			insts = new LinkedList<>();
+			for(VirtualInstruction inst : bufferIn)
+				if(inst.getID() <= i)
+					insts.add(inst);
+			if(insts.isEmpty())
+				bufferOut = null;
+			else
+				bufferOut = insts.toArray(new VirtualInstruction[0]);
+		}
 	}	
 }

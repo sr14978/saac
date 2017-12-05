@@ -8,13 +8,14 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import saac.dataObjects.Instruction;
+import saac.dataObjects.FilledInInstruction;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.FullChannelException;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
@@ -23,15 +24,15 @@ import saac.utils.Output;
 
 public class DualReservationStation implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 
-	List<FConnection<Instruction>.Input> outputUnits;	
-	FConnection<Instruction[]>.Output input;
+	List<FConnection<FilledInInstruction>.Input> outputUnits;	
+	FListConnection<FilledInInstruction>.Output input;
 	Connection<Boolean>.Input emptyFlag;
-	List<Instruction> buffer = new LinkedList<>();
+	List<FilledInInstruction> buffer = new LinkedList<>();
 	static int bufferLimit = 3;
 	int nextOutputToUse = 0;
 	
-	public DualReservationStation(List<FConnection<Instruction>.Input> outputUnits,
-			FConnection<Instruction[]>.Output input, Connection<Boolean>.Input emptyFlag) {
+	public DualReservationStation(List<FConnection<FilledInInstruction>.Input> outputUnits,
+			FListConnection<FilledInInstruction>.Output input, Connection<Boolean>.Input emptyFlag) {
 		this.outputUnits = outputUnits;
 		this.input = input;
 		this.emptyFlag = emptyFlag;
@@ -64,9 +65,9 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 			emptyFlag.put(true);
 	}
 	
-	public static boolean output(FConnection<Instruction>.Input input, List<Instruction> buffer, String name) throws FullChannelException {
+	public static boolean output(FConnection<FilledInInstruction>.Input input, List<FilledInInstruction> buffer, String name) throws FullChannelException {
 		if(input.clear()) {
-			Instruction inst = buffer.remove(0);
+			FilledInInstruction inst = buffer.remove(0);
 			input.put(inst);
 			Output.info.println(inst + " sent for execution on " + name);
 			return true;
@@ -94,7 +95,13 @@ public class DualReservationStation implements ClockedComponentI, VisibleCompone
 	}
 
 	@Override
-	public void clear() {
-		buffer.clear();
+	public void clear(int i) {
+		if(buffer == null)
+			return;
+		List<FilledInInstruction> results = new LinkedList<>();
+		for(FilledInInstruction inst : buffer)
+			if(inst.getID() <= i)
+				results.add(inst);
+		buffer = results;
 	}
 }

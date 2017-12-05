@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.Arrays;
 
+import saac.clockedComponents.RegisterFile.RegItem;
 import saac.utils.DrawingHelper;
 
 public class Connection<T> implements VisibleComponentI{
@@ -46,8 +47,8 @@ public class Connection<T> implements VisibleComponentI{
 			DrawingHelper.drawArrow(gc, BOX_SIZE/(2*num), 23);
 			DrawingHelper.drawBox(gc, "", 0, 0, BOX_SIZE/num, 20, Color.LIGHT_GRAY, Color.BLACK);
 			if(value != null) {
-				if(value instanceof Integer[]) {
-					Integer[] val = (Integer[]) value;
+				if(value instanceof Object[]) {
+					Object[] val = (Object[]) value;
 					gc.drawString(Arrays.toString(val), 5, 15);
 				} else 
 					gc.drawString(value.toString(), 5, 15);

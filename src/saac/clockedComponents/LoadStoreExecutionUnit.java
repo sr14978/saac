@@ -5,7 +5,7 @@ import java.awt.Graphics2D;
 import java.util.LinkedList;
 import java.util.List;
 
-import saac.dataObjects.Instruction;
+import saac.dataObjects.FilledInInstruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
@@ -32,12 +32,12 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		}
 	}
 	
-	private FConnection<Instruction>.Output instructionIn;
+	private FConnection<FilledInInstruction>.Output instructionIn;
 	private FConnection<InstructionResult>.Input resultOut;
 	private List<Item> buffer = new LinkedList<>();
 	private Memory memory;
 	
-	public LoadStoreExecutionUnit(FConnection<Instruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut, Memory memory) {
+	public LoadStoreExecutionUnit(FConnection<FilledInInstruction>.Output instructionIn, FConnection<InstructionResult>.Input resultOut, Memory memory) {
 		this.instructionIn = instructionIn;
 		this.resultOut = resultOut;
 		this.memory = memory;
@@ -51,7 +51,7 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		
 		if(!instructionIn.ready())
 			return;
-		Instruction inst = instructionIn.pop();
+		FilledInInstruction inst = instructionIn.pop();
 		
 		InstructionResult res = null;		
 		switch(inst.getOpcode()) {
@@ -114,7 +114,13 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 	}
 
 	@Override
-	public void clear() {
-		buffer.clear();
+	public void clear(int i) {
+		if(buffer == null)
+			return;
+		List<Item> results = new LinkedList<>();
+		for(Item inst : buffer)
+			if(inst.result.getID() <= i)
+				results.add(inst);
+		buffer = results;
 	}
 }

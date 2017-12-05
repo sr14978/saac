@@ -8,13 +8,15 @@ import java.util.List;
 import java.util.function.Function;
 
 import saac.Settings;
-import saac.dataObjects.Instruction;
+import saac.dataObjects.FilledInInstruction;
+import saac.dataObjects.VirtualInstruction;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
@@ -26,28 +28,28 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	static final Function<Opcode, Opcode> sameOp = Function.identity();
 	static final Function<Integer, Integer> sameVal = Function.identity();
 	
-	FConnection<Instruction[]>.Output instructionIn;
+	FListConnection<VirtualInstruction>.Output instructionIn;
 	Connection<Integer[]>.Output paramARegInput;
 	Connection<Integer[]>.Output paramBRegInput;
 	Connection<Integer[]>.Output paramCRegInput;
-	FConnection<Instruction[]>.Input outputEU;
-	FConnection<Instruction>.Input toEU_A;
+	FListConnection<FilledInInstruction>.Input outputEU;
+	FConnection<FilledInInstruction>.Input toEU_A;
 	Connection<Boolean>.Output dualToIssuer;
-	FConnection<Instruction>.Input outputLS;
-	FConnection<Instruction>.Input outputBr;
-	Instruction[] bufferOut;
+	FConnection<FilledInInstruction>.Input outputLS;
+	FConnection<FilledInInstruction>.Input outputBr;
+	FilledInInstruction[] bufferOut;
 	RegisterFile registerFile;
 	
 	public Issuer(RegisterFile rf,
-			FConnection<Instruction[]>.Output instructionIn,
+			FListConnection<VirtualInstruction>.Output instructionIn,
 			Connection<Integer[]>.Output paramARegInput,
 			Connection<Integer[]>.Output paramBRegInput,
 			Connection<Integer[]>.Output paramCRegInput,
-			FConnection<Instruction[]>.Input outputEU,
-			FConnection<Instruction>.Input toEU_A,
+			FListConnection<FilledInInstruction>.Input outputEU,
+			FConnection<FilledInInstruction>.Input toEU_A,
 			Connection<Boolean>.Output dualToIssuer,
-			FConnection<Instruction>.Input outputLS,
-			FConnection<Instruction>.Input outputBr) {
+			FConnection<FilledInInstruction>.Input outputLS,
+			FConnection<FilledInInstruction>.Input outputBr) {
 		this.instructionIn = instructionIn;
 		this.paramARegInput = paramARegInput;
 		this.paramBRegInput = paramBRegInput;
@@ -63,10 +65,10 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	@Override
 	public void tick() throws Exception {
 		if(instructionIn.ready() && bufferOut == null) {
-			Instruction[] insts= instructionIn.pop();
-			List<Instruction> instructionsOut = new LinkedList<>();
+			VirtualInstruction[] insts= instructionIn.pop();
+			List<FilledInInstruction> instructionsOut = new LinkedList<>();
 			for(int i = 0; i<insts.length; i++) {
-				Instruction inst = insts[i];
+				VirtualInstruction inst = insts[i];
 				final boolean paramAreg, paramBreg, paramCreg;
 				switch(inst.getOpcode()) {
 				case Ldc:
@@ -108,15 +110,15 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 				final int areg = paramARegInput.get()[i];
 				final int breg = paramBRegInput.get()[i];
 				final int creg = paramCRegInput.get()[i];
-				instructionsOut.add(inst.transform(
-						sameOp,
-						a -> paramAreg? areg:a,
-						b -> paramBreg? breg:b,
-						c -> paramCreg? creg:c
-								)
+				instructionsOut.add(inst.fillIn(
+								a -> paramAreg? areg:a,
+								b -> paramBreg? breg:b,
+								c -> paramCreg? creg:c,
+								d -> paramCreg? creg:d
+							)
 						);
 			}
-			bufferOut = instructionsOut.toArray(new Instruction[0]);
+			bufferOut = instructionsOut.toArray(new FilledInInstruction[0]);
 		}
 	}
 	
@@ -124,10 +126,10 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	public void tock() throws Exception {
 		if(bufferOut == null)
 			return;
-		List<Instruction> out = new LinkedList<>(Arrays.asList(bufferOut));
-		List<Instruction> outEUs = new LinkedList<>();
+		List<FilledInInstruction> out = new LinkedList<>(Arrays.asList(bufferOut));
+		List<FilledInInstruction> outEUs = new LinkedList<>();
 		for(int i = 0; i<out.size(); i++) {
-			Instruction inst = out.get(i);
+			FilledInInstruction inst = out.get(i);
 			switch(inst.getOpcode()) {
 			case Ldc:
 			case Add:
@@ -180,10 +182,10 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 		if(out.isEmpty())
 			bufferOut = null;
 		else
-			bufferOut = out.toArray(new Instruction[0]);
+			bufferOut = out.toArray(new FilledInInstruction[0]);
 		
 		if(!outEUs.isEmpty())
-			outputEU.put(outEUs.toArray(new Instruction[0]));
+			outputEU.put(outEUs.toArray(new FilledInInstruction[0]));
 	}
 		
 	class View extends ComponentView {
@@ -206,8 +208,17 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	}
 
 	@Override
-	public void clear() {
-		bufferOut = null;
+	public void clear(int i) {
+		if(bufferOut == null)
+			return;
+		List<FilledInInstruction> insts = new LinkedList<>();
+		for(FilledInInstruction inst : bufferOut)
+			if(inst.getID() <= i)
+				insts.add(inst);
+		if(insts.isEmpty())
+			bufferOut = null;
+		else
+			bufferOut = insts.toArray(new FilledInInstruction[0]);
 	}
 
 }

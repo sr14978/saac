@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 import saac.utils.Instructions.Opcode;
 
-public class Instruction {
+public class Instruction implements InstructionI{
 	
 	private final int instructionNumber;
 	private final Opcode opcode;
@@ -70,6 +70,10 @@ public class Instruction {
 	
 	public Instruction transformParamD(Function<Integer, Integer> f) {
 		return new Instruction(this.instructionNumber, this.opcode, this.paramA, this.paramB, this.paramC, f.apply(paramD));
+	}
+	
+	public VirtualInstruction virtualize(Function<Integer, Integer> a, Function<Integer, Integer> b, Function<Integer, Integer> c, Function<Integer, Integer> d) {
+		return new VirtualInstruction(instructionNumber, opcode, a.apply(paramA), paramA, b.apply(paramB), paramB, c.apply(paramC), paramC, d.apply(paramD), paramD);
 	}
 	
 	public String toString() {

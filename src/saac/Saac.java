@@ -19,17 +19,21 @@ import saac.clockedComponents.InstructionsSource;
 import saac.clockedComponents.Issuer;
 import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
+import saac.clockedComponents.RegisterFile.RegItem;
 import saac.clockedComponents.WritebackHandler;
 import saac.dataObjects.BranchResult;
+import saac.dataObjects.FilledInInstruction;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
+import saac.dataObjects.VirtualInstruction;
 import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.unclockedComponents.BranchPredictor;
 import saac.unclockedComponents.Label;
 import saac.unclockedComponents.Memory;
@@ -80,28 +84,28 @@ public class Saac implements ClockedComponentI {
 		
 		Memory memory = new Memory();
 		
-		List<FConnection<Instruction>> dualRSToEUs = new ArrayList<>();
+		List<FConnection<FilledInInstruction>> dualRSToEUs = new ArrayList<>();
 		List<FConnection<InstructionResult>> EUToWBs = new ArrayList<>();
 		List<ExecutionUnit> EUs = new ArrayList<>();
 		for(int i = 0; i<Settings.NUMBER_OF_EXECUTION_UNITS; i++) {
-			FConnection<Instruction> dualRSToEU = new FConnection<>();
+			FConnection<FilledInInstruction> dualRSToEU = new FConnection<>();
 			FConnection<InstructionResult> EUtoWB = new FConnection<>();
 			EUs.add(new ExecutionUnit(dualRSToEU.getOutputEnd(), EUtoWB.getInputEnd()));
 			dualRSToEUs.add(dualRSToEU);
 			EUToWBs.add(EUtoWB);
 		}
 	
-		FConnection<Instruction> issueToLS = new FConnection<>();
+		FConnection<FilledInInstruction> issueToLS = new FConnection<>();
 		FConnection<InstructionResult> LStoWB = new FConnection<>();
 		LoadStoreExecutionUnit LSEU = new LoadStoreExecutionUnit(issueToLS.getOutputEnd(), LStoWB.getInputEnd(), memory);
 		
-		FConnection<Instruction> issueToBr = new FConnection<>();
+		FConnection<FilledInInstruction> issueToBr = new FConnection<>();
 		FConnection<BranchResult> brToFetch = new FConnection<>();
 		FConnection<InstructionResult> brToWB = new FConnection<>();
 		BranchExecutionUnit brUnit = new BranchExecutionUnit(
 				issueToBr.getOutputEnd(), brToFetch.getInputEnd(), brToWB.getInputEnd());
 		
-		FConnection<Instruction[]> issueToDualRS = new FConnection<>();
+		FListConnection<FilledInInstruction> issueToDualRS = new FListConnection<>();
 		Connection<Boolean> dualToIssuer = new Connection<>();
 		DualReservationStation dualRS = new DualReservationStation(
 				dualRSToEUs.stream().map(x->x.getInputEnd()).collect(Collectors.toList()),
@@ -109,13 +113,13 @@ public class Saac implements ClockedComponentI {
 				dualToIssuer.getInputEnd()
 			);
 				
-		FConnection<int[][]> fetchToDecode = new FConnection<>();
-		FConnection<Instruction[]> decodeToDep = new FConnection<>();
+		FListConnection<int[]> fetchToDecode = new FListConnection<>();
+		FListConnection<VirtualInstruction> decodeToDep = new FListConnection<>();
 		Decoder decoder = new Decoder(decodeToDep.getInputEnd(), fetchToDecode.getOutputEnd());
 				
-		Connection<Integer[]> paramADepToReg = new Connection<>();
-		Connection<Integer[]> paramBDepToReg = new Connection<>();
-		Connection<Integer[]> paramCDepToReg = new Connection<>();
+		Connection<RegItem[]> paramADepToReg = new Connection<>();
+		Connection<RegItem[]> paramBDepToReg = new Connection<>();
+		Connection<RegItem[]> paramCDepToReg = new Connection<>();
 		
 		Connection<Integer[]> paramAReg_RegToIssue = new Connection<>();
 		Connection<Integer[]> paramBReg_RegToIssue = new Connection<>();
@@ -135,7 +139,7 @@ public class Saac implements ClockedComponentI {
 		
 		FConnection<Integer> addrInput = new FConnection<>();
 		FConnection<Boolean> clearInput = new FConnection<>();
-		FConnection<int[][]> instructionOutput = new FConnection<>();
+		FListConnection<int[]> instructionOutput = new FListConnection<>();
 		InstructionsSource instructionSource = new InstructionsSource(
 				addrInput.getOutputEnd(),
 				clearInput.getOutputEnd(),
@@ -152,8 +156,8 @@ public class Saac implements ClockedComponentI {
 				instructionOutput.getOutputEnd()
 			);
 		
-		FConnection<Instruction[]> opcodeDepToIssue = new FConnection<>();
-		BufferedConnection<Integer> dirtyWBtoDep = new BufferedConnection<>(WritebackHandler.BUFF_SIZE);
+		FListConnection<VirtualInstruction> opcodeDepToIssue = new FListConnection<>();
+		BufferedConnection<Integer> dirtyWBtoDep = new BufferedConnection<>(RegisterFile.BUFF_SIZE);
 
 		DepChecker depChecker = new DepChecker(registerFile,
 				decodeToDep.getOutputEnd(),
@@ -262,7 +266,6 @@ public class Saac implements ClockedComponentI {
 		clearables.add(instructionSource);
 		clearables.add(decoder);
 		clearables.add(depChecker);
-		clearables.add(registerFile);
 		clearables.add(issuer);
 		clearables.add(dualRS);
 		clearables.add(EUs.get(0));

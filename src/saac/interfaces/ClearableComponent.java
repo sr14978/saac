@@ -1,5 +1,5 @@
 package saac.interfaces;
 
 public interface ClearableComponent {
-	public void clear();
+	public void clear(int i);
 }

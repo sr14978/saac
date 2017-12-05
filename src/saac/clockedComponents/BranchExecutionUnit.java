@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import saac.dataObjects.BranchResult;
-import saac.dataObjects.Instruction;
+import saac.dataObjects.FilledInInstruction;
 import saac.dataObjects.InstructionResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -18,13 +18,13 @@ import saac.utils.Output;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
-	private FConnection<Instruction>.Output instructionIn;
+	private FConnection<FilledInInstruction>.Output instructionIn;
 	FConnection<BranchResult>.Input outputToFetch;
 	FConnection<InstructionResult>.Input outputToWB;
 	BranchResult bufferOut;
 	
 	public BranchExecutionUnit(
-			FConnection<Instruction>.Output instructionIn,
+			FConnection<FilledInInstruction>.Output instructionIn,
 			FConnection<BranchResult>.Input outputToFetch,
 			FConnection<InstructionResult>.Input input) {
 		this.instructionIn = instructionIn;
@@ -38,7 +38,7 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 			return;
 		if(!instructionIn.ready())
 			return;
-		Instruction inst = instructionIn.pop();
+		FilledInInstruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Br:
 			bufferOut = new BranchResult(inst.getID(), inst.getParamA(), true, true, inst.getParamD());
@@ -98,7 +98,8 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 	}
 
 	@Override
-	public void clear() {
-		bufferOut = null;
+	public void clear(int i) {
+		if(bufferOut != null && bufferOut.getID() > i)
+			bufferOut = null;
 	}
 }

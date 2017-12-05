@@ -1,0 +1,9 @@
+
+ldc r1 11
+ldc r2 22
+ldc r3 33
+
+ldma r4 10
+divi r3 r3 1
+add r0 r1 r2
+stop
