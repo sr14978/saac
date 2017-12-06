@@ -6,7 +6,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.Arrays;
 
-import saac.clockedComponents.RegisterFile.RegItem;
 import saac.utils.DrawingHelper;
 
 public class Connection<T> implements VisibleComponentI{

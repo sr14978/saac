@@ -14,7 +14,6 @@ import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
-import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;

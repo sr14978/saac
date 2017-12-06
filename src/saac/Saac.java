@@ -23,7 +23,6 @@ import saac.clockedComponents.RegisterFile.RegItem;
 import saac.clockedComponents.WritebackHandler;
 import saac.dataObjects.BranchResult;
 import saac.dataObjects.FilledInInstruction;
-import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
 import saac.dataObjects.VirtualInstruction;
