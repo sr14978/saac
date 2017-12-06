@@ -250,9 +250,9 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 				if(inst.getID() <= i)
 					insts.add(inst);
 			if(insts.isEmpty())
-				bufferOut = null;
+				bufferIn = null;
 			else
-				bufferOut = insts.toArray(new VirtualInstruction[0]);
+				bufferIn = insts.toArray(new VirtualInstruction[0]);
 		}
 	}	
 }

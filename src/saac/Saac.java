@@ -285,7 +285,6 @@ public class Saac implements ClockedComponentI {
 		clearables.add(issueToDualRS);
 		clearables.add(fetchToDecode);
 		clearables.add(decodeToDep);
-		clearables.add(instructionOutput);
 		clearables.add(opcodeDepToIssue);
 		clearables.add(addrInput);
 		clearables.add(clearInput);

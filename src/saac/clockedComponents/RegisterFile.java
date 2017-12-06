@@ -53,9 +53,12 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 			if(instructionOffset >= BUFF_SIZE - bufferIndexStart && bufferIndex >= bufferIndexStart )
 				return false;
 
-			
+			try {
 			reorderBuffer[bufferIndex] = res;
-			
+			} catch (ArrayIndexOutOfBoundsException e) {
+				System.out.println(res);
+				throw e;
+			}
 			if( (res.getID() - bufferInstructionStart + 1)
 					> (bufferIndexEnd - bufferIndexStart + BUFF_SIZE) % BUFF_SIZE ) {
 				bufferIndexEnd = (bufferIndex + 1) % BUFF_SIZE;
@@ -124,7 +127,8 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 			Object obj = reorderBuffer[bufferIndex];
 			if(obj == null)
 				return 0;
-			
+			if(!(obj instanceof RegisterResult))
+				return 0;
 			return ((RegisterResult) obj).getValue();				
 		}
 		throw new RuntimeException();

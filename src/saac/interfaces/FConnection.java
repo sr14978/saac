@@ -94,10 +94,8 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 		if(value == null)
 			return;
 		if(value instanceof InstructionI && ((InstructionI) value).getID() > i)
-				value = null;
-		else if(value instanceof int[])
 			value = null;
-		else
-			throw new RuntimeException(value.toString());
+		else if(value instanceof int[])
+			value = null;			
 	}
 }

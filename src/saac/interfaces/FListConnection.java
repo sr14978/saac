@@ -103,6 +103,8 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 					keeps.add(val);
 			if(!keeps.isEmpty())
 				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
+			else
+				value = null;
 		} else if(value instanceof int[][])
 			value = null;
 		else

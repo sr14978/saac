@@ -67,10 +67,13 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			BranchResult res = fromBrUnit.pop();
 			predictor.update(res);
 			if(!res.wasCorrect()) {
-				for(ClearableComponent cc : clearables)
+				for(ClearableComponent cc : clearables) {
 					cc.clear(res.getID());
+					System.out.println(cc.getClass());
+				}
 				instructionCounter = res.getID();
 				programCounter = res.getNewPc();
+				clearOutput.put(true);
 			}
 		} else if(addrOutput.clear()) {
 			addrOutput.put(programCounter);
