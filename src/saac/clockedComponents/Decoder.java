@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import saac.Settings;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.VirtualInstruction;
 import saac.interfaces.ClearableComponent;
@@ -104,12 +105,16 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 			throw new NotImplementedException();
 		}
 		
-		VirtualInstruction vinst = inst.virtualize(
+		VirtualInstruction vinst;
+		if(Settings.REGISTER_RENAMING_ENABLED)
+			vinst = inst.virtualize(
 				x->dependOnA?virtualAddresses.get(x):(dirtyA?inst.getID():x),
 				x->dependOnB?virtualAddresses.get(x):x,
 				x->dependOnC?virtualAddresses.get(x):x,
 				x->x
 			);
+		else
+			vinst = inst.virtualize(x->x, x->x, x->x, x->x);
 		
 		if(dirtyA) {
 			virtualAddresses.put(inst.getParamA(), inst.getID());

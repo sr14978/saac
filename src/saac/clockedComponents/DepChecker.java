@@ -76,6 +76,8 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 		List<RegItem> paramsOutC = new LinkedList<>();
 		List<VirtualInstruction> ins = new LinkedList<>(Arrays.asList(bufferIn));
 		List<Integer> allDirties = new LinkedList<>();
+		List<Integer> allUses= new LinkedList<>();
+		List<Integer> acceptedDirties = new LinkedList<>();
 		
 		for(int k = 0; k< bufferIn.length; k++) {
 			VirtualInstruction inst  = bufferIn[k];
@@ -131,46 +133,73 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			List<Character> paramDependances = new ArrayList<>();
 			RegisterFile rf = registerFile;
 			
-			if(dependOnA) {
-				if(allDirties.contains(inst.getVirtualParamA()) || 
-						(rf.inReorderBuffer(inst.getVirtualParamA()) && rf.getOffsetted(inst.getVirtualParamA()) == null))
-					paramDependances.add('A');
-			}
-			if(dependOnB) {
-				if(allDirties.contains(inst.getVirtualParamB()) ||
-						(rf.inReorderBuffer(inst.getVirtualParamB()) && rf.getOffsetted(inst.getVirtualParamB()) == null))
-					paramDependances.add('B');
-			}
-			if(dependOnC) {
-				if(allDirties.contains(inst.getVirtualParamC()) ||
-						(rf.inReorderBuffer(inst.getVirtualParamC()) && rf.getOffsetted(inst.getVirtualParamC()) == null))
-					paramDependances.add('C');
+			if(Settings.REGISTER_RENAMING_ENABLED) {
+				if(dependOnA) {
+					if(allDirties.contains(inst.getVirtualParamA()) || 
+							(rf.inReorderBuffer(inst.getVirtualParamA()) && rf.getOffsetted(inst.getVirtualParamA()) == null))
+						paramDependances.add('A');
+				}
+				if(dependOnB) {
+					if(allDirties.contains(inst.getVirtualParamB()) ||
+							(rf.inReorderBuffer(inst.getVirtualParamB()) && rf.getOffsetted(inst.getVirtualParamB()) == null))
+						paramDependances.add('B');
+				}
+				if(dependOnC) {
+					if(allDirties.contains(inst.getVirtualParamC()) ||
+							(rf.inReorderBuffer(inst.getVirtualParamC()) && rf.getOffsetted(inst.getVirtualParamC()) == null))
+						paramDependances.add('C');
+				}
+			} else {
+				if(dirtyA) {
+					if(allUses.contains(inst.getArchParamA()) || allDirties.contains(inst.getArchParamA()) || rf.isDirty(inst.getArchParamA()))
+						paramDependances.add('A');
+				} else if(dependOnA) {
+					if(allDirties.contains(inst.getArchParamA()) || rf.isDirty(inst.getArchParamA()))
+						paramDependances.add('A');
+				}
+				if(dependOnB) {
+					if(allDirties.contains(inst.getArchParamB()) || rf.isDirty(inst.getArchParamB()))
+						paramDependances.add('B');
+				}
+				if(dependOnC) {
+					if(allDirties.contains(inst.getArchParamC()) || rf.isDirty(inst.getArchParamC()))
+						paramDependances.add('C');
+				}
+				if(dependOnA)
+					allUses.add(inst.getArchParamA());
+				if(dependOnB)
+					allUses.add(inst.getArchParamB());
+				if(dependOnC)
+					allUses.add(inst.getArchParamC());
 			}
 			
 			if(dirtyA)
-				allDirties.add(inst.getID());
+				if(Settings.REGISTER_RENAMING_ENABLED)
+					allDirties.add(inst.getID());
+				else
+					allDirties.add(inst.getArchParamA());
 			
 			if(!paramDependances.isEmpty()) {
 				Output.info.println(inst + " is blocked by " + paramDependances);
-				if(Settings.OUT_OF_ORDER_ENABLED == false)
-					break;
-				else
+				if(Settings.OUT_OF_ORDER_ENABLED)
 					continue;
+				else
+					break;
 			}
-			/*
-			if(dirtyA) {
-				acceptedDirties.add(inst.getParamA());
-			}
-			*/
-			if(rf.inReorderBuffer(inst.getVirtualParamA()))
+			
+			if(dirtyA)
+				acceptedDirties.add(inst.getArchParamA());
+			
+			
+			if(rf.inReorderBuffer(inst.getVirtualParamA()) && Settings.REGISTER_RENAMING_ENABLED)
 				paramsOutA.add(new RegItem(inst.getVirtualParamA(), Reg.Virtual));
 			else
 				paramsOutA.add(new RegItem(inst.getArchParamA(), Reg.Architectural));
-			if(rf.inReorderBuffer(inst.getVirtualParamB()))
+			if(rf.inReorderBuffer(inst.getVirtualParamB()) && Settings.REGISTER_RENAMING_ENABLED)
 				paramsOutB.add(new RegItem(inst.getVirtualParamB(), Reg.Virtual));
 			else
 				paramsOutB.add(new RegItem(inst.getArchParamB(), Reg.Architectural));
-			if(rf.inReorderBuffer(inst.getVirtualParamC()))
+			if(rf.inReorderBuffer(inst.getVirtualParamC()) && Settings.REGISTER_RENAMING_ENABLED)
 				paramsOutC.add(new RegItem(inst.getVirtualParamC(), Reg.Virtual));
 			else
 				paramsOutC.add(new RegItem(inst.getArchParamC(), Reg.Architectural));
@@ -186,10 +215,10 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 		paramAOut.put(paramsOutA.toArray(new RegItem[0]));
 		paramBOut.put(paramsOutB.toArray(new RegItem[0]));
 		paramCOut.put(paramsOutC.toArray(new RegItem[0]));
-		/*
+		
 		for(Integer r : acceptedDirties)
 			registerFile.setDirty(r, true);
-		*/
+		
 		if(ins.size() == 0)
 			bufferIn = null;
 		else

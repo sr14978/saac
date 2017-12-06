@@ -64,20 +64,6 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 				bufferIndexEnd = (bufferIndex + 1) % BUFF_SIZE;
 			}
 			
-			if(res instanceof BranchResult) {
-				Saac.InstructionCounter++;
-				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
-			
-					BranchResult br = (BranchResult) res;
-					if(!br.wasCorrect()) {
-						reorderBuffer[bufferIndex] = null;
-						for(int i = bufferIndex; i<bufferIndexEnd; i++)
-							reorderBuffer[i] = null;
-					}
-					bufferIndexEnd = bufferIndex;
-				}
-			}
-			
 			return true;
 		} else 
 			throw new Exception("Reorder buffer overflow");
@@ -91,6 +77,15 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 		reorderBuffer[bufferIndexStart] = null;
 		bufferIndexStart = (bufferIndexStart + 1) % BUFF_SIZE;
 		bufferInstructionStart++;
+	}
+	
+	public void clearAfter() {
+		int bufferIndex = bufferIndexStart;
+		while(bufferIndex != bufferIndexEnd) {
+			reorderBuffer[bufferIndexStart] = null;
+			bufferIndex = (bufferIndex + 1) % BUFF_SIZE;
+		}
+		bufferIndexEnd = bufferIndex;
 	}
 	
 	public InstructionResult getOffsetted(int offset) {
@@ -233,6 +228,11 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	public void clearDirties() {
+		for(int i = 0; i<dirtyBits.length; i++)
+			dirtyBits[i] = false;
 	}
 
 }

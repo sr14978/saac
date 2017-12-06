@@ -10,9 +10,9 @@ public class Settings {
 	
 	public static final int SUPERSCALER_WIDTH = 4;
 	
-	public static final boolean OUT_OF_ORDER_ENABLED = false;
+	public static final boolean OUT_OF_ORDER_ENABLED = true;
 	
 	public static final int VIRTUAL_ADDRESS_NUM = 16;
 	
-	
+	public static final boolean REGISTER_RENAMING_ENABLED = true;
 }
