@@ -1,22 +1,23 @@
 package saac;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 import saac.Settings.BranchPrediciton;
 import saac.clockedComponents.RegisterFile;
-import saac.clockedComponents.RegisterFile.Reg;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
 
 public class Test {
 	
 	static Map<Config, Float> results = new HashMap<>();
-	
+	static List<Config> failures = new ArrayList<>();
 	static class Control {
 		volatile Float val = null;
 	}
@@ -51,16 +52,19 @@ public class Test {
 									Thread worker = new Thread() {
 										public void run() {
 											try {
-												control.val = runTest("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
+												//control.val = runTest("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
+												control.val = runTest("no_depend_add.program", (rf -> true));
 											} catch (InterruptedException e) {
+											} catch (WrongAnswerException e) {
 											} catch (Exception e) {
-												e.printStackTrace();
+												//e.printStackTrace();
 											}
 										}
 									};
 									worker.start();
 									Thread.sleep(10);
 									if(control.val == null) {
+										failures.add(new Config(branch, bypass, units, width, order, addr, renaming));
 										worker.interrupt();
 									} else {
 										results.put(new Config(branch, bypass, units, width, order, addr, renaming), control.val);
@@ -70,54 +74,54 @@ public class Test {
 						}
 					}
 				}
-				System.out.println(results);
-				Set<Config> bestConfigs = null;
-				float bestRate = 0;
-				for(Config c : results.keySet()) {
-					float val = results.get(c);
-					if(val == bestRate) {
-						bestConfigs.add(c);
-					}
-					if(val > bestRate) {
-						bestConfigs = new HashSet<>();
-						bestConfigs.add(c);
-						bestRate = val;
-					}
-				}
-				System.out.println(bestConfigs);
-				Set<BranchPrediciton> branchPrediction = new HashSet<>();
-				Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
-				Set<Integer> numberOfExecutionUnits = new HashSet<>();
-				Set<Integer> superScalerWidth = new HashSet<>();
-				Set<Boolean> outOfOrderEnabled = new HashSet<>();
-				Set<Integer> virtualAddressNum = new HashSet<>();
-				Set<Boolean> registerRenaming = new HashSet<>();
-				for(Config c : bestConfigs) {
-					if(!branchPrediction.contains(c.branchPrediction))
-						branchPrediction.add(c.branchPrediction);
-					if(!reservationStationBypassEnabled.contains(c.reservationStationBypassEnabled))
-						reservationStationBypassEnabled.add(c.reservationStationBypassEnabled);
-					if(!numberOfExecutionUnits.contains(c.numberOfExecutionUnits))
-						numberOfExecutionUnits.add(c.numberOfExecutionUnits);
-					if(!superScalerWidth.contains(c.superScalerWidth))
-						superScalerWidth.add(c.superScalerWidth);
-					if(!outOfOrderEnabled.contains(c.outOfOrderEnabled))
-						outOfOrderEnabled.add(c.outOfOrderEnabled);
-					if(!virtualAddressNum.contains(c.virtualAddressNum))
-						virtualAddressNum.add(c.virtualAddressNum);
-					if(!registerRenaming.contains(c.registerRenaming))
-						registerRenaming.add(c.registerRenaming);
-				}
-				System.out.println("branchPrediction:" + branchPrediction);
-				System.out.println("reservationStationBypassEnabled:" + reservationStationBypassEnabled);
-				System.out.println("numberOfExecutionUnits:" + numberOfExecutionUnits);
-				System.out.println("superScalerWidth:" + superScalerWidth);
-				System.out.println("outOfOrderEnabled:" + outOfOrderEnabled);
-				System.out.println("virtualAddressNum:" + virtualAddressNum);
-				System.out.println("registerRenaming:" + registerRenaming);
-				System.out.println(bestRate);
 			}
 		}
+		System.out.println("Results");		
+		Set<Config> bestConfigs = null;
+		float bestRate = 0;
+		for(Config c : results.keySet()) {
+			float val = results.get(c);
+			if(val == bestRate) {
+				bestConfigs.add(c);
+			}
+			if(val > bestRate) {
+				bestConfigs = new HashSet<>();
+				bestConfigs.add(c);
+				bestRate = val;
+			}
+		}
+		Set<BranchPrediciton> branchPrediction = new HashSet<>();
+		Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
+		Set<Integer> numberOfExecutionUnits = new HashSet<>();
+		Set<Integer> superScalerWidth = new HashSet<>();
+		Set<Boolean> outOfOrderEnabled = new HashSet<>();
+		Set<Integer> virtualAddressNum = new HashSet<>();
+		Set<Boolean> registerRenaming = new HashSet<>();
+		for(Config c : bestConfigs) {
+			if(!branchPrediction.contains(c.branchPrediction))
+				branchPrediction.add(c.branchPrediction);
+			if(!reservationStationBypassEnabled.contains(c.reservationStationBypassEnabled))
+				reservationStationBypassEnabled.add(c.reservationStationBypassEnabled);
+			if(!numberOfExecutionUnits.contains(c.numberOfExecutionUnits))
+				numberOfExecutionUnits.add(c.numberOfExecutionUnits);
+			if(!superScalerWidth.contains(c.superScalerWidth))
+				superScalerWidth.add(c.superScalerWidth);
+			if(!outOfOrderEnabled.contains(c.outOfOrderEnabled))
+				outOfOrderEnabled.add(c.outOfOrderEnabled);
+			if(!virtualAddressNum.contains(c.virtualAddressNum))
+				virtualAddressNum.add(c.virtualAddressNum);
+			if(!registerRenaming.contains(c.registerRenaming))
+				registerRenaming.add(c.registerRenaming);
+		}
+		System.out.println("branchPrediction:" + branchPrediction);
+		System.out.println("reservationStationBypassEnabled:" + reservationStationBypassEnabled);
+		System.out.println("numberOfExecutionUnits:" + numberOfExecutionUnits);
+		System.out.println("superScalerWidth:" + superScalerWidth);
+		System.out.println("outOfOrderEnabled:" + outOfOrderEnabled);
+		System.out.println("virtualAddressNum:" + virtualAddressNum);
+		System.out.println("registerRenaming:" + registerRenaming);
+		System.out.println(bestRate);
+		System.out.println(failures);
 	}
 
 	private static float runTest(String programName, Function<RegisterFile, Boolean> p) throws IOException, ParserException, Exception {
@@ -131,8 +135,11 @@ public class Test {
 		if(p.apply(saac.registerFile))
 			return RateUtils.round((float) Saac.InstructionCounter / Saac.CycleCounter);
 		else
-			throw new Exception("Test Failed");
+			throw new WrongAnswerException();
 	}
+	
+	@SuppressWarnings("serial")
+	static class WrongAnswerException extends Exception {}
 	
 	static class Config {
 		BranchPrediciton branchPrediction;

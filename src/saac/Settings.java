@@ -6,7 +6,7 @@ public class Settings {
 	
 	public static boolean RESERVATION_STATION_BYPASS_ENABLED = true;
 	
-	public static int NUMBER_OF_EXECUTION_UNITS = 2;
+	public static int NUMBER_OF_EXECUTION_UNITS = 4;
 	
 	public static int SUPERSCALER_WIDTH = 4;
 	
