@@ -2,13 +2,13 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.HashMap;
+import java.util.Map;
 
-import saac.Saac;
 import saac.Settings;
-import saac.Settings.BranchPrediciton;
-import saac.dataObjects.BranchResult;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.RegisterResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -18,7 +18,7 @@ import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
 
-public class RegisterFile implements VisibleComponentI, ClockedComponentI{
+public class RegisterFile implements VisibleComponentI, ClockedComponentI, ClearableComponent{
 
 	static final int registerNum = 12;
 	static final int PC = registerNum;
@@ -32,15 +32,15 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 	int bufferInstructionStart = 0;
 	
 	public static class RegItem {
-		Integer value;
-		Reg type;
+		public Integer value;
+		public Reg type;
 		RegItem(Integer value, Reg type) {
 			this.value = value;
 			this.type = type;
 		}
 		public String toString() { return value.toString() + (type==Reg.Virtual?"(v)":""); }
 	}
-	public enum Reg {Architectural, Virtual};
+	public enum Reg {Architectural, Virtual, Data};
 	
 	public boolean insert(InstructionResult res) throws Exception {
 		if(res.getID() < bufferInstructionStart + BUFF_SIZE) {
@@ -53,12 +53,8 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 			if(instructionOffset >= BUFF_SIZE - bufferIndexStart && bufferIndex >= bufferIndexStart )
 				return false;
 
-			try {
 			reorderBuffer[bufferIndex] = res;
-			} catch (ArrayIndexOutOfBoundsException e) {
-				System.out.println(res);
-				throw e;
-			}
+
 			if( (res.getID() - bufferInstructionStart + 1)
 					> (bufferIndexEnd - bufferIndexStart + BUFF_SIZE) % BUFF_SIZE ) {
 				bufferIndexEnd = (bufferIndex + 1) % BUFF_SIZE;
@@ -124,7 +120,9 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 				return 0;
 			if(!(obj instanceof RegisterResult))
 				return 0;
-			return ((RegisterResult) obj).getValue();				
+			return ((RegisterResult) obj).getValue();	
+		case Data:
+			return 0;
 		}
 		throw new RuntimeException();
 	}
@@ -167,6 +165,7 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 		this.readInputC = readInputC;
 		this.readOutputCReg = readOutputCReg;
 		this.writeInputs = writeInputs;
+		resetRAT();
 	}
 	
 	@Override
@@ -174,6 +173,8 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 		if(writeInputs.ready()) {
 			RegisterResult res = writeInputs.pop();
 			set(res.getTarget(), res.getValue());
+			if(getRAT(res.getTarget()).type == Reg.Virtual && getRAT(res.getTarget()).value == res.getID())
+				setRAT(res.getTarget(), res.getTarget(), Reg.Architectural);
 		}
 	}
 
@@ -218,10 +219,11 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 			DrawingHelper.drawBox(gc, "Register File");
 			gc.setColor(Color.BLACK);
 			for( int i = 0; i<registerNum; i++) {
-				gc.drawString(Integer.toString(values[i]), 25*i+5, 40);
+				gc.drawString(Integer.toString(values[i]), 25*i+5, 35);
 				if(dirtyBits[i])
-					gc.drawString("(d)", 25*i+5, 25);
+					gc.drawString("(d)", 25*i+5, 20);
 			}
+			gc.drawString(RAT.toString(), 5, 45);
 		}
 	}
 
@@ -231,8 +233,34 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI{
 	}
 
 	public void clearDirties() {
-		for(int i = 0; i<dirtyBits.length; i++)
-			dirtyBits[i] = false;
+		for(int j = 0; j<dirtyBits.length; j++)
+			dirtyBits[j] = false;
+	}
+	
+	Map<Integer, RegItem> RAT = new HashMap<>();
+	
+	public void resetRAT() {
+		for(int j = 0; j<registerNum; j++)
+			RAT.put(j, new RegItem(j, Reg.Architectural));
+	}
+	
+	public void resetRAT(int i) {
+		for(int j = 0; j<registerNum; j++)
+			if(RAT.get(j).type == Reg.Virtual && RAT.get(j).value > i)
+				RAT.put(j, new RegItem(j, Reg.Architectural));
+	}
+	
+	public void setRAT(int a, int b, Reg c) { 
+		RAT.put(a, new RegItem(b, c));
+	}
+	
+	public RegItem getRAT(int a) { 
+		return RAT.get(a);
 	}
 
+	@Override
+	public void clear(int i) {
+		resetRAT(i);
+	}
+	
 }

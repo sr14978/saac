@@ -87,7 +87,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 		int pc = addrInput.pop();
 		for(int i = pc; i<pc+Settings.SUPERSCALER_WIDTH; i++) {
 			int[] bytes = getInstruction(i);
-			bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], pc}, 4));
+			bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], i}, 4));
 		}
 	}
 	

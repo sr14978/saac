@@ -134,19 +134,22 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			RegisterFile rf = registerFile;
 			
 			if(Settings.REGISTER_RENAMING_ENABLED) {
-				if(dependOnA) {
-					if(allDirties.contains(inst.getVirtualParamA()) || 
-							(rf.inReorderBuffer(inst.getVirtualParamA()) && rf.getOffsetted(inst.getVirtualParamA()) == null))
+				if(dependOnA && inst.getVirtualParamA().type == Reg.Virtual) {
+					if(allDirties.contains(inst.getVirtualParamA().value)
+							|| (rf.inReorderBuffer(inst.getVirtualParamA().value)
+									&& rf.getOffsetted(inst.getVirtualParamA().value) == null))
 						paramDependances.add('A');
 				}
-				if(dependOnB) {
-					if(allDirties.contains(inst.getVirtualParamB()) ||
-							(rf.inReorderBuffer(inst.getVirtualParamB()) && rf.getOffsetted(inst.getVirtualParamB()) == null))
+				if(dependOnB && inst.getVirtualParamB().type == Reg.Virtual) {
+					if(allDirties.contains(inst.getVirtualParamB().value)
+							|| (rf.inReorderBuffer(inst.getVirtualParamB().value)
+									&& rf.getOffsetted(inst.getVirtualParamB().value) == null))
 						paramDependances.add('B');
 				}
-				if(dependOnC) {
-					if(allDirties.contains(inst.getVirtualParamC()) ||
-							(rf.inReorderBuffer(inst.getVirtualParamC()) && rf.getOffsetted(inst.getVirtualParamC()) == null))
+				if(dependOnC && inst.getVirtualParamC().type == Reg.Virtual) {
+					if(allDirties.contains(inst.getVirtualParamC().value)
+							|| (rf.inReorderBuffer(inst.getVirtualParamC().value)
+									&& rf.getOffsetted(inst.getVirtualParamC().value) == null))
 						paramDependances.add('C');
 				}
 			} else {
@@ -191,16 +194,22 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 				acceptedDirties.add(inst.getArchParamA());
 			
 			
-			if(rf.inReorderBuffer(inst.getVirtualParamA()) && Settings.REGISTER_RENAMING_ENABLED)
-				paramsOutA.add(new RegItem(inst.getVirtualParamA(), Reg.Virtual));
+			if(inst.getVirtualParamA().type == Reg.Virtual
+					&& rf.inReorderBuffer(inst.getVirtualParamA().value)
+					&& Settings.REGISTER_RENAMING_ENABLED)
+				paramsOutA.add(inst.getVirtualParamA());
 			else
 				paramsOutA.add(new RegItem(inst.getArchParamA(), Reg.Architectural));
-			if(rf.inReorderBuffer(inst.getVirtualParamB()) && Settings.REGISTER_RENAMING_ENABLED)
-				paramsOutB.add(new RegItem(inst.getVirtualParamB(), Reg.Virtual));
+			if(inst.getVirtualParamB().type == Reg.Virtual
+					&& rf.inReorderBuffer(inst.getVirtualParamB().value)
+					&& Settings.REGISTER_RENAMING_ENABLED)
+				paramsOutB.add(inst.getVirtualParamB());
 			else
 				paramsOutB.add(new RegItem(inst.getArchParamB(), Reg.Architectural));
-			if(rf.inReorderBuffer(inst.getVirtualParamC()) && Settings.REGISTER_RENAMING_ENABLED)
-				paramsOutC.add(new RegItem(inst.getVirtualParamC(), Reg.Virtual));
+			if(inst.getVirtualParamC().type == Reg.Virtual
+					&& rf.inReorderBuffer(inst.getVirtualParamC().value)
+					&& Settings.REGISTER_RENAMING_ENABLED)
+				paramsOutC.add(inst.getVirtualParamC());
 			else
 				paramsOutC.add(new RegItem(inst.getArchParamC(), Reg.Architectural));
 			

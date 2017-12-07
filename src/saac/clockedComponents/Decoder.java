@@ -3,12 +3,13 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
 
 import saac.Settings;
+import saac.clockedComponents.RegisterFile.Reg;
+import saac.clockedComponents.RegisterFile.RegItem;
 import saac.dataObjects.Instruction;
 import saac.dataObjects.VirtualInstruction;
 import saac.interfaces.ClearableComponent;
@@ -19,30 +20,31 @@ import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;;
 
-public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableComponent{
+public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableComponent {
 
 	FListConnection<VirtualInstruction>.Input output;
 	FListConnection<int[]>.Output input;
 	VirtualInstruction[] bufferOut;
-	Map<Integer, Integer> virtualAddresses = new HashMap<>();
-	
-	public Decoder(FListConnection<VirtualInstruction>.Input output, FListConnection<int[]>.Output input) {
+	RegisterFile registerFile;
+
+	public Decoder(FListConnection<VirtualInstruction>.Input output, FListConnection<int[]>.Output input, RegisterFile registerFile) {
 		this.output = output;
 		this.input = input;
+		this.registerFile = registerFile;
 	}
 
 	@Override
 	public void tick() throws Exception {
-		if(bufferOut != null)
+		if (bufferOut != null)
 			return;
-		
-		if(!input.ready())
+
+		if (!input.ready())
 			return;
 		int[][] datas = input.pop();
 		List<VirtualInstruction> outInsts = new LinkedList<>();
-		for(int i = 0; i<datas.length; i++) {
+		for (int i = 0; i < datas.length; i++) {
 			int[] data = datas[i];
 			Instruction inst = new Instruction(data[5], Opcode.fromInt(data[0]), data[1], data[2], data[3], data[4]);
 			VirtualInstruction vinst = rename(inst);
@@ -53,7 +55,7 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 
 	private VirtualInstruction rename(Instruction inst) {
 		final boolean dependOnA, dependOnB, dependOnC, dirtyA;
-		switch(inst.getOpcode()) {
+		switch (inst.getOpcode()) {
 		case Ldc:
 			dirtyA = true;
 			dependOnA = dependOnB = dependOnC = false;
@@ -104,47 +106,54 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 		default:
 			throw new NotImplementedException();
 		}
-		
+
 		VirtualInstruction vinst;
-		if(Settings.REGISTER_RENAMING_ENABLED)
-			vinst = inst.virtualize(
-				x->dependOnA?virtualAddresses.get(x):(dirtyA?inst.getID():x),
-				x->dependOnB?virtualAddresses.get(x):x,
-				x->dependOnC?virtualAddresses.get(x):x,
-				x->x
-			);
-		else
-			vinst = inst.virtualize(x->x, x->x, x->x, x->x);
-		
-		if(dirtyA) {
-			virtualAddresses.put(inst.getParamA(), inst.getID());
-			///if address not available - crash 
+		if (Settings.REGISTER_RENAMING_ENABLED)
+			vinst = inst
+					.virtualize(//make virt addreses store if in arch or virt and clear to arch on clear
+							x -> dependOnA ? registerFile.getRAT(x)
+									: (dirtyA ? new RegItem(inst.getID(), Reg.Virtual)
+											: new RegItem(x, Reg.Data)),
+							x -> dependOnB ? registerFile.getRAT(x)
+									: new RegItem(x, Reg.Data),
+							x -> dependOnC ? registerFile.getRAT(x)
+									: new RegItem(x, Reg.Data),
+							x -> new RegItem(x, Reg.Data));
+		else {
+			Function<Integer, RegItem> f = x -> new RegItem(x, Reg.Architectural);
+			vinst = inst.virtualize(f, f, f, f);
 		}
-		
+			
+
+		if (dirtyA) {
+			registerFile.setRAT(inst.getParamA(), inst.getID(), Reg.Virtual				);
+			/// if address not available - crash
+		}
+
 		return vinst;
 
 	}
 
 	@Override
 	public void tock() throws Exception {
-		if(bufferOut == null)
+		if (bufferOut == null)
 			return;
-		if(output.clear()) {
+		if (output.clear()) {
 			output.put(bufferOut);
 			bufferOut = null;
 		}
 	}
-		
+
 	class View extends ComponentView {
-		
+
 		View(int x, int y) {
 			super(x, y);
 		}
-		
+
 		public void paint(Graphics2D gc) {
 			DrawingHelper.drawBox(gc, "Decoder");
 			gc.setColor(Color.BLACK);
-			if(bufferOut != null)
+			if (bufferOut != null)
 				gc.drawString(Arrays.toString(bufferOut), 10, 30);
 		}
 	}
@@ -156,16 +165,16 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 
 	@Override
 	public void clear(int i) {
-		if(bufferOut == null)
-			return;
-		List<VirtualInstruction> insts = new LinkedList<>();
-		for(VirtualInstruction inst : bufferOut)
-			if(inst.getID() <= i)
-				insts.add(inst);
-		if(insts.isEmpty())
-			bufferOut = null;
-		else
-			bufferOut = insts.toArray(new VirtualInstruction[0]);
+		if (bufferOut != null) {
+			List<VirtualInstruction> insts = new LinkedList<>();
+			for (VirtualInstruction inst : bufferOut)
+				if (inst.getID() <= i)
+					insts.add(inst);
+			if (insts.isEmpty())
+				bufferOut = null;
+			else
+				bufferOut = insts.toArray(new VirtualInstruction[0]);
+		}
 	}
-	
+
 }

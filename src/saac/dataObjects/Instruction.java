@@ -2,6 +2,7 @@ package saac.dataObjects;
 
 import java.util.function.Function;
 
+import saac.clockedComponents.RegisterFile.RegItem;
 import saac.utils.Instructions.Opcode;
 
 public class Instruction implements InstructionI{
@@ -72,7 +73,7 @@ public class Instruction implements InstructionI{
 		return new Instruction(this.instructionNumber, this.opcode, this.paramA, this.paramB, this.paramC, f.apply(paramD));
 	}
 	
-	public VirtualInstruction virtualize(Function<Integer, Integer> a, Function<Integer, Integer> b, Function<Integer, Integer> c, Function<Integer, Integer> d) {
+	public VirtualInstruction virtualize(Function<Integer, RegItem> a, Function<Integer, RegItem> b, Function<Integer, RegItem> c, Function<Integer, RegItem> d) {
 		return new VirtualInstruction(instructionNumber, opcode, a.apply(paramA), paramA, b.apply(paramB), paramB, c.apply(paramC), paramC, d.apply(paramD), paramD);
 	}
 	

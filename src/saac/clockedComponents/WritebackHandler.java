@@ -114,8 +114,8 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				BranchResult br = (BranchResult) res;
 				if(!br.wasCorrect()) {
 					registerFile.clearAfter();
-					registerFile.clearDirties();
 					registerFile.bufferInstructionStart--;
+					registerFile.clearDirties();//not sure when to put this
 				}
 			}
 		}

@@ -114,8 +114,7 @@ public class Saac implements ClockedComponentI {
 				
 		FListConnection<int[]> fetchToDecode = new FListConnection<>();
 		FListConnection<VirtualInstruction> decodeToDep = new FListConnection<>();
-		Decoder decoder = new Decoder(decodeToDep.getInputEnd(), fetchToDecode.getOutputEnd());
-				
+		
 		Connection<RegItem[]> paramADepToReg = new Connection<>();
 		Connection<RegItem[]> paramBDepToReg = new Connection<>();
 		Connection<RegItem[]> paramCDepToReg = new Connection<>();
@@ -135,6 +134,7 @@ public class Saac implements ClockedComponentI {
 				paramCReg_RegToIssue.getInputEnd(),
 				WBtoRegister.getOutputEnd()
 			);
+		Decoder decoder = new Decoder(decodeToDep.getInputEnd(), fetchToDecode.getOutputEnd(), registerFile);
 		
 		FConnection<Integer> addrInput = new FConnection<>();
 		FConnection<Boolean> clearInput = new FConnection<>();
@@ -288,6 +288,7 @@ public class Saac implements ClockedComponentI {
 		clearables.add(addrInput);
 		clearables.add(clearInput);
 		clearables.add(instructionOutput);
+		clearables.add(registerFile);
 	}
 	
 	@Override
