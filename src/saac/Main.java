@@ -33,12 +33,10 @@ public class Main extends JFrame {
 	List<ComponentViewI> visibleComponents = new ArrayList<>();;
 	Saac saac;
 	boolean paused = false;
-	public static boolean finished = false;
     Main self = this;
 	
     JLabel rateLable;
     Gui gui;
-    public static Thread worker;
     
 	public Main() throws IOException, ParserException {
 		saac = new Saac(visibleComponents);
@@ -82,7 +80,7 @@ public class Main extends JFrame {
 		setSize(1500, 900);
 		setVisible(true);
 		
-		worker = new Thread(){
+		Worker.worker = new Thread(){
 			public void run() {
 				try {
 					saac.worker(self::flagRepaint);
@@ -94,7 +92,7 @@ public class Main extends JFrame {
 				}
 			}
 		};
-		worker.start();		
+		Worker.worker.start();		
 	}
 	private static final double s0 = 0.25;
 	private static final double s1 = 1;
@@ -156,7 +154,7 @@ public class Main extends JFrame {
     }
     
     void start() {
-    	if(paused && !finished) {
+    	if(paused && !Worker.finished) {
     		saac.mutex.unlock();
     		paused = false;
     	}
@@ -170,9 +168,9 @@ public class Main extends JFrame {
     }
 
     void step(int n) {
-    	if(paused && !finished) {
+    	if(paused && !Worker.finished) {
     		try {
-	    		for(int i = 0; i<n && !finished; i++)
+	    		for(int i = 0; i<n && !Worker.finished; i++)
 		        	saac.step(()->{});
 	    		flagRepaint();
     		} catch (Exception e) {
