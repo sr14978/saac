@@ -20,7 +20,7 @@ import saac.utils.DrawingHelper;
 
 public class RegisterFile implements VisibleComponentI, ClockedComponentI, ClearableComponent{
 
-	static final int registerNum = 12;
+	public static final int registerNum = 12;
 	static final int PC = registerNum;
 	private int[] values = new int[registerNum];
 	private boolean[] dirtyBits = new boolean[registerNum];

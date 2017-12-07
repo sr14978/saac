@@ -6,7 +6,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -30,7 +29,7 @@ public class Main extends JFrame {
 		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 	
-	List<ComponentViewI> visibleComponents = new ArrayList<>();;
+	List<ComponentViewI> visibleComponents;
 	Saac saac;
 	boolean paused = false;
     Main self = this;
@@ -39,7 +38,8 @@ public class Main extends JFrame {
     Gui gui;
     
 	public Main() throws IOException, ParserException {
-		saac = new Saac(visibleComponents);
+		saac = new Saac(null);
+		visibleComponents = saac.visibleComponents;
 		setTitle("Saac - Sam's Advanced Architecture Computer");
 		
 		JButton start = new JButton("Start");

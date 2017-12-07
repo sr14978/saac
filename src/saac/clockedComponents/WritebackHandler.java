@@ -115,7 +115,8 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			resultOutput.put(rr);
 			dirtyOutput.put(rr.getTarget());
 		} else if(res instanceof StopResult) {
-			Worker.worker.interrupt();
+			if(Worker.worker != null)
+				Worker.worker.interrupt();
 			Worker.finished = true;
 		} else if(res instanceof BranchResult) {
 			Saac.InstructionCounter++;

@@ -76,9 +76,13 @@ public class Saac implements ClockedComponentI {
 	
 	
 	List<ClockedComponentI> clockedComponents;
+	List<ComponentViewI> visibleComponents = new ArrayList<>();
+	RegisterFile registerFile;
 	
-	public Saac(List<ComponentViewI> visibleComponents) throws IOException, ParserException {
-
+	public Saac(String programName) throws IOException, ParserException {
+		InstructionCounter = 0;
+		CycleCounter = 0;
+		
 		List<ClearableComponent> clearables = new ArrayList<>();
 		
 		Memory memory = new Memory();
@@ -125,7 +129,7 @@ public class Saac implements ClockedComponentI {
 				
 		FConnection<RegisterResult> WBtoRegister = new FConnection<>();
 				
-		RegisterFile registerFile = new RegisterFile(
+		registerFile = new RegisterFile(
 				paramADepToReg.getOutputEnd(),
 				paramAReg_RegToIssue.getInputEnd(),
 				paramBDepToReg.getOutputEnd(),
@@ -142,7 +146,8 @@ public class Saac implements ClockedComponentI {
 		InstructionsSource instructionSource = new InstructionsSource(
 				addrInput.getOutputEnd(),
 				clearInput.getOutputEnd(),
-				instructionOutput.getInputEnd()
+				instructionOutput.getInputEnd(),
+				programName
 			);
 		
 		BranchPredictor branchPredictor = new BranchPredictor();

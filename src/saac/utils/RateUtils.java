@@ -6,7 +6,7 @@ public class RateUtils {
 		return "Rate: " + String.format("%.3f", rateVal);
 	}
 	
-    static float round(float i) {
+    public static float round(float i) {
     	return (float) Math.round(( i )*1000 ) / 1000;
     }
 }

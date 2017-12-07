@@ -48,12 +48,13 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	public InstructionsSource(
 			FConnection<Integer>.Output addrInput,
 			FConnection<Boolean>.Output clearInput,
-			FListConnection<int[]>.Input instructionOutput
+			FListConnection<int[]>.Input instructionOutput,
+			String programName
 			) throws IOException, ParserException {
 		this.addrInput = addrInput;
 		this.clearInput = clearInput;
 		this.instructionOutput = instructionOutput;
-		instructions = ProgramLoader.loadProgram();
+		instructions = ProgramLoader.loadProgram(programName);
 	}
 
 	@Override
