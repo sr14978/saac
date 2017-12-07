@@ -12,6 +12,7 @@ import saac.Saac;
 import saac.Settings;
 import saac.Settings.BranchPrediciton;
 import saac.dataObjects.BranchResult;
+import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
@@ -22,7 +23,9 @@ import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.VisibleComponentI;
+import saac.unclockedComponents.Memory;
 import saac.utils.DrawingHelper;
+import saac.utils.Instructions;
 import saac.utils.Output;
 
 public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
@@ -36,12 +39,12 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	
 	//to enforce round robin collection of inputs
 	int nextInput = 0;
+	Memory memory;
 	
 	
 	
 	
-	
-	public WritebackHandler(RegisterFile rf, DepChecker depChecker,
+	public WritebackHandler(RegisterFile rf, DepChecker depChecker, Memory memory,
 			List<FConnection<InstructionResult>.Output> inputEUs,
 			FConnection<InstructionResult>.Output inputLS,
 			FConnection<InstructionResult>.Output inputBr,
@@ -55,6 +58,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		this.resultOutput = resultOutput;
 		this.dirtyOutput = dirtyOutput;
 		Instance = this;
+		this.memory = memory;
 	}
 
 	@Override
@@ -86,18 +90,22 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		
 		return input;
 	}
-
+	int delay = 0;
 	@Override
 	public void tock() throws Exception {
+		if(delay != 0) {
+			delay--;
+			return;
+		}
 		InstructionResult res = registerFile.getFirst();
 		if(res == null)
 			return;
-		
-		registerFile.clearFirst();
-		
+		registerFile.clearFirst();		
 		if(res instanceof MemoryResult) {
 			Saac.InstructionCounter++;
 			MemoryResult mr = (MemoryResult) res;
+			memory.setWord(mr.getAddr(), mr.getValue());
+			delay = Instructions.InstructionDelay.get(Instructions.Opcode.Stmi);
 			depChecker.dirtyMem.remove(mr.getValue());
 		} else if(res instanceof RegisterResult) {
 			Saac.InstructionCounter++;
@@ -140,6 +148,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			gc.drawString("start index: " + Integer.toString(rf.bufferIndexStart), 700, 30);
 			gc.drawString("end index: " + Integer.toString(rf.bufferIndexEnd), 800, 30);
 			gc.drawString("start inst: " + Integer.toString(rf.bufferInstructionStart), 900, 30);
+			gc.drawString("delay: " + Integer.toString(delay), 1000, 30);
 		}
 	}
 

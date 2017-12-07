@@ -54,25 +54,28 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		FilledInInstruction inst = instructionIn.pop();
 		
 		InstructionResult res = null;		
+		int delay = 0;
 		switch(inst.getOpcode()) {
 		case Ldma:
 			res = new RegisterResult(inst.getID(), inst.getParamA(), memory.getWord(inst.getParamB()));
+			delay = Instructions.InstructionDelay.get(inst.getOpcode());
 			break;
 		case Stma:
-			memory.setWord(inst.getParamB(), inst.getParamA());
-			res = new MemoryResult(inst.getID(), inst.getParamB());
+			//memory.setWord(inst.getParamB(), inst.getParamA());
+			res = new MemoryResult(inst.getID(), inst.getParamB(), inst.getParamA());
 			break;
 		case Ldmi:
 			res = new RegisterResult(inst.getID(), inst.getParamA(), memory.getWord(inst.getParamB() + inst.getParamC()));
+			delay = Instructions.InstructionDelay.get(inst.getOpcode());
 			break;
 		case Stmi:
-			memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
-			res = new MemoryResult(inst.getID(), inst.getParamB() + inst.getParamC());
+			//memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
+			res = new MemoryResult(inst.getID(), inst.getParamB() + inst.getParamC(), inst.getParamA());
 			break;
 		default:
 			throw new NotImplementedException();
 		}
-		buffer.add(new Item(res, Instructions.InstructionDelay.get(inst.getOpcode())));
+		buffer.add(new Item(res, delay));
 	}
 
 	@Override

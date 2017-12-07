@@ -3,17 +3,23 @@ package saac.dataObjects;
 public class MemoryResult extends InstructionResult {
 	
 	private int value;
+	private int address;
 	
-	public MemoryResult(int instructionNumber, int i) {
+	public MemoryResult(int instructionNumber, int a, int v) {
 		this.instructionNumber = instructionNumber;
-		value = i;
+		value = v;
+		address = a;
 	}
 
 	public int getValue() {
 		return value;
 	}
 	
+	public int getAddr() {
+		return address;
+	}
+	
 	public String toString() {
-		return super.toString() + "target addr: " + Integer.toString(value); 
+		return super.toString() + "addr: " + Integer.toString(address) + ", val: " + Integer.toString(value); 
 	}
 }

@@ -62,7 +62,7 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			
 			return true;
 		} else 
-			throw new Exception("Reorder buffer overflow");
+			return false;
 	}
 	
 	public InstructionResult getFirst() {

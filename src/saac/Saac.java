@@ -179,7 +179,7 @@ public class Saac implements ClockedComponentI {
 				issueToBr.getInputEnd()
 			);
 		
-		WritebackHandler writeBack = new WritebackHandler(registerFile, depChecker,
+		WritebackHandler writeBack = new WritebackHandler(registerFile, depChecker, memory,
 				EUToWBs.stream().map(x->x.getOutputEnd()).collect(Collectors.toList()),
 				LStoWB.getOutputEnd(),
 				brToWB.getOutputEnd(),
