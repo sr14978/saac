@@ -31,6 +31,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	FConnection<Integer>.Input addrOutput;
 	FConnection<Boolean>.Input clearOutput;
 	FListConnection<int[]>.Output instructionInput;
+	int[][] instsInBuff;
 	List<ClearableComponent> clearables;
 	boolean halt = false;
 	BranchPredictor predictor;
@@ -86,26 +87,29 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			return;
 		if(!output.clear())
 			return;
-		
-		int[][] insts = instructionInput.pop();
+		if(instsInBuff == null)
+			instsInBuff = instructionInput.pop();
+		List<int[]> inInsts = new LinkedList<>();
+		inInsts.addAll(inInsts);
 		List<int[]> outInsts = new LinkedList<>();
-		for(int i = 0; i<insts.length; i++) {
-			int[] inst = insts[i];
+		insts:
+		for(int i = 0; i<instsInBuff.length; i++) {
+			int[] inst = instsInBuff[i];
+			inInsts.remove(inst);
 			inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], 0 }; 
-			boolean stop = false;
 			switch(Opcode.fromInt(inst[0])) {
 			case Jmp:
 				programCounter = inst[4] + 1 + inst[1];
 				Output.jumping_info.println("Fetch is jumping");
 				clearOutput.put(true);
-				stop = true;
-				break;
+				inInsts.clear();
+				break insts;
 			case Br:
 				programCounter = inst[1];
 				Output.jumping_info.println("Fetch is Branching");
 				clearOutput.put(true);
-				stop = true;
-				break;
+				inInsts.clear();
+				break insts;
 			case JmpN:
 			case JmpZ:
 				inst[3] = inst[4] + 1;
@@ -120,8 +124,10 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 					else
 						programCounter = inst[3];
 				} else {
+					clearOutput.put(true);
+					inInsts.clear();
 					halt = true;
-					return;
+					break insts;
 				}
 				break;
 			case Ln:
@@ -129,18 +135,19 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				inst[5] = instructionCounter++;
 				outInsts.add(inst);
 				halt = true;
-				stop = true;
-				return;
+				break insts;
 			default:
 				inst[5] = instructionCounter++;
 				outInsts.add(inst);
 				break;
 			}
-			if(stop)
-				break;
 		}
 		if(outInsts.size() > 0)
 			output.put(outInsts.toArray(new int[0][]));
+		if(inInsts.isEmpty())
+			instsInBuff = null;
+		else
+			instsInBuff = inInsts.toArray(new int[0][]);
 	}
 
 	class View extends ComponentView {
