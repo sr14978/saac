@@ -7,13 +7,11 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import saac.Main;
 import saac.Saac;
 import saac.Settings;
-import saac.Worker;
 import saac.Settings.BranchPrediciton;
+import saac.Worker;
 import saac.dataObjects.BranchResult;
-import saac.dataObjects.Instruction;
 import saac.dataObjects.InstructionResult;
 import saac.dataObjects.MemoryResult;
 import saac.dataObjects.RegisterResult;
@@ -41,10 +39,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	//to enforce round robin collection of inputs
 	int nextInput = 0;
 	Memory memory;
-	
-	
-	
-	
+		
 	public WritebackHandler(RegisterFile rf, DepChecker depChecker, Memory memory,
 			List<FConnection<InstructionResult>.Output> inputEUs,
 			FConnection<InstructionResult>.Output inputLS,
@@ -64,7 +59,22 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 
 	@Override
 	public void tick() throws Exception {
+		int count = 0;
+		for(int i = 0; i<inputs.size() && count < Settings.WRITEBACK_PARALLELISM; i++) {
+			int j = nextInput;
+			nextInput = (nextInput + 1) % inputs.size();
+			if(inputs.get(j).ready()) {
+				count++;
+				FConnection<? extends InstructionResult>.Output input = inputs.get(j);
+				InstructionResult res = input.peak();
+				
+				if(registerFile.insert(res)) {
+					input.pop();
+				}
+			}
+		}
 		
+		/*
 		FConnection<? extends InstructionResult>.Output input = getInput();
 		if(input == null)
 			return;
@@ -73,7 +83,8 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				
 		if(registerFile.insert(res)) {
 			input.pop();
-		}		
+		}
+		*/
 	}
 	
 	
