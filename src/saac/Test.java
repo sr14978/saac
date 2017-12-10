@@ -35,9 +35,8 @@ public class Test {
 	public static void main(String[] args) throws Exception {
 		System.out.println("Testing...");
 		//Results results = runCombinations("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
-		//Results results = runCombinations("no_depend_add.program", (rf -> true));
-		Results results = runCombinations("dynamic_branch_pred.program", 
-				(rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
+		Results results = runCombinations("no_depend_mul.program", (rf -> true));
+		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
 	}
@@ -137,9 +136,9 @@ public class Test {
 				Settings.OUT_OF_ORDER_ENABLED = order;
 				for(boolean renaming : new boolean[] {true, false}) {
 					Settings.REGISTER_RENAMING_ENABLED = renaming;
-					for(int width = 1; width<=4; width++) {
+					for(int width = 1; width<=8; width++) {
 						Settings.SUPERSCALER_WIDTH = width;
-						for(int units = 1; units<=4; units++) {
+						for(int units = 1; units<=8; units++) {
 							Settings.NUMBER_OF_EXECUTION_UNITS = units;
 							for(int addr = 8; addr<33; addr*=2) {
 								Settings.VIRTUAL_ADDRESS_NUM = addr;

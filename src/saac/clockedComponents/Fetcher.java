@@ -75,7 +75,6 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				clearOutput.put(true);
 			}
 		} else if(addrOutput.clear()) {
-			System.out.println("sending " + programCounter);
 			addrOutput.put(programCounter);
 			programCounter += Settings.SUPERSCALER_WIDTH;
 		}
