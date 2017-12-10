@@ -75,6 +75,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				clearOutput.put(true);
 			}
 		} else if(addrOutput.clear()) {
+			System.out.println("sending " + programCounter);
 			addrOutput.put(programCounter);
 			programCounter += Settings.SUPERSCALER_WIDTH;
 		}
@@ -119,10 +120,10 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
 					boolean prediction = predictor.predict(inst);
 					inst[4] = prediction?1:0;
-					if(prediction)
+					if(prediction) {
 						programCounter = inst[3] + inst[1];
-					else
-						programCounter = inst[3];
+						clearOutput.put(true);
+					}
 				} else {
 					clearOutput.put(true);
 					inInsts.clear();
