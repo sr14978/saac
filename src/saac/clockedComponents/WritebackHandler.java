@@ -21,6 +21,7 @@ import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.unclockedComponents.Memory;
 import saac.utils.DrawingHelper;
@@ -33,7 +34,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	FConnection<BranchResult>.Output inputBr;
 	RegisterFile registerFile;
 	DepChecker depChecker;
-	FConnection<RegisterResult>.Input resultOutput;
+	FListConnection<RegisterResult>.Input resultOutput;
 	BufferedConnection<Integer>.Input dirtyOutput;
 	
 	//to enforce round robin collection of inputs
@@ -44,7 +45,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			List<FConnection<InstructionResult>.Output> inputEUs,
 			FConnection<InstructionResult>.Output inputLS,
 			FConnection<InstructionResult>.Output inputBr,
-			FConnection<RegisterResult>.Input resultOutput,
+			FListConnection<RegisterResult>.Input resultOutput,
 			BufferedConnection<Integer>.Input dirtyOutput) {
 		this.inputs = new ArrayList<>(inputEUs);
 		this.inputs.add(inputLS);
@@ -60,7 +61,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	@Override
 	public void tick() throws Exception {
 		int count = 0;
-		for(int i = 0; i<inputs.size() && count < Settings.WRITEBACK_PARALLELISM; i++) {
+		for(int i = 0; i<inputs.size() && count < Settings.SUPERSCALER_WIDTH; i++) {
 			int j = nextInput;
 			nextInput = (nextInput + 1) % inputs.size();
 			if(inputs.get(j).ready()) {
@@ -73,35 +74,8 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				}
 			}
 		}
-		
-		/*
-		FConnection<? extends InstructionResult>.Output input = getInput();
-		if(input == null)
-			return;
-		
-		InstructionResult res = input.peak();
-				
-		if(registerFile.insert(res)) {
-			input.pop();
-		}
-		*/
 	}
-	
-	
 
-	private FConnection<? extends InstructionResult>.Output getInput() throws Exception {
-		FConnection<? extends InstructionResult>.Output input = null;
-		for(int i = 0; i<inputs.size(); i++) {
-			int j = nextInput;
-			nextInput = (nextInput + 1) % inputs.size();
-			if(inputs.get(j).ready()) {
-				input = inputs.get(j);
-				break;
-			}
-		}
-		
-		return input;
-	}
 	int delay = 0;
 	@Override
 	public void tock() throws Exception {
@@ -109,37 +83,44 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			delay--;
 			return;
 		}
-		InstructionResult res = registerFile.getFirst();
-		if(res == null)
-			return;
-		registerFile.clearFirst();		
-		if(res instanceof MemoryResult) {
-			Saac.InstructionCounter++;
-			MemoryResult mr = (MemoryResult) res;
-			memory.setWord(mr.getAddr(), mr.getValue());
-			delay = Instructions.InstructionDelay.get(Instructions.Opcode.Stmi);
-			depChecker.dirtyMem.remove(mr.getValue());
-		} else if(res instanceof RegisterResult) {
-			Saac.InstructionCounter++;
-			RegisterResult rr = (RegisterResult) res;
-			Output.info.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget()));
-			resultOutput.put(rr);
-			dirtyOutput.put(rr.getTarget());
-		} else if(res instanceof StopResult) {
-			if(Worker.worker != null)
-				Worker.worker.interrupt();
-			Worker.finished = true;
-		} else if(res instanceof BranchResult) {
-			Saac.InstructionCounter++;
-			if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
-				BranchResult br = (BranchResult) res;
-				if(!br.wasCorrect()) {
-					registerFile.clearAfter();
-					registerFile.bufferInstructionStart--;
-					registerFile.clearDirties();//not sure when to put this
+		List<RegisterResult> regResults = new ArrayList<>();
+		loop:
+		for(int i = 0; i<Settings.SUPERSCALER_WIDTH; i++) {
+			InstructionResult res = registerFile.getFirst();
+			if(res == null)
+				break loop;
+			registerFile.clearFirst();		
+			if(res instanceof MemoryResult) {
+				Saac.InstructionCounter++;
+				MemoryResult mr = (MemoryResult) res;
+				memory.setWord(mr.getAddr(), mr.getValue());
+				delay = Instructions.InstructionDelay.get(Instructions.Opcode.Stmi);
+				depChecker.dirtyMem.remove(mr.getValue());
+				break loop;
+			} else if(res instanceof RegisterResult) {
+				Saac.InstructionCounter++;
+				RegisterResult rr = (RegisterResult) res;
+				Output.info.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget()));
+				regResults.add(rr);
+				dirtyOutput.put(rr.getTarget());
+			} else if(res instanceof StopResult) {
+				if(Worker.worker != null)
+					Worker.worker.interrupt();
+				Worker.finished = true;
+				break loop;
+			} else if(res instanceof BranchResult) {
+				Saac.InstructionCounter++;
+				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
+					BranchResult br = (BranchResult) res;
+					if(!br.wasCorrect()) {
+						registerFile.clearAfter();
+						registerFile.bufferInstructionStart--;
+						registerFile.clearDirties();//not sure when to put this
+					}
 				}
 			}
 		}
+		resultOutput.put(regResults.toArray(new RegisterResult[0]));
 	}
 
 	class View extends ComponentView {

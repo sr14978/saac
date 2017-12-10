@@ -127,7 +127,7 @@ public class Saac implements ClockedComponentI {
 		Connection<Integer[]> paramBReg_RegToIssue = new Connection<>();
 		Connection<Integer[]> paramCReg_RegToIssue = new Connection<>();
 				
-		FConnection<RegisterResult> WBtoRegister = new FConnection<>();
+		FListConnection<RegisterResult> WBtoRegister = new FListConnection<>();
 				
 		registerFile = new RegisterFile(
 				paramADepToReg.getOutputEnd(),
@@ -272,17 +272,13 @@ public class Saac implements ClockedComponentI {
 		clearables.add(depChecker);
 		clearables.add(issuer);
 		clearables.add(dualRS);
-		clearables.add(EUs.get(0));
-		if(Settings.NUMBER_OF_EXECUTION_UNITS>1)
-			clearables.add(EUs.get(1));
+		for(int i = 0; i<Settings.NUMBER_OF_EXECUTION_UNITS; i++) {
+			clearables.add(EUs.get(i));
+			clearables.add(dualRSToEUs.get(i));
+			clearables.add(EUToWBs.get(i));
+		}
 		clearables.add(LSEU);
 		clearables.add(brUnit);
-		clearables.add(dualRSToEUs.get(0));
-		clearables.add(EUToWBs.get(0));
-		if(Settings.NUMBER_OF_EXECUTION_UNITS>1) {
-			clearables.add(dualRSToEUs.get(1));
-			clearables.add(EUToWBs.get(1));
-		}
 		clearables.add(issueToLS);
 		clearables.add(LStoWB);
 		clearables.add(issueToBr);

@@ -20,9 +20,11 @@ public class Test {
 	static class Results {
 		Map<Config, Float> results;
 		List<Config> failures;
-		Results(Map<Config, Float> results, List<Config> failures) {
+		double failureRate;
+		Results(Map<Config, Float> results, List<Config> failures, double failureRate) {
 			this.results = results;
 			this.failures = failures;
+			this.failureRate = failureRate;
 		}
 	}
 	
@@ -33,9 +35,10 @@ public class Test {
 	public static void main(String[] args) throws Exception {
 		System.out.println("Testing...");
 		//Results results = runCombinations("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
-		Results results = runCombinations("no_depend_add.program",
-				(rf -> true));
-		System.out.println("Results");
+		//Results results = runCombinations("no_depend_add.program", (rf -> true));
+		Results results = runCombinations("dynamic_branch_pred.program", 
+				(rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
+		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
 	}
 
@@ -126,19 +129,22 @@ public class Test {
 	public static Results runCombinations(String programName, Function<RegisterFile, Boolean> validationFunction) {
 		Map<Config, Float> results = new HashMap<>();
 		List<Config> failures = new ArrayList<>();
+		int total = 0;
+		int failureNum = 0;
 		for(boolean bypass : new boolean[] {true, false}) {
 			Settings.RESERVATION_STATION_BYPASS_ENABLED = bypass;
 			for(boolean order : new boolean[] {true, false}) {
 				Settings.OUT_OF_ORDER_ENABLED = order;
 				for(boolean renaming : new boolean[] {true, false}) {
 					Settings.REGISTER_RENAMING_ENABLED = renaming;
-					for(int width = 1; width<5; width++) {
+					for(int width = 1; width<=4; width++) {
 						Settings.SUPERSCALER_WIDTH = width;
-						for(int units = 1; units<5; units++) {
+						for(int units = 1; units<=4; units++) {
 							Settings.NUMBER_OF_EXECUTION_UNITS = units;
 							for(int addr = 8; addr<33; addr*=2) {
 								Settings.VIRTUAL_ADDRESS_NUM = addr;
 								for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
+									total++;
 									Settings.BRANCH_PREDICTION_MODE = branch;
 									final Control control = new Control();
 									Thread worker = new Thread() {
@@ -147,7 +153,10 @@ public class Test {
 												control.val = runTest(programName, validationFunction);
 											} catch (InterruptedException e) { }
 											catch (WrongAnswerException e) { }
-											catch (Exception e) { }
+											catch (Exception e) {
+												//System.err.println(e.getClass());
+												e.printStackTrace(System.err);
+											}
 										}
 									};
 									Thread timer = new Thread() {
@@ -163,13 +172,16 @@ public class Test {
 										if(!timer.isAlive()) {
 											failures.add(new Config(branch, bypass, units, width, order, addr, renaming));
 											worker.interrupt();
+											failureNum++;
 											break;
 										}
 										if(!worker.isAlive()) {
-											if(control.val != null)
+											if(control.val != null) {
 												results.put(new Config(branch, bypass, units, width, order, addr, renaming), control.val);
-											else
+											} else {
 												failures.add(new Config(branch, bypass, units, width, order, addr, renaming));
+												failureNum++;
+											}
 											timer.interrupt();
 											break;
 										}
@@ -181,7 +193,7 @@ public class Test {
 				}
 			}
 		}
-		return new Results(results, failures);
+		return new Results(results, failures, (double) failureNum / total);
 	}
 	
 	private static float runTest(String programName, Function<RegisterFile, Boolean> p) throws IOException, ParserException, Exception {

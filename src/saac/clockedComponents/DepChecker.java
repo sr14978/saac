@@ -237,7 +237,7 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 	@Override
 	public void tock() throws Exception {
 		
-		if(dirtyIn.ready())
+		while(dirtyIn.ready())
 			registerFile.setDirty(dirtyIn.pop(), false);
 		
 		if(bufferOut == null)

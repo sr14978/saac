@@ -13,7 +13,7 @@ import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
-import saac.interfaces.FConnection;
+import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
@@ -53,6 +53,20 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			if(instructionOffset >= BUFF_SIZE - bufferIndexStart && bufferIndex >= bufferIndexStart )
 				return false;
 
+			if(bufferIndex < 0)
+				System.out.println(String.format("%d %b %b %b %d %d %d %d %d %d", 
+						Settings.NUMBER_OF_EXECUTION_UNITS,
+						Settings.OUT_OF_ORDER_ENABLED,
+						Settings.REGISTER_RENAMING_ENABLED,
+						Settings.RESERVATION_STATION_BYPASS_ENABLED,
+						Settings.SUPERSCALER_WIDTH,
+						Settings.VIRTUAL_ADDRESS_NUM,
+						bufferInstructionStart,
+						instructionOffset,
+						bufferIndexStart,
+						bufferIndex
+						));
+			
 			reorderBuffer[bufferIndex] = res;
 
 			if( (res.getID() - bufferInstructionStart + 1)
@@ -147,7 +161,7 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 	Connection<Integer[]>.Input readOutputBReg;
 	Connection<RegItem[]>.Output readInputC;
 	Connection<Integer[]>.Input readOutputCReg;
-	FConnection<RegisterResult>.Output writeInputs;
+	FListConnection<RegisterResult>.Output writeInputs;
 	
 	public RegisterFile(
 			Connection<RegItem[]>.Output readInputA,
@@ -156,7 +170,7 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			Connection<Integer[]>.Input readOutputBReg,
 			Connection<RegItem[]>.Output readInputC,
 			Connection<Integer[]>.Input readOutputCReg,
-			FConnection<RegisterResult>.Output writeInputs
+			FListConnection<RegisterResult>.Output writeInputs
 			) {
 		this.readInputA = readInputA;
 		this.readOutputAReg = readOutputAReg;
@@ -171,10 +185,12 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 	@Override
 	public void tick() throws Exception {
 		if(writeInputs.ready()) {
-			RegisterResult res = writeInputs.pop();
-			set(res.getTarget(), res.getValue());
-			if(getRAT(res.getTarget()).type == Reg.Virtual && getRAT(res.getTarget()).value == res.getID())
-				setRAT(res.getTarget(), res.getTarget(), Reg.Architectural);
+			RegisterResult[] reses = writeInputs.pop();
+			for(RegisterResult res : reses) {
+				set(res.getTarget(), res.getValue());
+				if(getRAT(res.getTarget()).type == Reg.Virtual && getRAT(res.getTarget()).value == res.getID())
+					setRAT(res.getTarget(), res.getTarget(), Reg.Architectural);
+			}
 		}
 	}
 
