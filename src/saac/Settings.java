@@ -6,15 +6,15 @@ public class Settings {
 	
 	public static boolean RESERVATION_STATION_BYPASS_ENABLED = true;
 	
-	public static int NUMBER_OF_EXECUTION_UNITS = 4;
+	public static int NUMBER_OF_EXECUTION_UNITS = 8;
 	
 	public static int SUPERSCALER_WIDTH = 8;
 	
 	public static boolean OUT_OF_ORDER_ENABLED = true;
 	
-	public static int VIRTUAL_ADDRESS_NUM = 8;
+	public static int VIRTUAL_ADDRESS_NUM = 32;
 	
 	public static boolean REGISTER_RENAMING_ENABLED = true;
 		
-	public static int PARALLEL_INSTRUCTION_FETCH = 16;
+	public static int PARALLEL_INSTRUCTION_FETCH = 4 * 8;
 }

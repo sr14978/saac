@@ -144,7 +144,6 @@ public class Test {
 							for(int addr = 8; addr<=32; addr*=2) {
 								Settings.VIRTUAL_ADDRESS_NUM = addr;
 								for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
-									//BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static;
 									total++;
 									Settings.BRANCH_PREDICTION_MODE = branch;
 									final Control control = new Control();

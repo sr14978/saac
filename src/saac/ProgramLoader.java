@@ -14,8 +14,8 @@ public class ProgramLoader {
 
 	final static String programDirectory = "programs/";
 	//final static String programName = "no_depend_mul.program";
-	//final static String programName = "no_depend_ldc_rename.program";
-	final static String programName = "inner_product_stop.program";
+	final static String programName = "no_depend_ldc.program";
+	//final static String programName = "inner_product_stop.program";
 	//final static String programName = "reorder.program";
 	//final static String programName = "static_branch_pred.program";
 	//final static String programName = "dynamic_branch_pred.program";
