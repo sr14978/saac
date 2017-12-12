@@ -32,10 +32,11 @@ public class Test {
 		volatile Float val = null;
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {		
+		
 		System.out.println("Testing...");
-		//Results results = runCombinations("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
-		Results results = runCombinations("no_depend_add.program", (rf -> true));
+		Results results = runCombinations("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
+		//Results results = runCombinations("no_depend_ldc_rename.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
@@ -136,16 +137,20 @@ public class Test {
 				Settings.OUT_OF_ORDER_ENABLED = order;
 				for(boolean renaming : new boolean[] {true, false}) {
 					Settings.REGISTER_RENAMING_ENABLED = renaming;
-					for(int width = 1; width<=8; width++) {
+					for(int width = 1; width<=8; width*=2) {
 						Settings.SUPERSCALER_WIDTH = width;
-						for(int units = 1; units<=8; units++) {
+						for(int units = 1; units<=8; units*=2) {
 							Settings.NUMBER_OF_EXECUTION_UNITS = units;
-							for(int addr = 8; addr<33; addr*=2) {
+							for(int addr = 8; addr<=32; addr*=2) {
 								Settings.VIRTUAL_ADDRESS_NUM = addr;
 								for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
+									//BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static;
 									total++;
 									Settings.BRANCH_PREDICTION_MODE = branch;
 									final Control control = new Control();
+									final int units_w = units;
+									final int width_w = width;
+									final int addr_w = addr;
 									Thread worker = new Thread() {
 										public void run() {
 											try {
@@ -154,6 +159,7 @@ public class Test {
 											catch (WrongAnswerException e) { }
 											catch (Exception e) {
 												//System.err.println(e.getClass());
+												System.err.println(new Config(branch, bypass, units_w, width_w, order, addr_w, renaming));
 												e.printStackTrace(System.err);
 											}
 										}

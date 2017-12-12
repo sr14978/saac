@@ -43,7 +43,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	}
 	
 	List<Item> bufferOut = new LinkedList<>();
-	static final int BufferSize = 8;
+	static final int BufferSize = Settings.PARALLEL_INSTRUCTION_FETCH;
 	
 	public InstructionsSource(
 			FConnection<Integer>.Output addrInput,
@@ -63,14 +63,16 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 			return;
 		if(bufferOut.isEmpty())
 			return;
+		
+		for(Item item : bufferOut)
+			item.delay = item.delay > 0? item.delay-1 : 0;
+			
 		if(bufferOut.get(0).delay == 0) {
 			int[][] insts = new int[Settings.SUPERSCALER_WIDTH][];
 			for(int i = 0; i<Settings.SUPERSCALER_WIDTH; i++)
 				insts[i] = bufferOut.remove(0).value;
 			instructionOutput.put(insts);
-		}
-		for(Item item : bufferOut)
-			item.delay = item.delay > 0? item.delay-1 : 0;		
+		}		
 	}
 
 	@Override

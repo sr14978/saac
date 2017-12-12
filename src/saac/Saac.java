@@ -20,6 +20,7 @@ import saac.clockedComponents.Issuer;
 import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
 import saac.clockedComponents.RegisterFile.RegItem;
+import saac.clockedComponents.RegisterFile.RegVal;
 import saac.clockedComponents.WritebackHandler;
 import saac.dataObjects.BranchResult;
 import saac.dataObjects.FilledInInstruction;
@@ -119,13 +120,13 @@ public class Saac implements ClockedComponentI {
 		FListConnection<int[]> fetchToDecode = new FListConnection<>();
 		FListConnection<VirtualInstruction> decodeToDep = new FListConnection<>();
 		
-		Connection<RegItem[]> paramADepToReg = new Connection<>();
-		Connection<RegItem[]> paramBDepToReg = new Connection<>();
-		Connection<RegItem[]> paramCDepToReg = new Connection<>();
+		FListConnection<RegItem> paramADepToReg = new FListConnection<>();
+		FListConnection<RegItem> paramBDepToReg = new FListConnection<>();
+		FListConnection<RegItem> paramCDepToReg = new FListConnection<>();
 		
-		Connection<Integer[]> paramAReg_RegToIssue = new Connection<>();
-		Connection<Integer[]> paramBReg_RegToIssue = new Connection<>();
-		Connection<Integer[]> paramCReg_RegToIssue = new Connection<>();
+		FListConnection<RegVal> paramAReg_RegToIssue = new FListConnection<>();
+		FListConnection<RegVal> paramBReg_RegToIssue = new FListConnection<>();
+		FListConnection<RegVal> paramCReg_RegToIssue = new FListConnection<>();
 				
 		FListConnection<RegisterResult> WBtoRegister = new FListConnection<>();
 				
@@ -283,6 +284,12 @@ public class Saac implements ClockedComponentI {
 			clearables.add(LSEU);
 			clearables.add(brUnit);
 			clearables.add(issueToLS);
+			clearables.add(paramADepToReg);
+			clearables.add(paramBDepToReg);
+			clearables.add(paramCDepToReg);
+			clearables.add(paramAReg_RegToIssue);
+			clearables.add(paramBReg_RegToIssue);
+			clearables.add(paramCReg_RegToIssue);
 			clearables.add(LStoWB);
 			clearables.add(issueToBr);
 			clearables.add(issueToDualRS);

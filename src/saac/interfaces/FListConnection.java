@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import saac.clockedComponents.RegisterFile.RegItem;
+import saac.clockedComponents.RegisterFile.RegVal;
 import saac.dataObjects.InstructionI;
 import saac.utils.DrawingHelper;
 
@@ -59,8 +61,10 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 	static final int C_BOX_SIZE = BOX_SIZE-50;
 	class View extends ComponentView {
 
-		View(int x, int y){
+		int num;
+		View(int x, int y, int num){
 			super(x + (BOX_SIZE - C_BOX_SIZE)/2, y+15);
+			this.num = num;
 		}
 		
 		public void paint(Graphics2D gc) {
@@ -88,7 +92,11 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 
 	@Override
 	public ComponentViewI createView(int x, int y) {
-		return new View(x, y);
+		return new View(x, y, 1);
+	}
+	
+	public ComponentViewI createView(int x, int y, int num) {
+		return new View(x, y, num);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -100,6 +108,24 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 			List<T> keeps = new LinkedList<>();
 			for(T val : value)
 				if(((InstructionI) val).getID() <= i)
+					keeps.add(val);
+			if(!keeps.isEmpty())
+				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
+			else
+				value = null;
+		} else if(value instanceof RegItem[]) {
+			List<T> keeps = new LinkedList<>();
+			for(T val : value)
+				if(((RegItem) val).id <= i)
+					keeps.add(val);
+			if(!keeps.isEmpty())
+				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
+			else
+				value = null;
+		} else if(value instanceof RegVal[]) {
+			List<T> keeps = new LinkedList<>();
+			for(T val : value)
+				if(((RegVal) val).id <= i)
 					keeps.add(val);
 			if(!keeps.isEmpty())
 				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));

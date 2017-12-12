@@ -112,21 +112,21 @@ public class Decoder implements ClockedComponentI, VisibleComponentI, ClearableC
 			vinst = inst
 					.virtualize(//make virt addreses store if in arch or virt and clear to arch on clear
 							x -> dependOnA ? registerFile.getRAT(x)
-									: (dirtyA ? new RegItem(inst.getID(), Reg.Virtual)
-											: new RegItem(x, Reg.Data)),
+									: (dirtyA ? new RegItem(inst.getID(), inst.getID(), Reg.Virtual)
+											: new RegItem(inst.getID(), x, Reg.Data)),
 							x -> dependOnB ? registerFile.getRAT(x)
-									: new RegItem(x, Reg.Data),
+									: new RegItem(inst.getID(), x, Reg.Data),
 							x -> dependOnC ? registerFile.getRAT(x)
-									: new RegItem(x, Reg.Data),
-							x -> new RegItem(x, Reg.Data));
+									: new RegItem(inst.getID(), x, Reg.Data),
+							x -> new RegItem(inst.getID(), x, Reg.Data));
 		else {
-			Function<Integer, RegItem> f = x -> new RegItem(x, Reg.Architectural);
+			Function<Integer, RegItem> f = x -> new RegItem(inst.getID(), x, Reg.Architectural);
 			vinst = inst.virtualize(f, f, f, f);
 		}
 			
 
 		if (dirtyA) {
-			registerFile.setRAT(inst.getParamA(), inst.getID(), Reg.Virtual				);
+			registerFile.setRAT(inst.getID(), inst.getParamA(), inst.getID(), Reg.Virtual				);
 			/// if address not available - crash
 		}
 

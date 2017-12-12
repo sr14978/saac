@@ -12,7 +12,6 @@ import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
-import saac.interfaces.Connection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
@@ -32,13 +31,25 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 	int bufferInstructionStart = 0;
 	
 	public static class RegItem {
+		public int id;
 		public Integer value;
 		public Reg type;
-		RegItem(Integer value, Reg type) {
+		RegItem(int id, Integer value, Reg type) {
+			this.id = id;
 			this.value = value;
 			this.type = type;
 		}
-		public String toString() { return value.toString() + (type==Reg.Virtual?"(v)":""); }
+		public String toString() { return Integer.toString(id) + ": " + value.toString() + (type==Reg.Virtual?"(v)":""); }
+	}
+	
+	public static class RegVal {
+		public int id;
+		public Integer value;
+		RegVal(int id, Integer value) {
+			this.id = id;
+			this.value = value;
+		}
+		public String toString() { return Integer.toString(id) + ": " + value.toString(); }
 	}
 	public enum Reg {Architectural, Virtual, Data};
 	
@@ -106,6 +117,10 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 		return addr >= bufferInstructionStart && addr < bufferInstructionStart + BUFF_SIZE;
 	}
 	
+	public boolean notYetinReorderBuffer(int addr) {
+		return addr > bufferInstructionStart + BUFF_SIZE;
+	}
+	
 	public void set(int index, int value) {
 		if(index < registerNum && index >= 0)
 			values[index] = value;
@@ -155,21 +170,21 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			throw new ArrayIndexOutOfBoundsException();
 	}
 	
-	Connection<RegItem[]>.Output readInputA;
-	Connection<Integer[]>.Input readOutputAReg;
-	Connection<RegItem[]>.Output readInputB;
-	Connection<Integer[]>.Input readOutputBReg;
-	Connection<RegItem[]>.Output readInputC;
-	Connection<Integer[]>.Input readOutputCReg;
+	FListConnection<RegItem>.Output readInputA;
+	FListConnection<RegVal>.Input readOutputAReg;
+	FListConnection<RegItem>.Output readInputB;
+	FListConnection<RegVal>.Input readOutputBReg;
+	FListConnection<RegItem>.Output readInputC;
+	FListConnection<RegVal>.Input readOutputCReg;
 	FListConnection<RegisterResult>.Output writeInputs;
 	
 	public RegisterFile(
-			Connection<RegItem[]>.Output readInputA,
-			Connection<Integer[]>.Input readOutputAReg,
-			Connection<RegItem[]>.Output readInputB,
-			Connection<Integer[]>.Input readOutputBReg,
-			Connection<RegItem[]>.Output readInputC,
-			Connection<Integer[]>.Input readOutputCReg,
+			FListConnection<RegItem>.Output readInputA,
+			FListConnection<RegVal>.Input readOutputAReg,
+			FListConnection<RegItem>.Output readInputB,
+			FListConnection<RegVal>.Input readOutputBReg,
+			FListConnection<RegItem>.Output readInputC,
+			FListConnection<RegVal>.Input readOutputCReg,
 			FListConnection<RegisterResult>.Output writeInputs
 			) {
 		this.readInputA = readInputA;
@@ -189,41 +204,45 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 			for(RegisterResult res : reses) {
 				set(res.getTarget(), res.getValue());
 				if(getRAT(res.getTarget()).type == Reg.Virtual && getRAT(res.getTarget()).value == res.getID())
-					setRAT(res.getTarget(), res.getTarget(), Reg.Architectural);
+					setRAT(res.getID(), res.getTarget(), res.getTarget(), Reg.Architectural);
 			}
 		}
 	}
 
 	@Override
 	public void tock() throws Exception {
-		RegItem[] a_in = readInputA.get();
+		if(!(readOutputAReg.clear() && readOutputBReg.clear() && readOutputCReg.clear()))
+			return;
+		if(!(readInputA.ready() && readInputB.ready() && readInputC.ready()))
+			return;
+		
+		RegItem[] a_in = readInputA.pop();
 		if(a_in != null) {
-			Integer[] a_out = new Integer[a_in.length];
+			RegVal[] a_out = new RegVal[a_in.length];
 			for(int i = 0; i<a_in.length; i++)
 				if(a_in[i] != null)
-					a_out[i] = get(a_in[i].value, a_in[i].type);
+					a_out[i] = new RegVal(a_in[i].id, get(a_in[i].value, a_in[i].type));
 			readOutputAReg.put(a_out);
 		}
 		
-		RegItem[] b_in = readInputB.get();
+		RegItem[] b_in = readInputB.pop();
 		if(b_in != null) {
-			Integer[] b_out = new Integer[b_in.length];
-
+			RegVal[] b_out = new RegVal[b_in.length];
 			for(int i = 0; i<b_in.length; i++)
 				if(b_in[i] != null)
-					b_out[i] = get(b_in[i].value, b_in[i].type);
+					b_out[i] = new RegVal(b_in[i].id, get(b_in[i].value, b_in[i].type));
 			readOutputBReg.put(b_out);
 		}
 		
-		RegItem[] c_in = readInputC.get();
+		RegItem[] c_in = readInputC.pop();
 		if(c_in != null) {
-			Integer[] c_out = new Integer[c_in.length];
+			RegVal[] c_out = new RegVal[c_in.length];
 			for(int i = 0; i<c_in.length; i++)
 				if(c_in[i] != null)
-					c_out[i] = get(c_in[i].value, c_in[i].type);
+					c_out[i] = new RegVal(c_in[i].id, get(c_in[i].value, c_in[i].type));
 			readOutputCReg.put(c_out);
 		}
-	}	
+	}
 	
 	class View extends ComponentView {
 		
@@ -257,17 +276,17 @@ public class RegisterFile implements VisibleComponentI, ClockedComponentI, Clear
 	
 	public void resetRAT() {
 		for(int j = 0; j<registerNum; j++)
-			RAT.put(j, new RegItem(j, Reg.Architectural));
+			RAT.put(j, new RegItem(-1, j, Reg.Architectural));
 	}
 	
 	public void resetRAT(int i) {
 		for(int j = 0; j<registerNum; j++)
 			if(RAT.get(j).type == Reg.Virtual && RAT.get(j).value > i)
-				RAT.put(j, new RegItem(j, Reg.Architectural));
+				RAT.put(j, new RegItem(-1, j, Reg.Architectural));
 	}
 	
-	public void setRAT(int a, int b, Reg c) { 
-		RAT.put(a, new RegItem(b, c));
+	public void setRAT(int id, int a, int b, Reg c) { 
+		RAT.put(a, new RegItem(id, b, c));
 	}
 	
 	public RegItem getRAT(int a) { 

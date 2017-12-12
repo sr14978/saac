@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import saac.Settings;
+import saac.clockedComponents.RegisterFile.RegVal;
 import saac.dataObjects.FilledInInstruction;
 import saac.dataObjects.VirtualInstruction;
 import saac.interfaces.ClearableComponent;
@@ -29,9 +30,9 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	static final Function<Integer, Integer> sameVal = Function.identity();
 	
 	FListConnection<VirtualInstruction>.Output instructionIn;
-	Connection<Integer[]>.Output paramARegInput;
-	Connection<Integer[]>.Output paramBRegInput;
-	Connection<Integer[]>.Output paramCRegInput;
+	FListConnection<RegVal>.Output paramARegInput;
+	FListConnection<RegVal>.Output paramBRegInput;
+	FListConnection<RegVal>.Output paramCRegInput;
 	FListConnection<FilledInInstruction>.Input outputEU;
 	FConnection<FilledInInstruction>.Input toEU_A;
 	Connection<Boolean>.Output dualToIssuer;
@@ -42,9 +43,9 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	
 	public Issuer(RegisterFile rf,
 			FListConnection<VirtualInstruction>.Output instructionIn,
-			Connection<Integer[]>.Output paramARegInput,
-			Connection<Integer[]>.Output paramBRegInput,
-			Connection<Integer[]>.Output paramCRegInput,
+			FListConnection<RegVal>.Output paramARegInput,
+			FListConnection<RegVal>.Output paramBRegInput,
+			FListConnection<RegVal>.Output paramCRegInput,
 			FListConnection<FilledInInstruction>.Input outputEU,
 			FConnection<FilledInInstruction>.Input toEU_A,
 			Connection<Boolean>.Output dualToIssuer,
@@ -64,8 +65,13 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 	
 	@Override
 	public void tick() throws Exception {
-		if(instructionIn.ready() && bufferOut == null) {
+		
+		if(instructionIn.ready() && bufferOut == null
+				&& paramARegInput.ready() && paramBRegInput.ready() && paramCRegInput.ready()) {
 			VirtualInstruction[] insts= instructionIn.pop();
+			RegVal[] paramARegValues = paramARegInput.pop();
+			RegVal[] paramBRegValues = paramBRegInput.pop();
+			RegVal[] paramCRegValues = paramCRegInput.pop();
 			List<FilledInInstruction> instructionsOut = new LinkedList<>();
 			for(int i = 0; i<insts.length; i++) {
 				VirtualInstruction inst = insts[i];
@@ -107,9 +113,9 @@ public class Issuer implements ClockedComponentI, VisibleComponentI, ClearableCo
 				default:
 					throw new NotImplementedException();
 				}
-				final int areg = paramARegInput.get()[i];
-				final int breg = paramBRegInput.get()[i];
-				final int creg = paramCRegInput.get()[i];
+				final int areg = paramARegValues[i].value;
+				final int breg = paramBRegValues[i].value;
+				final int creg = paramCRegValues[i].value;
 				instructionsOut.add(inst.fillIn(
 								a -> paramAreg? areg:a,
 								b -> paramBreg? breg:b,

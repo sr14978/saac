@@ -18,7 +18,6 @@ import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
-import saac.interfaces.Connection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
@@ -37,9 +36,9 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 	BufferedConnection<Integer>.Output dirtyIn;
 	FListConnection<VirtualInstruction>.Input instructionOut;
 	VirtualInstruction[] bufferOut;
-	Connection<RegItem[]>.Input paramAOut;
-	Connection<RegItem[]>.Input paramBOut;
-	Connection<RegItem[]>.Input paramCOut;
+	FListConnection<RegItem>.Input paramAOut;
+	FListConnection<RegItem>.Input paramBOut;
+	FListConnection<RegItem>.Input paramCOut;
 	Set<Integer> dirtyMem = new HashSet<>();
 
 	public DepChecker(
@@ -47,9 +46,9 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			FListConnection<VirtualInstruction>.Output instructionIn,
 			BufferedConnection<Integer>.Output dirtyIn,
 			FListConnection<VirtualInstruction>.Input instructionOut,
-			Connection<RegItem[]>.Input paramAOut,
-			Connection<RegItem[]>.Input paramBOut,
-			Connection<RegItem[]>.Input paramCOut
+			FListConnection<RegItem>.Input paramAOut,
+			FListConnection<RegItem>.Input paramBOut,
+			FListConnection<RegItem>.Input paramCOut
 			) {
 		this.registerFile = rf;
 		this.instructionIn = instructionIn;
@@ -137,19 +136,22 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 				if(dependOnA && inst.getVirtualParamA().type == Reg.Virtual) {
 					if(allDirties.contains(inst.getVirtualParamA().value)
 							|| (rf.inReorderBuffer(inst.getVirtualParamA().value)
-									&& rf.getOffsetted(inst.getVirtualParamA().value) == null))
+									&& rf.getOffsetted(inst.getVirtualParamA().value) == null)
+							|| rf.notYetinReorderBuffer(inst.getVirtualParamA().value))
 						paramDependances.add('A');
 				}
 				if(dependOnB && inst.getVirtualParamB().type == Reg.Virtual) {
 					if(allDirties.contains(inst.getVirtualParamB().value)
 							|| (rf.inReorderBuffer(inst.getVirtualParamB().value)
-									&& rf.getOffsetted(inst.getVirtualParamB().value) == null))
+									&& rf.getOffsetted(inst.getVirtualParamB().value) == null)
+							|| rf.notYetinReorderBuffer(inst.getVirtualParamB().value))
 						paramDependances.add('B');
 				}
 				if(dependOnC && inst.getVirtualParamC().type == Reg.Virtual) {
 					if(allDirties.contains(inst.getVirtualParamC().value)
 							|| (rf.inReorderBuffer(inst.getVirtualParamC().value)
-									&& rf.getOffsetted(inst.getVirtualParamC().value) == null))
+									&& rf.getOffsetted(inst.getVirtualParamC().value) == null)
+							|| rf.notYetinReorderBuffer(inst.getVirtualParamC().value))
 						paramDependances.add('C');
 				}
 			} else {
@@ -197,29 +199,29 @@ public class DepChecker implements VisibleComponentI, ClockedComponentI, Clearab
 			if(inst.getVirtualParamA().type == Reg.Virtual
 					&& rf.inReorderBuffer(inst.getVirtualParamA().value)
 					&& Settings.REGISTER_RENAMING_ENABLED)
-				paramsOutA.add(inst.getVirtualParamA());
+				paramsOutA.add(new RegItem(inst.getID(), inst.getVirtualParamA().value, Reg.Virtual));
 			else
-				paramsOutA.add(new RegItem(inst.getArchParamA(), Reg.Architectural));
+				paramsOutA.add(new RegItem(inst.getID(), inst.getArchParamA(), Reg.Architectural));
 			if(inst.getVirtualParamB().type == Reg.Virtual
 					&& rf.inReorderBuffer(inst.getVirtualParamB().value)
 					&& Settings.REGISTER_RENAMING_ENABLED)
-				paramsOutB.add(inst.getVirtualParamB());
+				paramsOutB.add(new RegItem(inst.getID(), inst.getVirtualParamB().value, Reg.Virtual));
 			else
-				paramsOutB.add(new RegItem(inst.getArchParamB(), Reg.Architectural));
+				paramsOutB.add(new RegItem(inst.getID(), inst.getArchParamB(), Reg.Architectural));
 			if(inst.getVirtualParamC().type == Reg.Virtual
 					&& rf.inReorderBuffer(inst.getVirtualParamC().value)
 					&& Settings.REGISTER_RENAMING_ENABLED)
-				paramsOutC.add(inst.getVirtualParamC());
+				paramsOutC.add(new RegItem(inst.getID(), inst.getVirtualParamC().value, Reg.Virtual));
 			else
-				paramsOutC.add(new RegItem(inst.getArchParamC(), Reg.Architectural));
+				paramsOutC.add(new RegItem(inst.getID(), inst.getArchParamC(), Reg.Architectural));
 			
 			instructionsOut.add(inst);
 			ins.remove(inst);
 		}
 		if(instructionsOut.isEmpty())
 			return;
-		if(!instructionOut.clear())
-			return;
+		//if(!instructionOut.clear())
+		//	return;
 		bufferOut = instructionsOut.toArray(new VirtualInstruction[0]);
 		paramAOut.put(paramsOutA.toArray(new RegItem[0]));
 		paramBOut.put(paramsOutB.toArray(new RegItem[0]));
