@@ -34,8 +34,8 @@ public class Test {
 	
 	public static void main(String[] args) throws Exception {
 		System.out.println("Testing...");
-		//Results results = runCombinations("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
-		Results results = runCombinations("no_depend_add.program", (rf -> true));
+		Results results = runCombinations("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
+		//Results results = runCombinations("no_depend_ldc_rename.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
@@ -146,6 +146,9 @@ public class Test {
 									total++;
 									Settings.BRANCH_PREDICTION_MODE = branch;
 									final Control control = new Control();
+									final int units_w = units;
+									final int width_w = width;
+									final int addr_w = addr;
 									Thread worker = new Thread() {
 										public void run() {
 											try {
@@ -154,6 +157,7 @@ public class Test {
 											catch (WrongAnswerException e) { }
 											catch (Exception e) {
 												//System.err.println(e.getClass());
+												System.err.println(new Config(branch, bypass, units_w, width_w, order, addr_w, renaming));
 												e.printStackTrace(System.err);
 											}
 										}
