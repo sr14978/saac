@@ -6,7 +6,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.Arrays;
 
-import saac.dataObjects.InstructionI;
+import saac.dataObjects.Instruction.Instruction;
 import saac.utils.DrawingHelper;
 
 public class FConnection<T extends Object> implements VisibleComponentI, ClearableComponent{
@@ -99,7 +99,7 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 	public void clear(int i) {
 		if(value == null)
 			return;
-		if(value instanceof InstructionI && ((InstructionI) value).getID() > i)
+		if(value instanceof Instruction && ((Instruction) value).getID() > i)
 			value = null;
 		else if(value instanceof int[] || value instanceof Integer[])
 			value = null;			

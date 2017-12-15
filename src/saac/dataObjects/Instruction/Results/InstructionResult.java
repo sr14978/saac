@@ -1,4 +1,6 @@
-package saac.dataObjects;
+package saac.dataObjects.Instruction.Results;
+
+import saac.dataObjects.Instruction.InstructionI;
 
 public abstract class InstructionResult implements InstructionI{
 	protected int instructionNumber;

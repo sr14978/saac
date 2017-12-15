@@ -10,7 +10,7 @@ import java.util.List;
 
 import saac.clockedComponents.RegisterFile.RegItem;
 import saac.clockedComponents.RegisterFile.RegVal;
-import saac.dataObjects.InstructionI;
+import saac.dataObjects.Instruction.Instruction;
 import saac.utils.DrawingHelper;
 
 public class FListConnection<T extends Object> implements VisibleComponentI, ClearableComponent{
@@ -104,10 +104,10 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 	public void clear(int i) {
 		if(value == null)
 			return;
-		if(value instanceof InstructionI[]) {
+		if(value instanceof Instruction[]) {
 			List<T> keeps = new LinkedList<>();
 			for(T val : value)
-				if(((InstructionI) val).getID() <= i)
+				if(((Instruction) val).getID() <= i)
 					keeps.add(val);
 			if(!keeps.isEmpty())
 				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));

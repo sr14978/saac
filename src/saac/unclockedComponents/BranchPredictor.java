@@ -6,7 +6,7 @@ import java.util.LinkedList;
 
 import saac.Settings;
 import saac.Settings.BranchPrediciton;
-import saac.dataObjects.BranchResult;
+import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.VisibleComponentI;

@@ -1,4 +1,4 @@
-package saac.dataObjects;
+package saac.dataObjects.Instruction.Results;
 
 public class MemoryResult extends InstructionResult {
 	

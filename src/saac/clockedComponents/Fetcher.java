@@ -7,7 +7,7 @@ import java.util.List;
 
 import saac.Settings;
 import saac.Settings.BranchPrediciton;
-import saac.dataObjects.BranchResult;
+import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -22,7 +22,6 @@ import saac.utils.Output;
 
 public class Fetcher implements ClockedComponentI, VisibleComponentI {
 
-	RegisterFile registerFile;
 	FListConnection<int[]>.Input output;
 
 	FConnection<BranchResult>.Output fromBrUnit;
@@ -31,12 +30,12 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	FConnection<Integer>.Input addrOutput;
 	FConnection<Boolean>.Input clearOutput;
 	FListConnection<int[]>.Output instructionInput;
-	int[][] instsInBuff;
+	int[][] instructionInputBuff;
 	List<ClearableComponent> clearables;
 	boolean halt = false;
 	BranchPredictor predictor;
 	
-	public Fetcher(RegisterFile registerFile, List<ClearableComponent> clearables, BranchPredictor predictor,
+	public Fetcher(List<ClearableComponent> clearables, BranchPredictor predictor,
 			FListConnection<int[]>.Input output,
 			FConnection<BranchResult>.Output fromBrUnit,
 			FConnection<Integer>.Input addrOutput,
@@ -45,7 +44,6 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			) {
 		this.output = output;
 		this.fromBrUnit = fromBrUnit;
-		this.registerFile = registerFile;
 		this.addrOutput = addrOutput;
 		this.clearOutput = clearOutput;
 		this.instructionInput = instructionInput;
@@ -83,18 +81,24 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	@Override
 	public void tock() throws Exception {
 		
-		if(!instructionInput.ready())
+		if(!output.clear()) {
 			return;
-		if(!output.clear())
-			return;
-		if(instsInBuff == null)
-			instsInBuff = instructionInput.pop();
+		}
+		
+		if(instructionInputBuff == null) {
+			if(instructionInput.ready()) {
+				instructionInputBuff = instructionInput.pop();
+			} else {
+				return;
+			}
+		}
+		
 		List<int[]> inInsts = new LinkedList<>();
 		inInsts.addAll(inInsts);
 		List<int[]> outInsts = new LinkedList<>();
 		insts:
-		for(int i = 0; i<instsInBuff.length; i++) {
-			int[] inst = instsInBuff[i];
+		for(int i = 0; i<instructionInputBuff.length; i++) {
+			int[] inst = instructionInputBuff[i];
 			inInsts.remove(inst);
 			inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], 0 }; 
 			switch(Opcode.fromInt(inst[0])) {
@@ -142,12 +146,14 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				break;
 			}
 		}
-		if(outInsts.size() > 0)
+		if(outInsts.size() > 0) {
 			output.put(outInsts.toArray(new int[0][]));
-		if(inInsts.isEmpty())
-			instsInBuff = null;
-		else
-			instsInBuff = inInsts.toArray(new int[0][]);
+		}
+		if(inInsts.isEmpty()) {
+			instructionInputBuff = null;
+		} else {
+			instructionInputBuff = inInsts.toArray(new int[0][]);
+		}
 	}
 
 	class View extends ComponentView {

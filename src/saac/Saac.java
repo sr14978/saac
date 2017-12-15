@@ -1,42 +1,23 @@
 package saac;
 
-import static saac.utils.DrawingHelper.BOX_SIZE;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
-import saac.clockedComponents.BranchExecutionUnit;
-import saac.clockedComponents.Decoder;
-import saac.clockedComponents.DepChecker;
-import saac.clockedComponents.DualReservationStation;
-import saac.clockedComponents.ExecutionUnit;
 import saac.clockedComponents.Fetcher;
+import saac.clockedComponents.Decoder;
 import saac.clockedComponents.InstructionsSource;
-import saac.clockedComponents.Issuer;
-import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
-import saac.clockedComponents.RegisterFile.RegItem;
-import saac.clockedComponents.RegisterFile.RegVal;
-import saac.clockedComponents.WritebackHandler;
-import saac.dataObjects.BranchResult;
-import saac.dataObjects.FilledInInstruction;
-import saac.dataObjects.InstructionResult;
-import saac.dataObjects.RegisterResult;
-import saac.dataObjects.VirtualInstruction;
-import saac.interfaces.BufferedConnection;
+import saac.dataObjects.Instruction.Partial.PartialInstruction;
+import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
-import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.unclockedComponents.BranchPredictor;
-import saac.unclockedComponents.Label;
-import saac.unclockedComponents.Memory;
 import saac.utils.Output;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
@@ -83,42 +64,99 @@ public class Saac implements ClockedComponentI {
 	public Saac(String programName) throws IOException, ParserException {
 		InstructionCounter = 0;
 		CycleCounter = 0;
-		
 		List<ClearableComponent> clearables = new ArrayList<>();
+		
+		registerFile = new RegisterFile();
+		
+		FConnection<Integer> addrInput = new FConnection<>();
+		FConnection<Boolean> clearInput = new FConnection<>();
+		FListConnection<int[]> instructionOutput = new FListConnection<>();
+		InstructionsSource instructionSource = new InstructionsSource(
+				addrInput.getOutputEnd(),
+				clearInput.getOutputEnd(),
+				instructionOutput.getInputEnd(),
+				programName
+			);
+		
+		BranchPredictor branchPredictor = new BranchPredictor();
+		FListConnection<int[]> fetchToDecode = new FListConnection<>();
+		FConnection<BranchResult> brToFetch = new FConnection<>();
+
+		Fetcher fetcher = new Fetcher(clearables, branchPredictor,
+				fetchToDecode.getInputEnd(),
+				brToFetch.getOutputEnd(),
+				addrInput.getInputEnd(),
+				clearInput.getInputEnd(),
+				instructionOutput.getOutputEnd()
+			);
+		
+		FListConnection<PartialInstruction> decodeToAUReservationStation = new FListConnection<>();
+		FListConnection<PartialInstruction> decodeToLSReservationStation = new FListConnection<>();
+		FListConnection<PartialInstruction> decodeToBRReservationStation = new FListConnection<>();
+		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile,
+				decodeToAUReservationStation.getInputEnd(),
+				decodeToLSReservationStation.getInputEnd(),
+				decodeToBRReservationStation.getInputEnd()
+				
+				);
+		
+		//add the components to the list of things drawn on screen - specifying the location and size
+		{
+			clockedComponents.add(fetcher);
+			clockedComponents.add(instructionSource);
+			clockedComponents.add(decoder);
+		}
+		
+		{
+			int BOX_SIZE = 300;
+			int middleOffset = (int) (1.5*BOX_SIZE);
+			int boxHeight = 50;
+			int c = 0;
+			visibleComponents.add(fetcher.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(addrInput.createView(0, boxHeight*c));
+			visibleComponents.add(branchPredictor.createView(3*BOX_SIZE, boxHeight*c));	
+			c++;
+			visibleComponents.add(instructionSource.createView(0, boxHeight*c));
+			visibleComponents.add(fetchToDecode.createView(middleOffset, boxHeight*c));
+			c++;
+			visibleComponents.add(decoder.createView(middleOffset, boxHeight*c));
+
+		}
+		
+		/*
 		
 		Memory memory = new Memory();
 		
-		List<FConnection<FilledInInstruction>> dualRSToEUs = new ArrayList<>();
+		List<FConnection<CompleteInstruction>> dualRSToEUs = new ArrayList<>();
 		List<FConnection<InstructionResult>> EUToWBs = new ArrayList<>();
 		List<ExecutionUnit> EUs = new ArrayList<>();
 		for(int i = 0; i<Settings.NUMBER_OF_EXECUTION_UNITS; i++) {
-			FConnection<FilledInInstruction> dualRSToEU = new FConnection<>();
+			FConnection<CompleteInstruction> dualRSToEU = new FConnection<>();
 			FConnection<InstructionResult> EUtoWB = new FConnection<>();
 			EUs.add(new ExecutionUnit(dualRSToEU.getOutputEnd(), EUtoWB.getInputEnd()));
 			dualRSToEUs.add(dualRSToEU);
 			EUToWBs.add(EUtoWB);
 		}
 	
-		FConnection<FilledInInstruction> issueToLS = new FConnection<>();
+		FConnection<CompleteInstruction> issueToLS = new FConnection<>();
 		FConnection<InstructionResult> LStoWB = new FConnection<>();
 		LoadStoreExecutionUnit LSEU = new LoadStoreExecutionUnit(issueToLS.getOutputEnd(), LStoWB.getInputEnd(), memory);
 		
-		FConnection<FilledInInstruction> issueToBr = new FConnection<>();
+		FConnection<CompleteInstruction> issueToBr = new FConnection<>();
 		FConnection<BranchResult> brToFetch = new FConnection<>();
 		FConnection<InstructionResult> brToWB = new FConnection<>();
 		BranchExecutionUnit brUnit = new BranchExecutionUnit(
 				issueToBr.getOutputEnd(), brToFetch.getInputEnd(), brToWB.getInputEnd());
 		
-		FListConnection<FilledInInstruction> issueToDualRS = new FListConnection<>();
+		FListConnection<CompleteInstruction> issueToDualRS = new FListConnection<>();
 		Connection<Boolean> dualToIssuer = new Connection<>();
-		DualReservationStation dualRS = new DualReservationStation(
+		EUReservationStation dualRS = new EUReservationStation(
 				dualRSToEUs.stream().map(x->x.getInputEnd()).collect(Collectors.toList()),
 				issueToDualRS.getOutputEnd(), 
 				dualToIssuer.getInputEnd()
 			);
 				
-		FListConnection<int[]> fetchToDecode = new FListConnection<>();
-		FListConnection<VirtualInstruction> decodeToDep = new FListConnection<>();
+		FListConnection<PartialInstruction> decodeToDep = new FListConnection<>();
 		
 		FListConnection<RegItem> paramADepToReg = new FListConnection<>();
 		FListConnection<RegItem> paramBDepToReg = new FListConnection<>();
@@ -161,7 +199,7 @@ public class Saac implements ClockedComponentI {
 				instructionOutput.getOutputEnd()
 			);
 		
-		FListConnection<VirtualInstruction> opcodeDepToIssue = new FListConnection<>();
+		FListConnection<PartialInstruction> opcodeDepToIssue = new FListConnection<>();
 		BufferedConnection<Integer> dirtyWBtoDep = new BufferedConnection<>(RegisterFile.BUFF_SIZE);
 
 		DepChecker depChecker = new DepChecker(registerFile,
@@ -207,7 +245,8 @@ public class Saac implements ClockedComponentI {
 			clockedComponents.add(LSEU);
 			clockedComponents.add(brUnit);
 			clockedComponents.add(writeBack);
-			
+		}
+		{
 			int middleOffset = (int) (1.5*BOX_SIZE);
 			int boxHeight = 50;
 			int c = 0;
@@ -301,6 +340,7 @@ public class Saac implements ClockedComponentI {
 			clearables.add(instructionOutput);
 			clearables.add(registerFile);
 		}
+		*/
 	}
 	
 	@Override
