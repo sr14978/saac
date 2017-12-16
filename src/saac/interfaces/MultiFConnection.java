@@ -5,20 +5,21 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import saac.utils.DrawingHelper;
 import saac.utils.DrawingHelper.Orientation;
 
 public class MultiFConnection<T extends Object> implements VisibleComponentI {
-
+	
 	private List<T> value;
 	int seenNum;
 	int fanOutMax;
 	
 	public MultiFConnection(int fanOutMax) {
 		this.fanOutMax = fanOutMax;
-		value = new ArrayList<>();
+		value = Collections.synchronizedList(new ArrayList<>());
 		seenNum = 0;	
 	}
 	
@@ -79,6 +80,7 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, 23, Orientation.Up);
 			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHT_GRAY, Color.BLACK);
 			gc.drawString(Integer.toString(seenNum), 5, 15);
+			
 			gc.drawString(value.toString(), 15, 15);
 		}
 	}
