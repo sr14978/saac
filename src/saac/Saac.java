@@ -10,6 +10,7 @@ import saac.clockedComponents.ArithmeticUnit;
 import saac.clockedComponents.Decoder;
 import saac.clockedComponents.Fetcher;
 import saac.clockedComponents.InstructionsSource;
+import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
 import saac.clockedComponents.ReservationStation;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
@@ -24,6 +25,7 @@ import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
 import saac.unclockedComponents.BranchPredictor;
+import saac.unclockedComponents.Memory;
 import saac.utils.Output;
 import saac.utils.RateUtils;
 
@@ -72,6 +74,7 @@ public class Saac implements ClockedComponentI {
 		List<ClearableComponent> clearables = new ArrayList<>();
 		
 		registerFile = new RegisterFile();
+		Memory memory = new Memory();
 		
 		FConnection<Integer> addrInput = new FConnection<>();
 		FConnection<Boolean> clearInput = new FConnection<>();
@@ -119,19 +122,38 @@ public class Saac implements ClockedComponentI {
 					virtualRegisterValueBus.getInputEnd()));
 		}
 		
-		ReservationStation reservationStation = new ReservationStation(decodeToAUReservationStation.getOutputEnd(),
+		ReservationStation AUreservationStation = new ReservationStation(decodeToAUReservationStation.getOutputEnd(),
 				resevationStationToAUs.stream().map(x -> x.getInputEnd()).collect(Collectors.toList()),
 				virtualRegisterValueBus.getOutputEnd()); 
 		
+		FConnection<CompleteInstruction> resevationStationToLS = new FConnection<>();
+		ReservationStation LSreservationStation = new ReservationStation(decodeToLSReservationStation.getOutputEnd(),
+				resevationStationToLS.getInputEnd(),
+				virtualRegisterValueBus.getOutputEnd());
+		
+		FConnection<CompleteInstruction> resevationStationToBR = new FConnection<>();
+		ReservationStation BRreservationStation = new ReservationStation(decodeToBRReservationStation.getOutputEnd(),
+				resevationStationToBR.getInputEnd(),
+				virtualRegisterValueBus.getOutputEnd());
+		
+		FConnection<InstructionResult> LSToWritebacks = new FConnection<>();
+		LoadStoreExecutionUnit loadStoreExecutionUnit = new LoadStoreExecutionUnit(memory,
+				resevationStationToLS.getOutputEnd(),
+				LSToWritebacks.getInputEnd(),
+				virtualRegisterValueBus.getInputEnd()
+				);
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{
 			clockedComponents.add(fetcher);
 			clockedComponents.add(instructionSource);
 			clockedComponents.add(decoder);
-			clockedComponents.add(reservationStation);
+			clockedComponents.add(AUreservationStation);
+			clockedComponents.add(LSreservationStation);
+			clockedComponents.add(BRreservationStation);
 			for(ArithmeticUnit au : AUs) {
 				clockedComponents.add(au);
 			}
+			clockedComponents.add(loadStoreExecutionUnit);
 		}
 		
 		{
@@ -152,7 +174,9 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(decodeToLSReservationStation.createView(middleOffset, boxHeight*c));
 			visibleComponents.add(decodeToBRReservationStation.createView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
-			visibleComponents.add(reservationStation.createView(middleOffset - BOX_SIZE, boxHeight*c));
+			visibleComponents.add(AUreservationStation.createView(middleOffset - BOX_SIZE, boxHeight*c));
+			visibleComponents.add(LSreservationStation.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(BRreservationStation.createView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(resevationStationToAUs.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
 			c++;
@@ -163,7 +187,7 @@ public class Saac implements ClockedComponentI {
 		
 		/*
 		
-		Memory memory = new Memory();
+		
 		
 		List<FConnection<CompleteInstruction>> dualRSToEUs = new ArrayList<>();
 		List<FConnection<InstructionResult>> EUToWBs = new ArrayList<>();

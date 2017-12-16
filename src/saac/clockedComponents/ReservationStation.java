@@ -2,6 +2,7 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,15 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 		this.instructionInput = instructionInput;
 		this.virtualRegisterValueBus = virtualRegisterValueBus;
 		this.instructionOutputs = instructionOutputs;
+	}
+	
+	public ReservationStation(FListConnection<PartialInstruction>.Output instructionInput,
+			FConnection<CompleteInstruction>.Input instructionOutputs,
+			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus) {
+		this.instructionInput = instructionInput;
+		this.virtualRegisterValueBus = virtualRegisterValueBus;
+		this.instructionOutputs = new ArrayList<>();
+		this.instructionOutputs.add(instructionOutputs);
 	}
 	
 	@Override

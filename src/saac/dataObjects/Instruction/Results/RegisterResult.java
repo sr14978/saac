@@ -1,11 +1,13 @@
 package saac.dataObjects.Instruction.Results;
 
+import saac.dataObjects.Instruction.Partial.DestItem;
+
 public class RegisterResult extends InstructionResult {
 
-	private int target;
+	private DestItem target;
 	private int value;
 
-	public RegisterResult(int instructionNumber, int target, int value) {
+	public RegisterResult(int instructionNumber, DestItem target, int value) {
 		this.instructionNumber = instructionNumber;
 		this.value = value;
 		this.target = target;
@@ -14,7 +16,7 @@ public class RegisterResult extends InstructionResult {
 	public int getValue() {
 		return value;
 	}
-	public int getTarget() {
+	public DestItem getTarget() {
 		return target;
 	}
 	public String toString() {

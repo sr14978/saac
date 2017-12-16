@@ -14,33 +14,40 @@ import saac.utils.Instructions.Opcode;
 public class Parsers {
 
 	static Parser<int[]> constant(String inst, Opcode op) {
-		return padded(string(inst)).thenSecond(pure(new int[] { Opcode.toInt(op), 0, 0, 0 }));
+		return padded(string(inst)).thenSecond(pure(new int[] { Opcode.toInt(op), 0, 0, 0, 0 }));
 	}
 		
 	static Parser<int[]> unaryR(String inst, Opcode op) {
 		return padded(string(inst)).thenSecond(
 					string("r").thenSecond(padded(number)).thenWith((a) ->
-						pure(new int[] { Opcode.toInt(op), a, 0, 0 })));
+						pure(new int[] { Opcode.toInt(op), a, 0, 0, 0 })));
 	}
 	
 	static Parser<int[]> unaryN(String inst, Opcode op) {
 		return padded(string(inst)).thenSecond(
 				padded(number).thenWith((a) ->
-					pure(new int[] { Opcode.toInt(op), a, 0, 0 })));
+					pure(new int[] { Opcode.toInt(op), a, 0, 0, 0 })));
 	}
 	
 	static Parser<int[]> binaryRN(String inst, Opcode op) {
 		return padded(string(inst)).thenSecond(
 					string("r").thenSecond(padded(decimalNumber)).thenWith((a) ->
 						padded(number).thenWith((b) ->
-							pure(new int[] { Opcode.toInt(op), a, b, 0 }))));
+							pure(new int[] { Opcode.toInt(op), a, b, 0, 0 }))));
+	}
+	
+	static Parser<int[]> binary_RN(String inst, Opcode op) {
+		return padded(string(inst)).thenSecond(
+					string("r").thenSecond(padded(decimalNumber)).thenWith((a) ->
+						padded(number).thenWith((b) ->
+							pure(new int[] { Opcode.toInt(op), 0, a, b, 0 }))));
 	}
 	
 	static Parser<int[]> binaryNR(String inst, Opcode op) {
 		return padded(string(inst)).thenSecond(
 					padded(number).thenWith((a) ->
 						string("r").thenSecond(padded(decimalNumber)).thenWith((b) ->
-								pure(new int[] { Opcode.toInt(op), a, b, 0 }))));
+								pure(new int[] { Opcode.toInt(op), a, b, 0, 0 }))));
 	}
 		
 	static Parser<int[]> tertiaryRRR(String inst, Opcode op) {
@@ -48,7 +55,15 @@ public class Parsers {
 					string("r").thenSecond(padded(decimalNumber)).thenWith((rI) -> 
 						string("r").thenSecond(padded(decimalNumber)).thenWith((rJ) -> 
 							string("r").thenSecond(padded(decimalNumber)).thenWith((n) -> 
-									pure(new int[] { Opcode.toInt(op), rI, rJ, n })))));
+									pure(new int[] { Opcode.toInt(op), rI, rJ, n, 0 })))));
+	}
+	
+	static Parser<int[]> tertiary_RRR(String inst, Opcode op) {
+		return padded(string(inst)).thenSecond(
+					string("r").thenSecond(padded(decimalNumber)).thenWith((rI) -> 
+						string("r").thenSecond(padded(decimalNumber)).thenWith((rJ) -> 
+							string("r").thenSecond(padded(decimalNumber)).thenWith((n) -> 
+									pure(new int[] { Opcode.toInt(op), 0, rI, rJ, n })))));
 	}
 	
 	static Parser<int[]> tertiaryRRN(String inst, Opcode op) {
@@ -56,7 +71,7 @@ public class Parsers {
 					string("r").thenSecond(padded(decimalNumber)).thenWith((rI) -> 
 						string("r").thenSecond(padded(decimalNumber)).thenWith((rJ) -> 
 							padded(number).thenWith((n) -> 
-								pure(new int[] { Opcode.toInt(op), rI, rJ, n })))));
+								pure(new int[] { Opcode.toInt(op), rI, rJ, n, 0 })))));
 	}
 		
 	static List<Parser<int[]>> instructions = new ArrayList<Parser<int[]>>();
@@ -73,9 +88,9 @@ public class Parsers {
 		instructions.add(tertiaryRRR("div", Opcode.Div));
 		instructions.add(tertiaryRRN("divi", Opcode.Divi));
 		instructions.add(binaryRN("ldma", Opcode.Ldma));
-		instructions.add(binaryRN("stma", Opcode.Stma));
+		instructions.add(binary_RN("stma", Opcode.Stma));
 		instructions.add(tertiaryRRR("ldmi", Opcode.Ldmi));
-		instructions.add(tertiaryRRR("stmi", Opcode.Stmi));
+		instructions.add(tertiary_RRR("stmi", Opcode.Stmi));
 		instructions.add(unaryN("br", Opcode.Br));
 		instructions.add(unaryR("ln", Opcode.Ln));
 		instructions.add(unaryN("jmp", Opcode.Jmp));

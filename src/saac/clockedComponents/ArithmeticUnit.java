@@ -46,7 +46,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 		CompleteInstruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Ldc:
-			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get().getRegNumber(), inst.getParamA().get());
+			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), inst.getParamA().get());
 			break;
 		case Add:
 		case Addi:
@@ -78,7 +78,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 	}
 
 	private static RegisterResult binaryOperator(CompleteInstruction inst, BiFunction<Integer, Integer, Integer> f) {
-		return new RegisterResult(inst.getVirtualNumber(), inst.getDest().get().getRegNumber(), f.apply(inst.getParamA().get(), inst.getParamB().get()));
+		return new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), f.apply(inst.getParamA().get(), inst.getParamB().get()));
 	}
 	
 	@Override
