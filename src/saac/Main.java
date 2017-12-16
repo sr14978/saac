@@ -23,7 +23,7 @@ public class Main extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
 
-	public static void main(String[] args) throws IOException, ParserException {
+	public static void main(String[] args) throws Exception {
 				
 		Main window = new Main();
 		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -37,7 +37,7 @@ public class Main extends JFrame {
     JLabel rateLable;
     Gui gui;
     
-	public Main() throws IOException, ParserException {
+	public Main() throws Exception {
 		saac = new Saac(null);
 		visibleComponents = saac.visibleComponents;
 		setTitle("Saac - Sam's Advanced Architecture Computer");

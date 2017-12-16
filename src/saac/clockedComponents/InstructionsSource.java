@@ -59,14 +59,16 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 
 	@Override
 	public void tick() throws Exception {
-		if(!instructionOutput.clear())
-			return;
-		if(bufferOut.isEmpty())
-			return;
 		
-		for(Item item : bufferOut)
+		if(bufferOut.isEmpty()) {
+			return;
+		}
+		for(Item item : bufferOut) {
 			item.delay = item.delay > 0? item.delay-1 : 0;
-			
+		}
+		if(!instructionOutput.clear()) {
+			return;
+		}	
 		if(bufferOut.get(0).delay == 0) {
 			int[][] insts = new int[Settings.SUPERSCALER_WIDTH][];
 			for(int i = 0; i<Settings.SUPERSCALER_WIDTH; i++)

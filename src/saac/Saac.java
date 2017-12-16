@@ -1,26 +1,31 @@
 package saac;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
-import saac.clockedComponents.Fetcher;
+import com.sun.xml.internal.txw2.output.StreamSerializer;
+
 import saac.clockedComponents.Decoder;
+import saac.clockedComponents.Fetcher;
 import saac.clockedComponents.InstructionsSource;
 import saac.clockedComponents.RegisterFile;
+import saac.clockedComponents.ReservationStation;
+import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Results.BranchResult;
+import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
+import saac.interfaces.MultiFConnection;
 import saac.unclockedComponents.BranchPredictor;
 import saac.utils.Output;
 import saac.utils.RateUtils;
-import saac.utils.parsers.ParserException;
 
 public class Saac implements ClockedComponentI {
 
@@ -61,7 +66,7 @@ public class Saac implements ClockedComponentI {
 	List<ComponentViewI> visibleComponents = new ArrayList<>();
 	RegisterFile registerFile;
 	
-	public Saac(String programName) throws IOException, ParserException {
+	public Saac(String programName) throws Exception {
 		InstructionCounter = 0;
 		CycleCounter = 0;
 		List<ClearableComponent> clearables = new ArrayList<>();
@@ -99,12 +104,24 @@ public class Saac implements ClockedComponentI {
 				decodeToBRReservationStation.getInputEnd()
 				
 				);
+		MultiFConnection<RegisterResult> virtualRegisterValueBus = new MultiFConnection<>(3);
+		
+		List<FConnection<CompleteInstruction>> resevationStationToAUs = new ArrayList<>();
+		for(int i = 0; i<Settings.NUMBER_OF_EXECUTION_UNITS; i++) {
+			FConnection<CompleteInstruction> resevationStationToAU = new FConnection<>();
+			resevationStationToAUs.add(resevationStationToAU);
+		}
+		
+		ReservationStation reservationStation = new ReservationStation(decodeToAUReservationStation.getOutputEnd(),
+				resevationStationToAUs.stream().map(x -> x.getInputEnd()).collect(Collectors.toList()),
+				virtualRegisterValueBus.getOutputEnd());
 		
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{
 			clockedComponents.add(fetcher);
 			clockedComponents.add(instructionSource);
 			clockedComponents.add(decoder);
+			clockedComponents.add(reservationStation);
 		}
 		
 		{
@@ -120,7 +137,12 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(fetchToDecode.createView(middleOffset, boxHeight*c));
 			c++;
 			visibleComponents.add(decoder.createView(middleOffset, boxHeight*c));
-
+			c++;
+			visibleComponents.add(decodeToAUReservationStation.createView(middleOffset - BOX_SIZE, boxHeight*c));
+			visibleComponents.add(decodeToLSReservationStation.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(decodeToBRReservationStation.createView(middleOffset + BOX_SIZE, boxHeight*c));
+			c++;
+			visibleComponents.add(reservationStation.createView(middleOffset - BOX_SIZE, boxHeight*c));
 		}
 		
 		/*

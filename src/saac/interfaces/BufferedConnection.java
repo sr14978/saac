@@ -27,11 +27,11 @@ public class BufferedConnection<T> implements VisibleComponentI, ClearableCompon
 	}
 	
 	public class Input {
-		public <H extends T> void put(H val) throws FullChannelException {
+		public <H extends T> void put(H val) throws ChannelException {
 			if(buffer.size() < MAX_BUFFER_SIZE)
 				buffer.add(val);
 			else
-				throw new FullChannelException();
+				throw new ChannelException();
 		}
 		public boolean notFull() {
 			return buffer.size() < MAX_BUFFER_SIZE;
@@ -42,9 +42,9 @@ public class BufferedConnection<T> implements VisibleComponentI, ClearableCompon
 	}
 	
 	public class Output {
-		public T pop() throws FullChannelException {
+		public T pop() throws ChannelException {
 			if(buffer.isEmpty())
-				throw new FullChannelException();
+				throw new ChannelException();
 			else
 				return buffer.remove(0);
 			
@@ -52,9 +52,9 @@ public class BufferedConnection<T> implements VisibleComponentI, ClearableCompon
 		public boolean ready() {
 			return !buffer.isEmpty();
 		}
-		public T peak() throws FullChannelException {
+		public T peak() throws ChannelException {
 			if(buffer.isEmpty())
-				throw new FullChannelException();
+				throw new ChannelException();
 			else
 				return buffer.get(0);
 		}

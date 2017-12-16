@@ -8,8 +8,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import saac.clockedComponents.RegisterFile.RegItem;
-import saac.clockedComponents.RegisterFile.RegVal;
 import saac.dataObjects.Instruction.Instruction;
 import saac.utils.DrawingHelper;
 
@@ -26,11 +24,11 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 	}
 	
 	public class Input {
-		public <H extends T> void put(H[] val) throws FullChannelException {
+		public <H extends T> void put(H[] val) throws ChannelException {
 			if(value == null)
 				value = val;
 			else
-				throw new FullChannelException();
+				throw new ChannelException();
 		}
 		public boolean clear() {
 			return value == null;
@@ -38,9 +36,9 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 	}
 	
 	public class Output {
-		public T[] pop() throws FullChannelException {
+		public T[] pop() throws ChannelException {
 			if(value == null) {
-				throw new FullChannelException();
+				throw new ChannelException();
 			} else {
 				T[] val = value;
 				value = null;
@@ -50,9 +48,9 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 		public boolean ready() {
 			return value != null;
 		}
-		public T[] peak() throws FullChannelException {
+		public T[] peak() throws ChannelException {
 			if(value == null)
-				throw new FullChannelException();
+				throw new ChannelException();
 			else
 				return value;
 		}
@@ -107,33 +105,13 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 		if(value instanceof Instruction[]) {
 			List<T> keeps = new LinkedList<>();
 			for(T val : value)
-				if(((Instruction) val).getID() <= i)
+				if(((Instruction) val).getVirtualNumber() <= i)
 					keeps.add(val);
 			if(!keeps.isEmpty())
 				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
 			else
 				value = null;
-		} else if(value instanceof RegItem[]) {
-			List<T> keeps = new LinkedList<>();
-			for(T val : value)
-				if(((RegItem) val).id <= i)
-					keeps.add(val);
-			if(!keeps.isEmpty())
-				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
-			else
-				value = null;
-		} else if(value instanceof RegVal[]) {
-			List<T> keeps = new LinkedList<>();
-			for(T val : value)
-				if(((RegVal) val).id <= i)
-					keeps.add(val);
-			if(!keeps.isEmpty())
-				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
-			else
-				value = null;
-		} else if(value instanceof int[][])
-			value = null;
-		else
+		} else
 			throw new RuntimeException(value.toString());
 	}
 }

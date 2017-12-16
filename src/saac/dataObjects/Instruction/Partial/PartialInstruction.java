@@ -11,9 +11,9 @@ public class PartialInstruction extends Instruction<Optional<DestItem>, Optional
 	private final Opcode opcode;
 	//register numbers
 	private final Optional<DestItem> dest; 
-	private final Optional<SourceItem> paramA;
-	private final Optional<SourceItem> paramB;
-	private final Optional<SourceItem> paramC;
+	private Optional<SourceItem> paramA;
+	private Optional<SourceItem> paramB;
+	private Optional<SourceItem> paramC;
 	
 	public PartialInstruction(int instructionNumber, Opcode opcode, Optional<DestItem> dest, Optional<SourceItem> paramA, Optional<SourceItem> paramB, Optional<SourceItem> paramC) {
 		this.instructionNumber = instructionNumber;
@@ -24,7 +24,7 @@ public class PartialInstruction extends Instruction<Optional<DestItem>, Optional
 		this.paramC = paramC;
 	}
 	
-	public int getID() {
+	public int getVirtualNumber() {
 		return instructionNumber;
 	}
 	
@@ -46,6 +46,18 @@ public class PartialInstruction extends Instruction<Optional<DestItem>, Optional
 
 	public Optional<SourceItem> getParamC() {
 		return paramC;
+	}
+	
+	public void setParamA(SourceItem a) {
+		paramA = Optional.of(a);
+	}
+
+	public void setParamB(SourceItem b) {
+		paramB = Optional.of(b);
+	}
+
+	public void setParamC(SourceItem c) {
+		paramC = Optional.of(c);
 	}
 	
 	public String toString() {

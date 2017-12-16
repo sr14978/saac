@@ -5,7 +5,7 @@ import saac.dataObjects.Instruction.InstructionI;
 public abstract class InstructionResult implements InstructionI{
 	protected int instructionNumber;
 	
-	public int getID() {
+	public int getVirtualNumber() {
 		return instructionNumber;
 	}
 	

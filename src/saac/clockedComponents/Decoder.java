@@ -157,12 +157,12 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	
 	private PartialInstruction renameInstruction(EmptyInstruction inst) {
 		
-		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getID());
+		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getVirtualNumber());
 		final Optional<SourceItem> a = renameParam(inst.getParamA());
 		final Optional<SourceItem> b = renameParam(inst.getParamB());
 		final Optional<SourceItem> c = renameParam(inst.getParamC());
 				
-		return new PartialInstruction(inst.getID(), inst.getOpcode(), dest, a, b, c);
+		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c);
 	}
 
 	private Optional<SourceItem> renameParam(Optional<Item> o) {
@@ -288,7 +288,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		if (bufferOut != null) {
 			List<PartialInstruction> insts = new LinkedList<>();
 			for (PartialInstruction inst : bufferOut) {
-				if (inst.getID() <= i) {
+				if (inst.getVirtualNumber() <= i) {
 					insts.add(inst);
 				}
 			}

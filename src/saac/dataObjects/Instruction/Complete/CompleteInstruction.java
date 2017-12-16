@@ -1,20 +1,23 @@
 package saac.dataObjects.Instruction.Complete;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import saac.dataObjects.Instruction.Instruction;
 import saac.dataObjects.Instruction.Partial.DestItem;
+import saac.dataObjects.Instruction.Partial.PartialInstruction;
+import saac.dataObjects.Instruction.Partial.SourceItem;
 import saac.utils.Instructions.Opcode;
 
 public class CompleteInstruction extends Instruction<Optional<DestItem>, Optional<Integer>>{
 		
 	private final int instructionNumber;
 	private final Opcode opcode;
-	//register numbers
+
 	private final Optional<DestItem> dest; 
-	private final Optional<Integer> paramA;
-	private final Optional<Integer> paramB;
-	private final Optional<Integer> paramC;
+	private Optional<Integer> paramA;
+	private Optional<Integer> paramB;
+	private Optional<Integer> paramC;
 	
 	public CompleteInstruction(int instructionNumber, Opcode opcode, Optional<DestItem> dest, Optional<Integer> paramA, Optional<Integer> paramB, Optional<Integer> paramC) {
 		this.instructionNumber = instructionNumber;
@@ -25,7 +28,29 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		this.paramC = paramC;
 	}
 	
-	public int getID() {
+	public CompleteInstruction(PartialInstruction p) throws Exception {
+		this.instructionNumber = p.getVirtualNumber();
+		this.opcode = p.getOpcode();
+		this.dest = p.getDest();
+		setParam(p.getParamA(), this::setParamA);
+		setParam(p.getParamB(), this::setParamB);
+		setParam(p.getParamC(), this::setParamC);
+	}
+	
+	private void setParam(Optional<SourceItem> param, Consumer<Integer> object) throws Exception {
+		if(!param.isPresent()) {
+			this.paramA = Optional.empty();
+		} else {
+			SourceItem i = param.get();
+			if(i.isDataValue()) {
+				this.paramA = Optional.of(i.getValue());
+			} else {
+				throw new Exception("Instruction not Complete");
+			}
+		}
+	}
+
+	public int getVirtualNumber() {
 		return instructionNumber;
 	}
 	
@@ -47,6 +72,18 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 
 	public Optional<Integer> getParamC() {
 		return paramC;
+	}
+	
+	private void setParamA(Integer a) {
+		paramA = Optional.of(a);
+	}
+
+	private void setParamB(Integer b) {
+		paramB = Optional.of(b);
+	}
+
+	private void setParamC(Integer c) {
+		paramC = Optional.of(c);
 	}
 	
 	public String toString() {

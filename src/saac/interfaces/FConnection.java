@@ -22,11 +22,11 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 	}
 	
 	public class Input {
-		public <H extends T> void put(H val) throws FullChannelException {
+		public <H extends T> void put(H val) throws ChannelException {
 			if(value == null)
 				value = val;
 			else
-				throw new FullChannelException();
+				throw new ChannelException();
 		}
 		public boolean clear() {
 			return value == null;
@@ -34,9 +34,9 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 	}
 	
 	public class Output {
-		public T pop() throws FullChannelException {
+		public T pop() throws ChannelException {
 			if(value == null) {
-				throw new FullChannelException();
+				throw new ChannelException();
 			} else {
 				T val = value;
 				value = null;
@@ -46,9 +46,9 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 		public boolean ready() {
 			return value != null;
 		}
-		public T peak() throws FullChannelException {
+		public T peak() throws ChannelException {
 			if(value == null)
-				throw new FullChannelException();
+				throw new ChannelException();
 			else
 				return value;
 		}
@@ -99,7 +99,7 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 	public void clear(int i) {
 		if(value == null)
 			return;
-		if(value instanceof Instruction && ((Instruction) value).getID() > i)
+		if(value instanceof Instruction && ((Instruction) value).getVirtualNumber() > i)
 			value = null;
 		else if(value instanceof int[] || value instanceof Integer[])
 			value = null;			

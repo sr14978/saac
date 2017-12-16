@@ -24,7 +24,7 @@ public class EmptyInstruction extends Instruction<Optional<Integer>, Optional<It
 		this.paramC = paramC;
 	}
 	
-	public int getID() {
+	public int getVirtualNumber() {
 		return instructionNumber;
 	}
 	

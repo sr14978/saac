@@ -67,8 +67,8 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			predictor.update(res);
 			if(!res.wasCorrect()) {
 				for(ClearableComponent cc : clearables)
-					cc.clear(res.getID());
-				instructionCounter = res.getID();
+					cc.clear(res.getVirtualNumber());
+				instructionCounter = res.getVirtualNumber();
 				programCounter = res.getNewPc();
 				clearOutput.put(true);
 			}
