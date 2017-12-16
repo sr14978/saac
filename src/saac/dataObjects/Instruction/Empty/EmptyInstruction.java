@@ -14,14 +14,20 @@ public class EmptyInstruction extends Instruction<Optional<Integer>, Optional<It
 	private final Optional<Item> paramA;
 	private final Optional<Item> paramB;
 	private final Optional<Item> paramC;
+	private final Optional<Item> paramD;
 	
-	public EmptyInstruction(int instructionNumber, Opcode opcode, Optional<Integer> dest, Optional<Item> paramA, Optional<Item> paramB, Optional<Item> paramC) {
+	public EmptyInstruction(int instructionNumber, Opcode opcode, Optional<Integer> dest,
+			Optional<Item> paramA,
+			Optional<Item> paramB,
+			Optional<Item> paramC,
+			Optional<Item> paramD) {
 		this.instructionNumber = instructionNumber;
 		this.opcode = opcode;
 		this.dest = dest;
 		this.paramA = paramA;
 		this.paramB = paramB;
 		this.paramC = paramC;
+		this.paramD = paramD;
 	}
 	
 	public int getVirtualNumber() {
@@ -46,6 +52,10 @@ public class EmptyInstruction extends Instruction<Optional<Integer>, Optional<It
 
 	public Optional<Item> getParamC() {
 		return paramC;
+	}
+	
+	public Optional<Item> getParamD() {
+		return paramD;
 	}
 	
 	public String toString() {

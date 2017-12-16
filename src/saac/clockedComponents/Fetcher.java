@@ -116,13 +116,15 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				break insts;
 			case JmpN:
 			case JmpZ:
-				inst[3] = inst[5] + 1;
-				inst[5] = instructionCounter++;
+				inst[4] = inst[5] + 1;
+				inst[3] = inst[2];
+				inst[2] = inst[1];
+				inst[6] = instructionCounter++;
 				outInsts.add(inst);
 				
 				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
 					boolean prediction = predictor.predict(inst);
-					inst[4] = prediction?1:0;
+					inst[5] = prediction?1:0;
 					if(prediction) {
 						programCounter = inst[3] + inst[1];
 						clearOutput.put(true);
@@ -134,9 +136,9 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 					break insts;
 				}
 				break;
-			case Ln:
+			case Ln://broken
 				clearOutput.put(true);
-				inst[5] = instructionCounter++;
+				inst[6] = instructionCounter++;
 				outInsts.add(inst);
 				halt = true;
 				break insts;

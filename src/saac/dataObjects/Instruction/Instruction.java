@@ -9,4 +9,5 @@ public abstract class Instruction<D,S> implements InstructionI{
 	public abstract S getParamA();
 	public abstract S getParamB();
 	public abstract S getParamC();
+	public abstract S getParamD();
 }

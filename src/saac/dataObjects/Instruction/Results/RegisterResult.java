@@ -20,7 +20,7 @@ public class RegisterResult extends InstructionResult {
 		return target;
 	}
 	public String toString() {
-		return super.toString() + String.format("target reg: %d, value: %d", target, value); 
+		return super.toString() + String.format("target: %s, value: %d", target.toString(), value); 
 	}
 
 }

@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import saac.clockedComponents.ArithmeticUnit;
+import saac.clockedComponents.BranchExecutionUnit;
 import saac.clockedComponents.Decoder;
 import saac.clockedComponents.Fetcher;
 import saac.clockedComponents.InstructionsSource;
@@ -136,12 +137,19 @@ public class Saac implements ClockedComponentI {
 				resevationStationToBR.getInputEnd(),
 				virtualRegisterValueBus.getOutputEnd());
 		
-		FConnection<InstructionResult> LSToWritebacks = new FConnection<>();
+		FConnection<InstructionResult> LSToWriteback = new FConnection<>();
 		LoadStoreExecutionUnit loadStoreExecutionUnit = new LoadStoreExecutionUnit(memory,
 				resevationStationToLS.getOutputEnd(),
-				LSToWritebacks.getInputEnd(),
+				LSToWriteback.getInputEnd(),
 				virtualRegisterValueBus.getInputEnd()
 				);
+		
+		FConnection<InstructionResult> BRToWriteback = new FConnection<>();
+		FConnection<BranchResult> BRToFetch = new FConnection<>();
+		BranchExecutionUnit branchExecutionUnit = new BranchExecutionUnit(resevationStationToBR.getOutputEnd(),
+				BRToFetch.getInputEnd(), BRToWriteback.getInputEnd());
+
+		
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{
 			clockedComponents.add(fetcher);
@@ -154,6 +162,7 @@ public class Saac implements ClockedComponentI {
 				clockedComponents.add(au);
 			}
 			clockedComponents.add(loadStoreExecutionUnit);
+			clockedComponents.add(branchExecutionUnit);
 		}
 		
 		{
@@ -179,10 +188,16 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(BRreservationStation.createView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(resevationStationToAUs.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
+			visibleComponents.add(resevationStationToLS.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(resevationStationToBR.createView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(AUs.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
+			visibleComponents.add(loadStoreExecutionUnit.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(branchExecutionUnit.createView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(AUToWritebacks.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
+			visibleComponents.add(LSToWriteback.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(BRToWriteback.createView(middleOffset + BOX_SIZE, boxHeight*c));
 		}
 		
 		/*

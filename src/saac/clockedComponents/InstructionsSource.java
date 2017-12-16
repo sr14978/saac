@@ -26,7 +26,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 		if(addr < instructions.length && addr >= 0)
 			return instructions[addr];
 		else 
-			return new int[] {0x0, 0x0, 0x0, 0x0};
+			return new int[] {0x0, 0x0, 0x0, 0x0, 0x0};
 	}
 	
 	FConnection<Integer>.Output addrInput;

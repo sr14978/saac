@@ -100,6 +100,9 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 			return;
 		else if (resultOut.clear()) {
 			resultOut.put(res);
+			if(res instanceof RegisterResult) {
+				virtualRegisterValueBus.put((RegisterResult) res);
+			}
 			res = null;
 		}
 	}

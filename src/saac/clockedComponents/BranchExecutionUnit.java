@@ -40,6 +40,7 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 			return;
 		CompleteInstruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
+		/*
 		case Br:
 			bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getDest().get().getRegNumber(), true, true, inst.getParamD());
 			break;
@@ -47,19 +48,20 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 			bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA() + inst.getParamC(), true, true, inst.getParamD());
 			Output.jumping_info.println("jumping to " + bufferOut);
 			break;
+		*/
 		case JmpN:
 			if(inst.getParamB().get() < 0) {
-				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA() + inst.getParamC(), inst.getParamD(), true, inst.getParamC()-1);
+				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get() + inst.getParamC().get(), inst.getParamD().get(), true, inst.getParamC().get()-1);
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamC(), inst.getParamD(), false, inst.getParamC()-1);
+				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamC().get(), inst.getParamD().get(), false, inst.getParamC().get()-1);
 			break;
 		case JmpZ:
 			if(inst.getParamB().get() == 0) {
-				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA() + inst.getParamC(), inst.getParamD(), true, inst.getParamC()-1);
+				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get() + inst.getParamC().get(), inst.getParamD().get(), true, inst.getParamC().get()-1);
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamC(), inst.getParamD(), false, inst.getParamC()-1);
+				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamC().get(), inst.getParamD().get(), false, inst.getParamC().get()-1);
 			break;
 		default:
 			throw new NotImplementedException();

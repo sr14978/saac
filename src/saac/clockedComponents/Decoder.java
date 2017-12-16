@@ -58,13 +58,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		for (int i = 0; i < datas.length; i++) {
 			int[] data = datas[i];
 						
-			final Usage usageA, usageB, usageC;
+			final Usage usageA, usageB, usageC, usageD;
 			final boolean dirtyDest;
 			switch (Opcode.fromInt(data[0])) {
 			case Ldc:
 				dirtyDest = true;
 				usageA = Usage.Data; 
-				usageB = usageC = Usage.Null;
+				usageB = usageC = usageD = Usage.Null;
 				break;
 			case Add:
 			case Sub:
@@ -73,11 +73,12 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Ldmi:
 				dirtyDest = true;
 				usageA = usageB = Usage.Reg; 
-				usageC = Usage.Null;
+				usageC = usageD = Usage.Null;
 				break;
 			case Stmi:
 				dirtyDest = false;
 				usageA = usageB = usageC = Usage.Data; 
+				usageD = Usage.Null;
 				break;
 			case Addi:
 			case Subi:
@@ -86,44 +87,43 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				dirtyDest = true;
 				usageA = Usage.Reg;
 				usageB = Usage.Data;
-				usageC = Usage.Null;
+				usageC = usageD = Usage.Null;
 				break;
 			case Nop:
 				dirtyDest = false;
-				usageA = usageB = usageC = Usage.Null;
+				usageA = usageB = usageC = usageD = Usage.Null;
 				break;
 			case Ldma:
 				dirtyDest = true;
 				usageA = Usage.Data;
-				usageB = usageC = Usage.Null;
+				usageB = usageC = usageD = Usage.Null;
 				break;
 			case Stma:
 				dirtyDest = false;
 				usageA = Usage.Reg;
 				usageB = Usage.Data;
-				usageC = Usage.Null;
+				usageC = usageD = Usage.Null;
 				break;
 			case Br:
 			case Jmp:
 				dirtyDest = false;
 				usageA = Usage.Data;
-				usageB = usageC = Usage.Null;
+				usageB = usageC = usageD = Usage.Null;
 				break;
 			case Ln:
 				dirtyDest = false;
 				usageA = Usage.Reg;
-				usageB = usageC = Usage.Null;
+				usageB = usageC = usageD = Usage.Null;
 				break;
 			case JmpN:
 			case JmpZ:
 				dirtyDest = false;
-				usageA = Usage.Data;
+				usageA = usageC = usageD = Usage.Data;
 				usageB = Usage.Reg;
-				usageC = Usage.Null;
 				break;
 			case Stop:
 				dirtyDest = false;
-				usageA = usageB = usageC = Usage.Null;
+				usageA = usageB = usageC = usageD = Usage.Null;
 				break;
 			default:
 				throw new NotImplementedException();
@@ -134,7 +134,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					dirtyDest ? Optional.of(data[1]) : Optional.empty(),
 					formatParam(data[2], usageA),
 					formatParam(data[3], usageB),
-					formatParam(data[4], usageC)
+					formatParam(data[4], usageC),
+					formatParam(data[5], usageD)
 			);
 			PartialInstruction vinst = renameInstruction(inst);
 			outInsts.add(vinst);
@@ -160,9 +161,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		final Optional<SourceItem> a = renameParam(inst.getParamA());
 		final Optional<SourceItem> b = renameParam(inst.getParamB());
 		final Optional<SourceItem> c = renameParam(inst.getParamC());
+		final Optional<SourceItem> d = renameParam(inst.getParamD());
 		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getVirtualNumber());
 				
-		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c);
+		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c, d);
 	}
 
 	private Optional<SourceItem> renameParam(Optional<Item> o) {

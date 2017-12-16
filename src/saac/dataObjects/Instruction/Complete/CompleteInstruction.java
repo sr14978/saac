@@ -18,14 +18,20 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 	private Optional<Integer> paramA;
 	private Optional<Integer> paramB;
 	private Optional<Integer> paramC;
+	private Optional<Integer> paramD;
 	
-	public CompleteInstruction(int instructionNumber, Opcode opcode, Optional<DestItem> dest, Optional<Integer> paramA, Optional<Integer> paramB, Optional<Integer> paramC) {
+	public CompleteInstruction(int instructionNumber, Opcode opcode, Optional<DestItem> dest,
+			Optional<Integer> paramA,
+			Optional<Integer> paramB,
+			Optional<Integer> paramC,
+			Optional<Integer> paramD) {
 		this.instructionNumber = instructionNumber;
 		this.opcode = opcode;
 		this.dest = dest;
 		this.paramA = paramA;
 		this.paramB = paramB;
 		this.paramC = paramC;
+		this.paramD = paramD;
 	}
 	
 	public CompleteInstruction(PartialInstruction p) throws Exception {
@@ -74,6 +80,10 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		return paramC;
 	}
 	
+	public Optional<Integer> getParamD() {
+		return paramD;
+	}
+	
 	private void setParamA(Optional<Integer> a) {
 		paramA = a;
 	}
@@ -84,6 +94,10 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 
 	private void setParamC(Optional<Integer> c) {
 		paramC = c;
+	}
+	
+	public void setParamD(Integer d) {
+		paramD = Optional.of(d);
 	}
 	
 	public String toString() {
