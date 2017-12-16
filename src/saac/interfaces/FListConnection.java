@@ -97,7 +97,7 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 		return new View(x, y, num);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void clear(int i) {
 		if(value == null)

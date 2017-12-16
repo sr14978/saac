@@ -95,6 +95,7 @@ public class FConnection<T extends Object> implements VisibleComponentI, Clearab
 		return new View(x, y, num);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void clear(int i) {
 		if(value == null)

@@ -5,7 +5,6 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -17,7 +16,6 @@ import javax.swing.JSlider;
 import saac.interfaces.ComponentViewI;
 import saac.utils.Output;
 import saac.utils.RateUtils;
-import saac.utils.parsers.ParserException;
 
 public class Main extends JFrame {
 	

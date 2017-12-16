@@ -12,7 +12,6 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 	int seenNum;
 	int fanOutMax;
 	
-	@SuppressWarnings("unchecked")
 	public MultiFConnection(int fanOutMax) {
 		this.fanOutMax = fanOutMax;
 		value = new ArrayList<>();

@@ -11,7 +11,6 @@ import java.util.function.Function;
 
 import saac.Settings.BranchPrediciton;
 import saac.clockedComponents.RegisterFile;
-import saac.clockedComponents.RegisterFile.Reg;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
 
