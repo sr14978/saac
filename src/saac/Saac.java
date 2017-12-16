@@ -91,11 +91,11 @@ public class Saac implements ClockedComponentI {
 		
 		BranchPredictor branchPredictor = new BranchPredictor();
 		FListConnection<int[]> fetchToDecode = new FListConnection<>();
-		FConnection<BranchResult> brToFetch = new FConnection<>();
+		FConnection<BranchResult> BRToFetch = new FConnection<>();
 
 		Fetcher fetcher = new Fetcher(clearables, branchPredictor,
 				fetchToDecode.getInputEnd(),
-				brToFetch.getOutputEnd(),
+				BRToFetch.getOutputEnd(),
 				addrInput.getInputEnd(),
 				clearInput.getInputEnd(),
 				instructionOutput.getOutputEnd()
@@ -147,7 +147,6 @@ public class Saac implements ClockedComponentI {
 				);
 		
 		FConnection<InstructionResult> BRToWriteback = new FConnection<>();
-		FConnection<BranchResult> BRToFetch = new FConnection<>();
 		BranchExecutionUnit branchExecutionUnit = new BranchExecutionUnit(resevationStationToBR.getOutputEnd(),
 				BRToFetch.getInputEnd(), BRToWriteback.getInputEnd());
 
@@ -181,12 +180,14 @@ public class Saac implements ClockedComponentI {
 			int c = 0;
 			visibleComponents.add(fetcher.createView(middleOffset, boxHeight*c));
 			visibleComponents.add(addrInput.createView(0, boxHeight*c));
-			visibleComponents.add(branchPredictor.createView(3*BOX_SIZE, boxHeight*c));	
+			visibleComponents.add(branchPredictor.createView((int) (3.5*BOX_SIZE), boxHeight*c));	
 			c++;
 			visibleComponents.add(instructionSource.createView(0, boxHeight*c));
 			visibleComponents.add(fetchToDecode.createView(middleOffset, boxHeight*c));
 			c++;
 			visibleComponents.add(decoder.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(instructionOutput.createView(0, boxHeight*c));
+			visibleComponents.add(registerFile.createView((int) (3.5*BOX_SIZE), boxHeight*c));
 			c++;
 			visibleComponents.add(decodeToAUReservationStation.createView(middleOffset - BOX_SIZE, boxHeight*c));
 			visibleComponents.add(decodeToLSReservationStation.createView(middleOffset, boxHeight*c));

@@ -1,12 +1,19 @@
 package saac.clockedComponents;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.util.Arrays;
 import java.util.Optional;
 
 import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClockedComponentI;
+import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
 import saac.interfaces.FListConnection;
+import saac.interfaces.VisibleComponentI;
+import saac.utils.DrawingHelper;
 
-public class RegisterFile implements ClockedComponentI {
+public class RegisterFile implements ClockedComponentI, VisibleComponentI {
 
 	private final static int ArchitecturalRegistersNum = 12;
 	private int[] architecturalRegisters = new int[ArchitecturalRegistersNum];
@@ -72,6 +79,9 @@ public class RegisterFile implements ClockedComponentI {
 		public int getValue() {
 			return virtualRegister.isPresent()?virtualRegister.get():architecturalRegister.get();
 		}
+		public String toString() {
+			return virtualRegister.isPresent()?"v"+virtualRegister.get():"a"+architecturalRegister.get();
+		}
 	}
 
 	@Override
@@ -93,5 +103,28 @@ public class RegisterFile implements ClockedComponentI {
 
 	@Override
 	public void tock() throws Exception {}
+	
+	class View extends ComponentView {
+		
+		View(int x, int y) {
+			super(x, y);
+		}
+		
+		public void paint(Graphics2D gc) {
+			DrawingHelper.drawBox(gc, "Register File");
+			gc.setColor(Color.BLACK);
+			for( int i = 0; i<ArchitecturalRegistersNum; i++) {
+				gc.drawString(Integer.toString(architecturalRegisters[i]), 25*i+5, 35);
+				if(architecturalDirties[i])
+					gc.drawString("(d)", 25*i+5, 20);
+			}
+			gc.drawString(Arrays.toString(RAT), 5, 45);
+		}
+	}
+
+	@Override
+	public ComponentViewI createView(int x, int y) {
+		return new View(x, y);
+	}
 	
 }

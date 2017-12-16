@@ -41,6 +41,7 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		setParam(p.getParamA(), this::setParamA);
 		setParam(p.getParamB(), this::setParamB);
 		setParam(p.getParamC(), this::setParamC);
+		setParam(p.getParamD(), this::setParamD);
 	}
 	
 	private void setParam(Optional<SourceItem> param, Consumer<Optional<Integer>> setter) throws Exception {
@@ -96,11 +97,17 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		paramC = c;
 	}
 	
-	public void setParamD(Integer d) {
-		paramD = Optional.of(d);
+	public void setParamD(Optional<Integer> d) {
+		paramD = d;
 	}
 	
 	public String toString() {
-		return String.format("%d: %s = %s (%s, %s, %s)", instructionNumber, dest, opcode.toString(), paramA, paramB, paramC); 
+		return String.format("%d: %s = %s (%s, %s, %s, %s)", instructionNumber,
+				dest.isPresent()?dest.get():"/",
+				opcode.toString(),
+				paramA.isPresent()?paramA.get():"/",
+				paramB.isPresent()?paramB.get():"/",
+				paramC.isPresent()?paramC.get():"/",
+				paramD.isPresent()?paramD.get():"/"); 
 	}
 }

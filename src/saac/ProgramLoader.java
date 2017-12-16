@@ -15,14 +15,14 @@ public class ProgramLoader {
 	final static String programDirectory = "programs/";
 	//final static String programName = "no_depend_mul.program";
 	//final static String programName = "no_depend_ldc.program";
-	//final static String programName = "inner_product_stop.program";
+	final static String programName = "inner_product_stop.program";
 	//final static String programName = "reorder.program";
 	//final static String programName = "static_branch_pred.program";
 	//final static String programName = "dynamic_branch_pred.program";
 	//final static String programName = "out of order dependancies test.program";
 	//final static String programName = "reoder test.program";
 	//final static String programName = "memory_branch.program";
-	final static String programName = "depend_simple.program";
+	//final static String programName = "depend_simple.program";
 	
 	public static int[][] loadProgram(String programName) throws IOException, ParserException {
 		File program = new File(programDirectory + (programName == null?ProgramLoader.programName:programName));

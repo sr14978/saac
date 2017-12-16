@@ -129,7 +129,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				throw new NotImplementedException();
 			}
 			
-			EmptyInstruction inst = new EmptyInstruction(data[5],
+			if(Opcode.fromInt(data[0]).equals(Opcode.JmpZ)) {
+				System.out.println("hi");
+			}
+			
+			EmptyInstruction inst = new EmptyInstruction(data[6],
 					Opcode.fromInt(data[0]), 
 					dirtyDest ? Optional.of(data[1]) : Optional.empty(),
 					formatParam(data[2], usageA),

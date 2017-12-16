@@ -59,6 +59,12 @@ public class EmptyInstruction extends Instruction<Optional<Integer>, Optional<It
 	}
 	
 	public String toString() {
-		return String.format("%d: %s = %s (%s, %s, %s)", instructionNumber, dest, opcode.toString(), paramA, paramB, paramC); 
+		return String.format("%d: %s = %s (%s, %s, %s, %s)", instructionNumber,
+				dest.isPresent()?dest.get():"/",
+				opcode.toString(),
+				paramA.isPresent()?paramA.get():"/",
+				paramB.isPresent()?paramB.get():"/",
+				paramC.isPresent()?paramC.get():"/",
+				paramD.isPresent()?paramD.get():"/"); 
 	}
 }

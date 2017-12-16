@@ -100,7 +100,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		for(int i = 0; i<instructionInputBuff.length; i++) {
 			int[] inst = instructionInputBuff[i];
 			inInsts.remove(inst);
-			inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], 0 }; 
+			inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], inst[5], 0 }; 
 			switch(Opcode.fromInt(inst[0])) {
 			case Jmp:
 				programCounter = inst[5] + 1 + inst[1];
@@ -143,7 +143,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				halt = true;
 				break insts;
 			default:
-				inst[5] = instructionCounter++;
+				inst[6] = instructionCounter++;
 				outInsts.add(inst);
 				break;
 			}

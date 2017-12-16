@@ -6,9 +6,9 @@ public class Settings {
 	
 	public static boolean RESERVATION_STATION_BYPASS_ENABLED = true;
 	
-	public static int NUMBER_OF_EXECUTION_UNITS = 1;
+	public static int NUMBER_OF_EXECUTION_UNITS = 2;
 	
-	public static int SUPERSCALER_WIDTH = 1;
+	public static int SUPERSCALER_WIDTH = 2;
 	
 	public static boolean OUT_OF_ORDER_ENABLED = true;
 	
@@ -16,5 +16,5 @@ public class Settings {
 	
 	public static boolean REGISTER_RENAMING_ENABLED = true;
 		
-	public static int PARALLEL_INSTRUCTION_FETCH = 2/*4 * 8*/;
+	public static int PARALLEL_INSTRUCTION_FETCH = 4 * SUPERSCALER_WIDTH;
 }

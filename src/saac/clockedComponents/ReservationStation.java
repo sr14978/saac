@@ -68,6 +68,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 					fillInSingleParamWithResult(inst::getParamA, inst::setParamA, result);
 					fillInSingleParamWithResult(inst::getParamB, inst::setParamB, result);
 					fillInSingleParamWithResult(inst::getParamC, inst::setParamC, result);
+					fillInSingleParamWithResult(inst::getParamD, inst::setParamD, result);
 				}
 			}
 		}
@@ -88,7 +89,8 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 	private boolean isReady(PartialInstruction i) {
 		return 		( !i.getParamA().isPresent() || (i.getParamA().isPresent() && i.getParamA().get().isDataValue()) )
 				&& 	( !i.getParamB().isPresent() || (i.getParamB().isPresent() && i.getParamB().get().isDataValue()) )
-				&& 	( !i.getParamC().isPresent() || (i.getParamC().isPresent() && i.getParamC().get().isDataValue()) );
+				&& 	( !i.getParamC().isPresent() || (i.getParamC().isPresent() && i.getParamC().get().isDataValue()) )
+				&& 	( !i.getParamD().isPresent() || (i.getParamD().isPresent() && i.getParamD().get().isDataValue()) );
 	}
 
 	private void fillInSingleParamWithResult(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter,  RegisterResult result) {
