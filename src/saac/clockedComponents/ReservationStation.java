@@ -78,9 +78,9 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 	}
 
 	private boolean isReady(PartialInstruction i) {
-		return 		!i.getParamA().isPresent() || (i.getParamA().isPresent() && i.getParamA().get().isDataValue())
-				&& 	!i.getParamB().isPresent() || (i.getParamB().isPresent() && i.getParamB().get().isDataValue())
-				&& 	!i.getParamC().isPresent() || (i.getParamC().isPresent() && i.getParamC().get().isDataValue());
+		return 		( !i.getParamA().isPresent() || (i.getParamA().isPresent() && i.getParamA().get().isDataValue()) )
+				&& 	( !i.getParamB().isPresent() || (i.getParamB().isPresent() && i.getParamB().get().isDataValue()) )
+				&& 	( !i.getParamC().isPresent() || (i.getParamC().isPresent() && i.getParamC().get().isDataValue()) );
 	}
 
 	private void fillInSingleParamWithResult(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter,  RegisterResult result) {

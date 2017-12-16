@@ -10,6 +10,12 @@ public class RegisterFile {
 	
 	RatItem[] RAT = new RatItem[ArchitecturalRegistersNum];
 	
+	public RegisterFile() {
+		for(int i = 0; i<RAT.length; i++) {
+			RAT[i] = RatItem.Architectural(i);
+		}
+	}
+	
 	public boolean isDirty(int registerNumber) {
 		return architecturalDirties[registerNumber];
 	}
@@ -22,7 +28,7 @@ public class RegisterFile {
 		return architecturalRegisters[registerNumber];
 	}
 	
-	public void setLatestRegister(int registerNumber, int value) {
+	public void setRegisterValue(int registerNumber, int value) {
 		architecturalRegisters[registerNumber] = value;
 	}
 
@@ -30,7 +36,7 @@ public class RegisterFile {
 		return RAT[registerNumber];
 	}
 	
-	public void setVirtualRegister(int registerNumber, RatItem virtualRegisterNumber) {
+	public void setLatestRegister(int registerNumber, RatItem virtualRegisterNumber) {
 		RAT[registerNumber] = virtualRegisterNumber;
 	}
 

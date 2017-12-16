@@ -4,19 +4,19 @@ public class DestItem {
 	private int regValue;
 	private int virtualregValue;
 	public DestItem(int regValue, int virtualregValue) {
-		this.setRegValue(regValue);
-		this.setVirtualRegValue(virtualregValue);
+		this.setRegNumber(regValue);
+		this.setVirtualRegNumber(virtualregValue);
 	}
-	public int getRegValue() {
+	public int getRegNumber() {
 		return regValue;
 	}
-	private void setRegValue(int regValue) {
+	private void setRegNumber(int regValue) {
 		this.regValue = regValue;
 	}
-	public int getVirtualRegValue() {
+	public int getVirtualRegNumber() {
 		return virtualregValue;
 	}
-	private void setVirtualRegValue(int virtualregValue) {
+	private void setVirtualRegNumber(int virtualregValue) {
 		this.virtualregValue = virtualregValue;
 	}
 	public String toString() {

@@ -37,13 +37,13 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		setParam(p.getParamC(), this::setParamC);
 	}
 	
-	private void setParam(Optional<SourceItem> param, Consumer<Integer> object) throws Exception {
+	private void setParam(Optional<SourceItem> param, Consumer<Optional<Integer>> setter) throws Exception {
 		if(!param.isPresent()) {
-			this.paramA = Optional.empty();
+			setter.accept(Optional.empty());
 		} else {
 			SourceItem i = param.get();
 			if(i.isDataValue()) {
-				this.paramA = Optional.of(i.getValue());
+				setter.accept(Optional.of(i.getValue()));
 			} else {
 				throw new Exception("Instruction not Complete");
 			}
@@ -74,16 +74,16 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		return paramC;
 	}
 	
-	private void setParamA(Integer a) {
-		paramA = Optional.of(a);
+	private void setParamA(Optional<Integer> a) {
+		paramA = a;
 	}
 
-	private void setParamB(Integer b) {
-		paramB = Optional.of(b);
+	private void setParamB(Optional<Integer> b) {
+		paramB = b;
 	}
 
-	private void setParamC(Integer c) {
-		paramC = Optional.of(c);
+	private void setParamC(Optional<Integer> c) {
+		paramC = c;
 	}
 	
 	public String toString() {

@@ -6,8 +6,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import com.sun.xml.internal.txw2.output.StreamSerializer;
-
+import saac.clockedComponents.ArithmeticUnit;
 import saac.clockedComponents.Decoder;
 import saac.clockedComponents.Fetcher;
 import saac.clockedComponents.InstructionsSource;
@@ -16,6 +15,7 @@ import saac.clockedComponents.ReservationStation;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Results.BranchResult;
+import saac.dataObjects.Instruction.Results.InstructionResult;
 import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -107,14 +107,21 @@ public class Saac implements ClockedComponentI {
 		MultiFConnection<RegisterResult> virtualRegisterValueBus = new MultiFConnection<>(3);
 		
 		List<FConnection<CompleteInstruction>> resevationStationToAUs = new ArrayList<>();
+		List<ArithmeticUnit> AUs = new ArrayList<>();
+		List<FConnection<InstructionResult>> AUToWritebacks = new ArrayList<>();
 		for(int i = 0; i<Settings.NUMBER_OF_EXECUTION_UNITS; i++) {
 			FConnection<CompleteInstruction> resevationStationToAU = new FConnection<>();
 			resevationStationToAUs.add(resevationStationToAU);
+			FConnection<InstructionResult> AUToWriteback = new FConnection<>();
+			AUToWritebacks.add(AUToWriteback);
+			AUs.add(new ArithmeticUnit(resevationStationToAU.getOutputEnd(),
+					AUToWriteback.getInputEnd(),
+					virtualRegisterValueBus.getInputEnd()));
 		}
 		
 		ReservationStation reservationStation = new ReservationStation(decodeToAUReservationStation.getOutputEnd(),
 				resevationStationToAUs.stream().map(x -> x.getInputEnd()).collect(Collectors.toList()),
-				virtualRegisterValueBus.getOutputEnd());
+				virtualRegisterValueBus.getOutputEnd()); 
 		
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{
@@ -122,6 +129,9 @@ public class Saac implements ClockedComponentI {
 			clockedComponents.add(instructionSource);
 			clockedComponents.add(decoder);
 			clockedComponents.add(reservationStation);
+			for(ArithmeticUnit au : AUs) {
+				clockedComponents.add(au);
+			}
 		}
 		
 		{
@@ -143,6 +153,12 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(decodeToBRReservationStation.createView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(reservationStation.createView(middleOffset - BOX_SIZE, boxHeight*c));
+			c++;
+			visibleComponents.add(resevationStationToAUs.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
+			c++;
+			visibleComponents.add(AUs.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
+			c++;
+			visibleComponents.add(AUToWritebacks.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
 		}
 		
 		/*

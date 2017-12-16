@@ -157,10 +157,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	
 	private PartialInstruction renameInstruction(EmptyInstruction inst) {
 		
-		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getVirtualNumber());
 		final Optional<SourceItem> a = renameParam(inst.getParamA());
 		final Optional<SourceItem> b = renameParam(inst.getParamB());
 		final Optional<SourceItem> c = renameParam(inst.getParamC());
+		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getVirtualNumber());
 				
 		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c);
 	}
@@ -195,7 +195,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	}
 	
 	private void setLatestRegister(Integer registerNumber, int id) {
-		registerFile.setLatestRegister(registerNumber, id);
+		registerFile.setLatestRegister(registerNumber, RatItem.Virtual(id));
 	}
 
 	private RatItem getLatestRegister(int registerNumber) {
