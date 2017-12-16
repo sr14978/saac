@@ -2,7 +2,9 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 import saac.dataObjects.Instruction.Results.RegisterResult;
@@ -19,13 +21,15 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI {
 	private int[] architecturalRegisters = new int[ArchitecturalRegistersNum];
 	private boolean[] architecturalDirties = new boolean[ArchitecturalRegistersNum];
 	
-	RatItem[] RAT = new RatItem[ArchitecturalRegistersNum];
+	List<List<RatItem>> RAT = new ArrayList<List<RatItem>>();
 	
 	FListConnection<RegisterResult>.Output writeBackToRegisters;
 	
 	public RegisterFile(FListConnection<RegisterResult>.Output writeBackToRegisters){
-		for(int i = 0; i<RAT.length; i++) {
-			RAT[i] = RatItem.Architectural(i);
+		for(int i = 0; i<ArchitecturalRegistersNum; i++) {
+			List<RatItem> l = new LinkedList<>();
+			l.add(RatItem.Architectural(i));
+			RAT.add(l);
 		}
 		this.writeBackToRegisters = writeBackToRegisters;
 	}
@@ -47,11 +51,15 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI {
 	}
 
 	public RatItem getLatestRegister(int registerNumber) {
-		return RAT[registerNumber];
+		return RAT.get(registerNumber).get(0);
 	}
 	
 	public void setLatestRegister(int registerNumber, RatItem virtualRegisterNumber) {
-		RAT[registerNumber] = virtualRegisterNumber;
+		RAT.get(registerNumber).add(0,virtualRegisterNumber);
+	}
+	
+	private void removeRatEntry(int registerNumber, int virtualNumber) {
+		RAT.get(registerNumber).removeIf(i->i.isVirtual() && i.getValue() == virtualNumber);
 	}
 
 	public static class RatItem {
@@ -91,12 +99,7 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI {
 			for(RegisterResult update : updates) {
 				int archRegNum = update.getTarget().getRegNumber();
 				setRegisterValue(archRegNum, update.getValue());
-				RatItem i = getLatestRegister(archRegNum);
-				if(i.isArchitectural()) {
-					throw new Exception("RAT item should be virtual");
-				} else if(update.getVirtualNumber() == i.getValue()) {
-					setLatestRegister(archRegNum, RatItem.Architectural(archRegNum));
-				}
+				removeRatEntry(archRegNum, update.getVirtualNumber());
 			}
 		}
 	}
@@ -118,7 +121,7 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI {
 				if(architecturalDirties[i])
 					gc.drawString("(d)", 25*i+5, 20);
 			}
-			gc.drawString(Arrays.toString(RAT), 5, 45);
+			gc.drawString(RAT.toString(), 5, 45);
 		}
 	}
 
