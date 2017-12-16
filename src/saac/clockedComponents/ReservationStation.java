@@ -28,9 +28,8 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 	FListConnection<PartialInstruction>.Output instructionInput;
 	List<FConnection<CompleteInstruction>.Input> instructionOutputs;
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
-	static final int partialBufferMaxSize = 8;
+	static final int MaxSize = 8;
 	List<PartialInstruction> partialBuffer = new LinkedList<>();
-	static final int completeBufferMaxSize = 8;
 	List<CompleteInstruction> completeBuffer = new LinkedList<>();
 	
 	
@@ -54,7 +53,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 	@Override
 	public void tick() throws Exception {
 		
-		if(instructionInput.ready() && partialBuffer.size() < partialBufferMaxSize - Settings.SUPERSCALER_WIDTH) {
+		if(instructionInput.ready() && partialBuffer.size() + completeBuffer.size() < MaxSize - Settings.SUPERSCALER_WIDTH) {
 			PartialInstruction[] insts = instructionInput.pop();
 			for(PartialInstruction inst : insts) {
 				partialBuffer.add(inst);
@@ -74,7 +73,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 		}
 		
 		int i = 0;
-		while(i<partialBuffer.size() && completeBuffer.size()<completeBufferMaxSize) {
+		while(i<partialBuffer.size()) {
 			PartialInstruction inst = partialBuffer.get(i);
 			if(isReady(inst)) {
 				partialBuffer.remove(i);
@@ -128,8 +127,9 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 		public void paint(Graphics2D gc) {
 			DrawingHelper.drawBox(gc, "Fetcher");
 			gc.setColor(Color.BLACK);
-			gc.drawString(partialBuffer.toString(), 10, 25);
-			gc.drawString(completeBuffer.toString(), 10, 40);
+			gc.drawString(partialBuffer.size()==MaxSize?"F":"", 5, 32);
+			gc.drawString(partialBuffer.toString(), 15, 25);
+			gc.drawString(completeBuffer.toString(), 15, 40);
 		}
 	}
 

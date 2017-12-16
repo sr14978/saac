@@ -21,6 +21,7 @@ import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
+import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.unclockedComponents.Memory;
 import saac.unclockedComponents.ReorderBuffer;
@@ -34,6 +35,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	//FConnection<BranchResult>.Output inputBr;
 	ReorderBuffer reorderBuffer;
 	FListConnection<RegisterResult>.Input resultOutput;
+	MultiFConnection<RegisterResult>.Input virtualRegisterValueBus;
 	
 	//to enforce round robin collection of inputs
 	int nextInput = 0;
@@ -43,11 +45,13 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			List<FConnection<InstructionResult>.Output> inputEUs,
 			FConnection<InstructionResult>.Output inputLS,
 			FConnection<InstructionResult>.Output inputBr,
-			FListConnection<RegisterResult>.Input resultOutput) {
+			FListConnection<RegisterResult>.Input resultOutput,
+			MultiFConnection<RegisterResult>.Input virtualRegisterValueBus) {
 		this.inputs = new ArrayList<>(inputEUs);
 		this.inputs.add(inputLS);
 		this.inputs.add(inputBr);
 		this.resultOutput = resultOutput;
+		this.virtualRegisterValueBus = virtualRegisterValueBus;
 		Instance = this;
 		this.memory = memory;
 		reorderBuffer = new ReorderBuffer();
@@ -117,6 +121,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		}
 		if(!regResults.isEmpty()) {
 			resultOutput.put(regResults.toArray(new RegisterResult[0]));
+			for(RegisterResult res :regResults ) {
+				virtualRegisterValueBus.put(res);
+			}
 		}
 	}
 

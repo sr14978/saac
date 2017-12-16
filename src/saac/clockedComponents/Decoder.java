@@ -77,7 +77,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				break;
 			case Stmi:
 				dirtyDest = false;
-				usageA = usageB = usageC = Usage.Data; 
+				usageA = usageB = usageC = Usage.Reg; 
 				usageD = Usage.Null;
 				break;
 			case Addi:
@@ -128,11 +128,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			default:
 				throw new NotImplementedException();
 			}
-			
-			if(Opcode.fromInt(data[0]).equals(Opcode.JmpZ)) {
-				System.out.println("hi");
-			}
-			
+					
 			EmptyInstruction inst = new EmptyInstruction(data[6],
 					Opcode.fromInt(data[0]), 
 					dirtyDest ? Optional.of(data[1]) : Optional.empty(),

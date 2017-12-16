@@ -28,12 +28,22 @@ public class DrawingHelper {
 		gc.drawString(name, x+2, y+12);
 	}
 		
+	public enum Orientation {Up, Down};
 	public static void drawArrow(Graphics2D gc, int x, int y) {
+		drawArrow(gc, x, y, Orientation.Down);
+	}
+	
+	public static void drawArrow(Graphics2D gc, int x, int y, Orientation o) {
 		gc.setColor(Color.BLACK);
-		int width = 20;
-		int height = 10;
-		int[] xCoords = new int[] {x-width/2, x, x+width/2};
-		int[] yCoords = new int[] {y, y+height, y};
+		final int width = 20;
+		final int height = 10;
+		final int[] xCoords = new int[] {x-width/2, x, x+width/2};
+		final int[] yCoords;
+		if(o.equals(Orientation.Down)) {
+			yCoords = new int[] {y, y+height, y};
+		} else {
+			yCoords = new int[] {y+height, y, y+height};
+		}
 		gc.fillPolygon(xCoords, yCoords, 3);
 	}
 }

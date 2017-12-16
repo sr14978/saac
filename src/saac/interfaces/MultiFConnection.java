@@ -2,9 +2,13 @@ package saac.interfaces;
 
 import static saac.utils.DrawingHelper.BOX_SIZE;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
+
+import saac.utils.DrawingHelper;
+import saac.utils.DrawingHelper.Orientation;
 
 public class MultiFConnection<T extends Object> implements VisibleComponentI {
 
@@ -34,7 +38,6 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 			}
 			if(seenNum == fanOutMax) {
 				seenNum = 0;
-				value.clear();
 			}
 			value.add(val);
 		}
@@ -48,7 +51,11 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 		public List<T> pop() throws ChannelException {
 			if(seenNum < fanOutMax) {
 				seenNum++;
-				return value;
+				List<T> val = new ArrayList<>(value);
+				if(seenNum == fanOutMax) {
+					value.clear();
+				}
+				return val;
 			} else {
 				throw new ChannelException();
 			}
@@ -68,7 +75,11 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 		}
 		
 		public void paint(Graphics2D gc) {
-
+			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, -12, Orientation.Up);
+			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, 23, Orientation.Up);
+			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHT_GRAY, Color.BLACK);
+			gc.drawString(Integer.toString(seenNum), 5, 15);
+			gc.drawString(value.toString(), 15, 15);
 		}
 	}
 

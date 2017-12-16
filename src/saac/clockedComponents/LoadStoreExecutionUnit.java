@@ -42,12 +42,12 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 	public LoadStoreExecutionUnit(Memory memory,
 			FConnection<CompleteInstruction>.Output instructionIn,
 			FConnection<InstructionResult>.Input resultOut,
-			MultiFConnection<RegisterResult>.Input virtualRegisterValueBus
-			) {
+			MultiFConnection<RegisterResult>.Input virtualRegisterValueBus) {
 		this.instructionIn = instructionIn;
 		this.resultOut = resultOut;
 		this.memory = memory;
 		this.resultOut = resultOut;
+		this.virtualRegisterValueBus = virtualRegisterValueBus;
 	}
 	
 	@Override
@@ -91,14 +91,14 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		for(Item i : new LinkedList<>(buffer)) {
 			if(i.delay > 0)
 				i.delay -= 1;
-			else if(res == null) {
+			else if(res == null && resultOut.clear()) {
 				res = i.result;
 				buffer.remove(i);
 			}
 		}
 		if(res == null)
 			return;
-		else if (resultOut.clear()) {
+		else {
 			resultOut.put(res);
 			if(res instanceof RegisterResult) {
 				virtualRegisterValueBus.put((RegisterResult) res);

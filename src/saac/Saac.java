@@ -154,10 +154,12 @@ public class Saac implements ClockedComponentI {
 				AUToWritebacks.stream().map(x->x.getOutputEnd()).collect(Collectors.toList()),
 				LSToWriteback.getOutputEnd(),
 				BRToWriteback.getOutputEnd(),
-				writeBackToRegisters.getInputEnd());
+				writeBackToRegisters.getInputEnd(),
+				virtualRegisterValueBus.getInputEnd());
 		
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{
+			clockedComponents.add(registerFile);
 			clockedComponents.add(fetcher);
 			clockedComponents.add(instructionSource);
 			clockedComponents.add(decoder);
@@ -170,7 +172,6 @@ public class Saac implements ClockedComponentI {
 			clockedComponents.add(loadStoreExecutionUnit);
 			clockedComponents.add(branchExecutionUnit);
 			clockedComponents.add(writebackHandler);
-			clockedComponents.add(registerFile);
 		}
 		
 		{
@@ -200,6 +201,7 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(resevationStationToAUs.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
 			visibleComponents.add(resevationStationToLS.createView(middleOffset, boxHeight*c));
 			visibleComponents.add(resevationStationToBR.createView(middleOffset + BOX_SIZE, boxHeight*c));
+			visibleComponents.add(virtualRegisterValueBus.createView((int) (3.5*BOX_SIZE), boxHeight*c));
 			c++;
 			visibleComponents.add(AUs.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
 			visibleComponents.add(loadStoreExecutionUnit.createView(middleOffset, boxHeight*c));
