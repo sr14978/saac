@@ -14,6 +14,7 @@ import saac.clockedComponents.InstructionsSource;
 import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
 import saac.clockedComponents.ReservationStation;
+import saac.clockedComponents.WritebackHandler;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Results.BranchResult;
@@ -74,7 +75,8 @@ public class Saac implements ClockedComponentI {
 		CycleCounter = 0;
 		List<ClearableComponent> clearables = new ArrayList<>();
 		
-		registerFile = new RegisterFile();
+		FListConnection<RegisterResult> writeBackToRegisters = new FListConnection<>();
+		registerFile = new RegisterFile(writeBackToRegisters.getOutputEnd());
 		Memory memory = new Memory();
 		
 		FConnection<Integer> addrInput = new FConnection<>();
@@ -149,6 +151,11 @@ public class Saac implements ClockedComponentI {
 		BranchExecutionUnit branchExecutionUnit = new BranchExecutionUnit(resevationStationToBR.getOutputEnd(),
 				BRToFetch.getInputEnd(), BRToWriteback.getInputEnd());
 
+		WritebackHandler writebackHandler = new WritebackHandler(memory,
+				AUToWritebacks.stream().map(x->x.getOutputEnd()).collect(Collectors.toList()),
+				LSToWriteback.getOutputEnd(),
+				BRToWriteback.getOutputEnd(),
+				writeBackToRegisters.getInputEnd());
 		
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{
@@ -163,6 +170,8 @@ public class Saac implements ClockedComponentI {
 			}
 			clockedComponents.add(loadStoreExecutionUnit);
 			clockedComponents.add(branchExecutionUnit);
+			clockedComponents.add(writebackHandler);
+			clockedComponents.add(registerFile);
 		}
 		
 		{
@@ -198,6 +207,8 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(AUToWritebacks.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
 			visibleComponents.add(LSToWriteback.createView(middleOffset, boxHeight*c));
 			visibleComponents.add(BRToWriteback.createView(middleOffset + BOX_SIZE, boxHeight*c));
+			c++;
+			visibleComponents.add(writebackHandler.createView(0, boxHeight*c));
 		}
 		
 		/*
