@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import saac.Settings;
 import saac.clockedComponents.RegisterFile.RatItem;
+import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Empty.EmptyInstruction;
 import saac.dataObjects.Instruction.Empty.Item;
 import saac.dataObjects.Instruction.Partial.DestItem;
@@ -19,6 +20,8 @@ import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
+import saac.interfaces.Connection;
+import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
@@ -28,7 +31,12 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Decoder implements ClearableComponent, ClockedComponentI, VisibleComponentI {
 	enum Usage {Reg, Data, Null};
-		
+	Connection<Boolean>.Output isAUReservationStationEmpty;
+	Connection<Boolean>.Output isLSReservationStationEmpty;
+	Connection<Boolean>.Output isBRReservationStationEmpty;	
+	FConnection<CompleteInstruction>.Input toSingleAU;
+	FConnection<CompleteInstruction>.Input toSingleLS;
+	FConnection<CompleteInstruction>.Input toSingleBR;
 	FListConnection<PartialInstruction>.Input outputAU;
 	FListConnection<PartialInstruction>.Input outputLS;
 	FListConnection<PartialInstruction>.Input outputBR;
@@ -40,12 +48,24 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	public Decoder(FListConnection<int[]>.Output input, RegisterFile registerFile,
 			FListConnection<PartialInstruction>.Input outputAU,
 			FListConnection<PartialInstruction>.Input outputLS,
-			FListConnection<PartialInstruction>.Input outputBR) {
+			FListConnection<PartialInstruction>.Input outputBR,
+			Connection<Boolean>.Output isAUReservationStationEmpty,
+			Connection<Boolean>.Output isLSReservationStationEmpty,
+			Connection<Boolean>.Output isBRReservationStationEmpty,
+			FConnection<CompleteInstruction>.Input toSingleAU,
+			FConnection<CompleteInstruction>.Input toSingleLS,
+			FConnection<CompleteInstruction>.Input toSingleBR) {
 		this.outputAU = outputAU;
 		this.outputLS = outputLS;
 		this.outputBR = outputBR;
 		this.input = input;
 		this.registerFile = registerFile;
+		this.isAUReservationStationEmpty = isAUReservationStationEmpty;
+		this.isLSReservationStationEmpty = isLSReservationStationEmpty;
+		this.isBRReservationStationEmpty = isBRReservationStationEmpty;
+		this.toSingleAU = toSingleAU;
+		this.toSingleLS = toSingleLS;
+		this.toSingleBR = toSingleBR;
 	}
 
 	@Override
@@ -320,8 +340,15 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Nop:
 			case Stop:
 				if(outputAU.clear()) {
-					forAUs.add(inst);
-					Output.debug.println(inst + " sent to EU reservation station");
+					if(ReservationStation.isReady(inst)
+							&& isAUReservationStationEmpty.get()
+							&& toSingleAU.clear()
+							&& Settings.RESERVATION_STATION_BYPASS_ENABLED) {
+						toSingleAU.put(new CompleteInstruction(inst));
+					} else {
+						forAUs.add(inst);
+						Output.debug.println(inst + " sent to EU reservation station");
+					}
 					remaining.remove(i--);
 				}
 				break;
@@ -330,8 +357,15 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Stma:
 			case Ldmi:
 				if(outputLS.clear()) {
-					forLSs.add(inst);
-					Output.debug.println(bufferOut + " sent for execution on LSU");
+					if(ReservationStation.isReady(inst)
+							&& isLSReservationStationEmpty.get()
+							&& toSingleLS.clear()
+							&& Settings.RESERVATION_STATION_BYPASS_ENABLED) {
+						toSingleLS.put(new CompleteInstruction(inst));
+					} else {
+						forLSs.add(inst);
+						Output.debug.println(bufferOut + " sent for execution on LSU");
+					}
 					remaining.remove(i--);
 				}
 				break;
@@ -340,8 +374,15 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case JmpN:
 			case JmpZ:
 				if(outputBR.clear()) {
-					forBRs.add(inst);
-					Output.debug.println(bufferOut + " sent for execution on BrU");
+					if(ReservationStation.isReady(inst)
+							&& isBRReservationStationEmpty.get()
+							&& toSingleBR.clear()
+							&& Settings.RESERVATION_STATION_BYPASS_ENABLED) {
+						toSingleBR.put(new CompleteInstruction(inst));
+					} else {
+						forBRs.add(inst);
+						Output.debug.println(bufferOut + " sent for execution on BrU");
+					}
 					remaining.remove(i--);
 				}
 				break;

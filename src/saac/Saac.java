@@ -23,6 +23,7 @@ import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
+import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
@@ -101,15 +102,13 @@ public class Saac implements ClockedComponentI {
 				instructionOutput.getOutputEnd()
 			);
 		
+		Connection<Boolean> isAUReservationStationEmpty = new Connection<>();
+		Connection<Boolean> isLSReservationStationEmpty = new Connection<>();
+		Connection<Boolean> isBRReservationStationEmpty = new Connection<>();
 		FListConnection<PartialInstruction> decodeToAUReservationStation = new FListConnection<>();
 		FListConnection<PartialInstruction> decodeToLSReservationStation = new FListConnection<>();
 		FListConnection<PartialInstruction> decodeToBRReservationStation = new FListConnection<>();
-		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile,
-				decodeToAUReservationStation.getInputEnd(),
-				decodeToLSReservationStation.getInputEnd(),
-				decodeToBRReservationStation.getInputEnd()
-				
-				);
+		
 		MultiFConnection<RegisterResult> virtualRegisterValueBus = new MultiFConnection<>(3);
 		
 		List<FConnection<CompleteInstruction>> resevationStationToAUs = new ArrayList<>();
@@ -127,17 +126,20 @@ public class Saac implements ClockedComponentI {
 		
 		ReservationStation AUreservationStation = new ReservationStation(decodeToAUReservationStation.getOutputEnd(),
 				resevationStationToAUs.stream().map(x -> x.getInputEnd()).collect(Collectors.toList()),
-				virtualRegisterValueBus.getOutputEnd()); 
+				virtualRegisterValueBus.getOutputEnd(),
+				isAUReservationStationEmpty.getInputEnd()); 
 		
 		FConnection<CompleteInstruction> resevationStationToLS = new FConnection<>();
 		ReservationStation LSreservationStation = new ReservationStation(decodeToLSReservationStation.getOutputEnd(),
 				resevationStationToLS.getInputEnd(),
-				virtualRegisterValueBus.getOutputEnd());
+				virtualRegisterValueBus.getOutputEnd(),
+				isLSReservationStationEmpty.getInputEnd());
 		
 		FConnection<CompleteInstruction> resevationStationToBR = new FConnection<>();
 		ReservationStation BRreservationStation = new ReservationStation(decodeToBRReservationStation.getOutputEnd(),
 				resevationStationToBR.getInputEnd(),
-				virtualRegisterValueBus.getOutputEnd());
+				virtualRegisterValueBus.getOutputEnd(),
+				isBRReservationStationEmpty.getInputEnd());
 		
 		FConnection<InstructionResult> LSToWriteback = new FConnection<>();
 		LoadStoreExecutionUnit loadStoreExecutionUnit = new LoadStoreExecutionUnit(memory,
@@ -150,6 +152,18 @@ public class Saac implements ClockedComponentI {
 		BranchExecutionUnit branchExecutionUnit = new BranchExecutionUnit(resevationStationToBR.getOutputEnd(),
 				BRToFetch.getInputEnd(), BRToWriteback.getInputEnd());
 
+		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile,
+				decodeToAUReservationStation.getInputEnd(),
+				decodeToLSReservationStation.getInputEnd(),
+				decodeToBRReservationStation.getInputEnd(),
+				isAUReservationStationEmpty.getOutputEnd(),
+				isLSReservationStationEmpty.getOutputEnd(),
+				isBRReservationStationEmpty.getOutputEnd(),
+				resevationStationToAUs.get(0).getInputEnd(),
+				resevationStationToLS.getInputEnd(),
+				resevationStationToBR.getInputEnd()
+				);
+		
 		WritebackHandler writebackHandler = new WritebackHandler(memory,
 				AUToWritebacks.stream().map(x->x.getOutputEnd()).collect(Collectors.toList()),
 				LSToWriteback.getOutputEnd(),

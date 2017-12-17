@@ -18,6 +18,7 @@ import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
+import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
@@ -26,6 +27,7 @@ import saac.utils.DrawingHelper;
 import saac.utils.Output;
 
 public class ReservationStation implements ClockedComponentI, VisibleComponentI, ClearableComponent{
+	Connection<Boolean>.Input isEmpty;
 	FListConnection<PartialInstruction>.Output instructionInput;
 	List<FConnection<CompleteInstruction>.Input> instructionOutputs;
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
@@ -36,19 +38,25 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 		
 	public ReservationStation(FListConnection<PartialInstruction>.Output instructionInput,
 			List<FConnection<CompleteInstruction>.Input> instructionOutputs,
-			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus) {
+			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus,
+			Connection<Boolean>.Input isEmpty) {
 		this.instructionInput = instructionInput;
 		this.virtualRegisterValueBus = virtualRegisterValueBus;
 		this.instructionOutputs = instructionOutputs;
+		this.isEmpty = isEmpty;
+		isEmpty.put(true);
 	}
 	
 	public ReservationStation(FListConnection<PartialInstruction>.Output instructionInput,
 			FConnection<CompleteInstruction>.Input instructionOutputs,
-			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus) {
+			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus,
+			Connection<Boolean>.Input isEmpty) {
 		this.instructionInput = instructionInput;
 		this.virtualRegisterValueBus = virtualRegisterValueBus;
 		this.instructionOutputs = new ArrayList<>();
 		this.instructionOutputs.add(instructionOutputs);
+		this.isEmpty = isEmpty;
+		isEmpty.put(true);
 	}
 	
 	@Override
@@ -78,10 +86,14 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 				partialBuffer.remove(inst);
 				completeBuffer.add(new CompleteInstruction(inst));
 			}
-		}		
+		}
+		
+		if(!partialBuffer.isEmpty() || !completeBuffer.isEmpty()) {
+			isEmpty.put(false);
+		}
 	}
 
-	private boolean isReady(PartialInstruction i) {
+	public static boolean isReady(PartialInstruction i) {
 		return 		( !i.getParamA().isPresent() || (i.getParamA().isPresent() && i.getParamA().get().isDataValue()) )
 				&& 	( !i.getParamB().isPresent() || (i.getParamB().isPresent() && i.getParamB().get().isDataValue()) )
 				&& 	( !i.getParamC().isPresent() || (i.getParamC().isPresent() && i.getParamC().get().isDataValue()) )
@@ -111,6 +123,9 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 			}
 			if(completeBuffer.isEmpty())
 				break;
+		}
+		if(partialBuffer.isEmpty() && completeBuffer.isEmpty()) {
+			isEmpty.put(true);
 		}
 	}
 
