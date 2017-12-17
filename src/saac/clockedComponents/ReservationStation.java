@@ -29,7 +29,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	FListConnection<PartialInstruction>.Output instructionInput;
 	List<FConnection<CompleteInstruction>.Input> instructionOutputs;
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
-	static final int MaxSize = 8;
+	static final int MaxSize = 16;
 	
 	TreeSet<PartialInstruction> partialBuffer = new TreeSet<>();
 	TreeSet<CompleteInstruction> completeBuffer = new TreeSet<>();

@@ -52,10 +52,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	public void tick() throws Exception {
 		if (bufferOut != null)
 			return;
-		if (!input.ready())
-			return;
-		if(bufferIn == null)
-			bufferIn = input.pop();
+		
+		if(bufferIn == null) {
+			if (input.ready())
+				bufferIn = input.pop();
+			else
+				return;
+		}
 		
 		List<PartialInstruction> instsToOutput = new LinkedList<>();
 		List<int[]> instsToKeep = new LinkedList<>();
