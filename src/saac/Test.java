@@ -34,8 +34,8 @@ public class Test {
 	public static void main(String[] args) throws Exception {		
 		
 		System.out.println("Testing...");
-		//Results results = runCombinations("inner_product_stop.program", (rf -> rf.get(1, Reg.Architectural) == 440));
-		Results results = runCombinations("no_depend_ldc.program", (rf -> true));
+		Results results = runCombinations("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 440));
+		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
@@ -56,49 +56,51 @@ public class Test {
 				bestRate = val;
 			}
 		}
-		Set<BranchPrediciton> branchPrediction = new HashSet<>();
-		Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
-		Set<Integer> numberOfExecutionUnits = new HashSet<>();
-		Set<Integer> superScalerWidth = new HashSet<>();
-		Set<Boolean> outOfOrderEnabled = new HashSet<>();
-		Set<Integer> virtualAddressNum = new HashSet<>();
-		Set<Boolean> registerRenaming = new HashSet<>();
-		for(Config c : bestConfigs) {
-			if(!branchPrediction.contains(c.branchPrediction))
-				branchPrediction.add(c.branchPrediction);
-			if(!reservationStationBypassEnabled.contains(c.reservationStationBypassEnabled))
-				reservationStationBypassEnabled.add(c.reservationStationBypassEnabled);
-			if(!numberOfExecutionUnits.contains(c.numberOfExecutionUnits))
-				numberOfExecutionUnits.add(c.numberOfExecutionUnits);
-			if(!superScalerWidth.contains(c.superScalerWidth))
-				superScalerWidth.add(c.superScalerWidth);
-			if(!outOfOrderEnabled.contains(c.outOfOrderEnabled))
-				outOfOrderEnabled.add(c.outOfOrderEnabled);
-			if(!virtualAddressNum.contains(c.virtualAddressNum))
-				virtualAddressNum.add(c.virtualAddressNum);
-			if(!registerRenaming.contains(c.registerRenaming))
-				registerRenaming.add(c.registerRenaming);
+		if(bestConfigs != null) {
+			Set<BranchPrediciton> branchPrediction = new HashSet<>();
+			Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
+			Set<Integer> numberOfExecutionUnits = new HashSet<>();
+			Set<Integer> superScalerWidth = new HashSet<>();
+			Set<Boolean> outOfOrderEnabled = new HashSet<>();
+			Set<Integer> virtualAddressNum = new HashSet<>();
+			Set<Boolean> registerRenaming = new HashSet<>();
+			for(Config c : bestConfigs) {
+				if(!branchPrediction.contains(c.branchPrediction))
+					branchPrediction.add(c.branchPrediction);
+				if(!reservationStationBypassEnabled.contains(c.reservationStationBypassEnabled))
+					reservationStationBypassEnabled.add(c.reservationStationBypassEnabled);
+				if(!numberOfExecutionUnits.contains(c.numberOfExecutionUnits))
+					numberOfExecutionUnits.add(c.numberOfExecutionUnits);
+				if(!superScalerWidth.contains(c.superScalerWidth))
+					superScalerWidth.add(c.superScalerWidth);
+				if(!outOfOrderEnabled.contains(c.outOfOrderEnabled))
+					outOfOrderEnabled.add(c.outOfOrderEnabled);
+				if(!virtualAddressNum.contains(c.virtualAddressNum))
+					virtualAddressNum.add(c.virtualAddressNum);
+				if(!registerRenaming.contains(c.registerRenaming))
+					registerRenaming.add(c.registerRenaming);
+			}
+			System.out.println("branchPrediction:" + branchPrediction);
+			System.out.println("reservationStationBypassEnabled:" + reservationStationBypassEnabled);
+			System.out.println("numberOfExecutionUnits:" + numberOfExecutionUnits);
+			System.out.println("superScalerWidth:" + superScalerWidth);
+			System.out.println("outOfOrderEnabled:" + outOfOrderEnabled);
+			System.out.println("virtualAddressNum:" + virtualAddressNum);
+			System.out.println("registerRenaming:" + registerRenaming);
+			System.out.println(bestRate);
 		}
-		System.out.println("branchPrediction:" + branchPrediction);
-		System.out.println("reservationStationBypassEnabled:" + reservationStationBypassEnabled);
-		System.out.println("numberOfExecutionUnits:" + numberOfExecutionUnits);
-		System.out.println("superScalerWidth:" + superScalerWidth);
-		System.out.println("outOfOrderEnabled:" + outOfOrderEnabled);
-		System.out.println("virtualAddressNum:" + virtualAddressNum);
-		System.out.println("registerRenaming:" + registerRenaming);
-		System.out.println(bestRate);
 		
 		System.out.println("Failures");
 		if(results.failures.isEmpty())
 			System.out.println("All passed");
 		else {
-			branchPrediction = new HashSet<>();
-			reservationStationBypassEnabled = new HashSet<>();
-			numberOfExecutionUnits = new HashSet<>();
-			superScalerWidth = new HashSet<>();
-			outOfOrderEnabled = new HashSet<>();
-			virtualAddressNum = new HashSet<>();
-			registerRenaming = new HashSet<>();
+			Set<BranchPrediciton> branchPrediction = new HashSet<>();
+			Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
+			Set<Integer> numberOfExecutionUnits = new HashSet<>();
+			Set<Integer> superScalerWidth = new HashSet<>();
+			Set<Boolean> outOfOrderEnabled = new HashSet<>();
+			Set<Integer> virtualAddressNum = new HashSet<>();
+			Set<Boolean> registerRenaming = new HashSet<>();
 			for(Config c : results.failures) {
 				if(!branchPrediction.contains(c.branchPrediction))
 					branchPrediction.add(c.branchPrediction);
@@ -165,7 +167,7 @@ public class Test {
 									Thread timer = new Thread() {
 										public void run() {
 											try {
-												Thread.sleep(1000);
+												Thread.sleep(100);
 											} catch (InterruptedException e) {}										
 										}
 									};
