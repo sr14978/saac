@@ -105,7 +105,7 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 		if(value == null)
 			return;
 		if(value instanceof int[][]) {
-			filter(val->((int[]) val)[6] <= i);
+			value = null;
 		} else if(value instanceof EmptyInstruction[]) {
 			filter(val->((EmptyInstruction) val).getVirtualNumber() <= i);
 		} else if(value instanceof PartialInstruction[]) {

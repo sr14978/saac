@@ -29,6 +29,7 @@ import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
 import saac.unclockedComponents.BranchPredictor;
 import saac.unclockedComponents.Memory;
+import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.Output;
 import saac.utils.RateUtils;
 
@@ -152,7 +153,9 @@ public class Saac implements ClockedComponentI {
 		BranchExecutionUnit branchExecutionUnit = new BranchExecutionUnit(resevationStationToBR.getOutputEnd(),
 				BRToFetch.getInputEnd(), BRToWriteback.getInputEnd());
 
-		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile,
+		ReorderBuffer reorderBuffer = new ReorderBuffer();
+		
+		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile, reorderBuffer,
 				decodeToAUReservationStation.getInputEnd(),
 				decodeToLSReservationStation.getInputEnd(),
 				decodeToBRReservationStation.getInputEnd(),
@@ -164,7 +167,7 @@ public class Saac implements ClockedComponentI {
 				resevationStationToBR.getInputEnd()
 				);
 		
-		WritebackHandler writebackHandler = new WritebackHandler(memory,
+		WritebackHandler writebackHandler = new WritebackHandler(memory, reorderBuffer,
 				AUToWritebacks.stream().map(x->x.getOutputEnd()).collect(Collectors.toList()),
 				LSToWriteback.getOutputEnd(),
 				BRToWriteback.getOutputEnd(),
@@ -195,6 +198,7 @@ public class Saac implements ClockedComponentI {
 			int c = 0;
 			visibleComponents.add(fetcher.createView(middleOffset, boxHeight*c));
 			visibleComponents.add(addrInput.createView(0, boxHeight*c));
+			visibleComponents.add(clearInput.createView(BOX_SIZE/2, boxHeight*c));
 			visibleComponents.add(branchPredictor.createView((int) (3.5*BOX_SIZE), boxHeight*c));	
 			c++;
 			visibleComponents.add(instructionSource.createView(0, boxHeight*c));

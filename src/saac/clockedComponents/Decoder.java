@@ -24,6 +24,7 @@ import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
+import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 import saac.utils.Output;
@@ -42,10 +43,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	FListConnection<PartialInstruction>.Input outputBR;
 	FListConnection<int[]>.Output input;
 	PartialInstruction[] bufferOut;
-	int[][] bufferIn;
+	PartialInstruction[] bufferIn;
 	RegisterFile registerFile;
+	ReorderBuffer reorderBuffer;	
 
-	public Decoder(FListConnection<int[]>.Output input, RegisterFile registerFile,
+	public Decoder(FListConnection<int[]>.Output input, RegisterFile registerFile, ReorderBuffer reorderBuffer,
 			FListConnection<PartialInstruction>.Input outputAU,
 			FListConnection<PartialInstruction>.Input outputLS,
 			FListConnection<PartialInstruction>.Input outputBR,
@@ -54,12 +56,14 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			Connection<Boolean>.Output isBRReservationStationEmpty,
 			FConnection<CompleteInstruction>.Input toSingleAU,
 			FConnection<CompleteInstruction>.Input toSingleLS,
-			FConnection<CompleteInstruction>.Input toSingleBR) {
+			FConnection<CompleteInstruction>.Input toSingleBR
+			) {
 		this.outputAU = outputAU;
 		this.outputLS = outputLS;
 		this.outputBR = outputBR;
 		this.input = input;
 		this.registerFile = registerFile;
+		this.reorderBuffer = reorderBuffer;
 		this.isAUReservationStationEmpty = isAUReservationStationEmpty;
 		this.isLSReservationStationEmpty = isLSReservationStationEmpty;
 		this.isBRReservationStationEmpty = isBRReservationStationEmpty;
@@ -70,165 +74,194 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 
 	@Override
 	public void tick() throws Exception {
-		if (bufferOut != null)
-			return;
-		
 		if(bufferIn == null) {
-			if (input.ready())
-				bufferIn = input.pop();
-			else
-				return;
-		}
-		
-		List<PartialInstruction> instsToOutput = new LinkedList<>();
-		List<int[]> instsToKeep = new LinkedList<>();
-		List<Integer> dirtiesInWindow = new ArrayList<>();
-		List<Integer> acceptedDirtiesInWindow = new ArrayList<>();
-		for (int i = 0; i < bufferIn.length; i++) {
-			int[] data = bufferIn[i];
-						
-			final Usage usageA, usageB, usageC, usageD;
-			final boolean dirtyDest;
-			switch (Opcode.fromInt(data[0])) {
-			case Ldc:
-				dirtyDest = true;
-				usageA = Usage.Data; 
-				usageB = usageC = usageD = Usage.Null;
-				break;
-			case Add:
-			case Sub:
-			case Mul:
-			case Div:
-			case Ldmi:
-				dirtyDest = true;
-				usageA = usageB = Usage.Reg; 
-				usageC = usageD = Usage.Null;
-				break;
-			case Stmi:
-				dirtyDest = false;
-				usageA = usageB = usageC = Usage.Reg; 
-				usageD = Usage.Null;
-				break;
-			case Addi:
-			case Subi:
-			case Muli:
-			case Divi:
-				dirtyDest = true;
-				usageA = Usage.Reg;
-				usageB = Usage.Data;
-				usageC = usageD = Usage.Null;
-				break;
-			case Nop:
-				dirtyDest = false;
-				usageA = usageB = usageC = usageD = Usage.Null;
-				break;
-			case Ldma:
-				dirtyDest = true;
-				usageA = Usage.Data;
-				usageB = usageC = usageD = Usage.Null;
-				break;
-			case Stma:
-				dirtyDest = false;
-				usageA = Usage.Reg;
-				usageB = Usage.Data;
-				usageC = usageD = Usage.Null;
-				break;
-			case Br:
-			case Jmp:
-				dirtyDest = false;
-				usageA = Usage.Data;
-				usageB = usageC = usageD = Usage.Null;
-				break;
-			case Ln:
-				dirtyDest = false;
-				usageA = Usage.Reg;
-				usageB = usageC = usageD = Usage.Null;
-				break;
-			case JmpN:
-			case JmpZ:
-				dirtyDest = false;
-				usageA = usageC = usageD = Usage.Data;
-				usageB = Usage.Reg;
-				break;
-			case Stop:
-				dirtyDest = false;
-				usageA = usageB = usageC = usageD = Usage.Null;
-				break;
-			default:
-				throw new NotImplementedException();
-			}
-			
-			EmptyInstruction inst = new EmptyInstruction(data[6],
-					Opcode.fromInt(data[0]), 
-					dirtyDest ? Optional.of(data[1]) : Optional.empty(),
-					formatParam(data[2], usageA),
-					formatParam(data[3], usageB),
-					formatParam(data[4], usageC),
-					formatParam(data[5], usageD)
-			);
-			
-			if(!Settings.REGISTER_RENAMING_ENABLED) {
-				List<String> dependancies = new ArrayList<>();
-				if(usageA.equals(Usage.Reg)){
-					int val = inst.getParamA().get().getValue();
-					if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
-						dependancies.add("A (" + val + ")");
-					}
-				}
-				if(usageB.equals(Usage.Reg)){
-					int val = inst.getParamB().get().getValue();
-					if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
-						dependancies.add("B (" + val + ")");
-					}
-				}
-				if(usageC.equals(Usage.Reg)){
-					int val = inst.getParamC().get().getValue();
-					if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
-						dependancies.add("C (" + val + ")");
-					}
-				}
+			if (input.ready()) {
+				final int[][] incomingInsts = input.pop();
 				
-				if(dirtyDest) {
-					dirtiesInWindow.add(inst.getDest().get());
-				}
-				
-				if(!dependancies.isEmpty()) {
-					Output.info.println(inst + " is blocked by " + dependancies);
-					if(Settings.OUT_OF_ORDER_ENABLED) {
-						instsToKeep.add(data);
-						continue;
-					} else {
-						for(int j = i; j<bufferIn.length; j++) {
-							instsToKeep.add(bufferIn[j]);
-						}
+				List<PartialInstruction> instructions = new LinkedList<>();
+				for (int i = 0; i < incomingInsts.length; i++) {
+					int[] data = incomingInsts[i];
+								
+					final Usage usageA, usageB, usageC, usageD;
+					final boolean dirtyDest;
+					switch (Opcode.fromInt(data[0])) {
+					case Ldc:
+						dirtyDest = true;
+						usageA = Usage.Data; 
+						usageB = usageC = usageD = Usage.Null;
 						break;
+					case Add:
+					case Sub:
+					case Mul:
+					case Div:
+					case Ldmi:
+						dirtyDest = true;
+						usageA = usageB = Usage.Reg; 
+						usageC = usageD = Usage.Null;
+						break;
+					case Stmi:
+						dirtyDest = false;
+						usageA = usageB = usageC = Usage.Reg; 
+						usageD = Usage.Null;
+						break;
+					case Addi:
+					case Subi:
+					case Muli:
+					case Divi:
+						dirtyDest = true;
+						usageA = Usage.Reg;
+						usageB = Usage.Data;
+						usageC = usageD = Usage.Null;
+						break;
+					case Nop:
+						dirtyDest = false;
+						usageA = usageB = usageC = usageD = Usage.Null;
+						break;
+					case Ldma:
+						dirtyDest = true;
+						usageA = Usage.Data;
+						usageB = usageC = usageD = Usage.Null;
+						break;
+					case Stma:
+						dirtyDest = false;
+						usageA = Usage.Reg;
+						usageB = Usage.Data;
+						usageC = usageD = Usage.Null;
+						break;
+					case Br:
+					case Jmp:
+						dirtyDest = false;
+						usageA = Usage.Data;
+						usageB = usageC = usageD = Usage.Null;
+						break;
+					case Ln:
+						dirtyDest = false;
+						usageA = Usage.Reg;
+						usageB = usageC = usageD = Usage.Null;
+						break;
+					case JmpN:
+					case JmpZ:
+						dirtyDest = false;
+						usageA = usageC = usageD = Usage.Data;
+						usageB = Usage.Reg;
+						break;
+					case Stop:
+						dirtyDest = false;
+						usageA = usageB = usageC = usageD = Usage.Null;
+						break;
+					default:
+						throw new NotImplementedException();
 					}
+					
+					EmptyInstruction inst = new EmptyInstruction(data[6],
+							Opcode.fromInt(data[0]), 
+							dirtyDest ? Optional.of(data[1]) : Optional.empty(),
+							formatParam(data[2], usageA),
+							formatParam(data[3], usageB),
+							formatParam(data[4], usageC),
+							formatParam(data[5], usageD)
+					);
+					
+					PartialInstruction vinst = maybeRenameInstruction(inst);
+					instructions.add(vinst);
 				}
 				
-				if(dirtyDest) {
-					acceptedDirtiesInWindow.add(inst.getDest().get());
+				bufferIn = instructions.toArray(new PartialInstruction[0]);
+				
+			} else {
+				return;
+			}
+		}
+		
+		if(bufferOut == null) {
+			List<Integer> dirtiesInWindow = new ArrayList<>();
+			List<PartialInstruction> readyInstructions = new LinkedList<>();
+			List<PartialInstruction> notReadyInstructions = new LinkedList<>();
+			for(int i = 0; i<bufferIn.length; i++) {
+				PartialInstruction inst = bufferIn[i];
+				if(isVirtualSlotAvailable(inst.getVirtualNumber())) {
+					
+					if(Settings.REGISTER_RENAMING_ENABLED) {
+						readyInstructions.add(inst);
+					} else {
+						List<String> dependancies = new ArrayList<>();
+						if(inst.getParamA().isPresent() && inst.getParamA().get().isRegister()){
+							int val = inst.getParamA().get().getValue();
+							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+								dependancies.add("A (" + val + ")");
+							} else {
+								inst.setParamA(SourceItem.Data(getArchitecturalRegisterValue(val)));
+							}
+						}
+						if(inst.getParamB().isPresent() && inst.getParamB().get().isRegister()){
+							int val = inst.getParamB().get().getValue();
+							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+								dependancies.add("B (" + val + ")");
+							} else {
+								inst.setParamB(SourceItem.Data(getArchitecturalRegisterValue(val)));
+							}
+						}
+						if(inst.getParamC().isPresent() && inst.getParamC().get().isRegister()){
+							int val = inst.getParamC().get().getValue();
+							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+								dependancies.add("C (" + val + ")");
+							} else {
+								inst.setParamC(SourceItem.Data(getArchitecturalRegisterValue(val)));
+							}
+						}
+						if(inst.getParamD().isPresent() && inst.getParamD().get().isRegister()){
+							int val = inst.getParamD().get().getValue();
+							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+								dependancies.add("D (" + val + ")");
+							} else {
+								inst.setParamD(SourceItem.Data(getArchitecturalRegisterValue(val)));
+							}
+						}
+						
+						if(inst.getDest().isPresent()) {
+							dirtiesInWindow.add(inst.getDest().get().getRegNumber());
+						}
+						
+						if(!dependancies.isEmpty()) {
+							Output.info.println(inst + " is blocked by " + dependancies);
+							if(Settings.OUT_OF_ORDER_ENABLED) {
+								notReadyInstructions.add(inst);
+								continue;
+							} else {
+								for(int j = i; j<bufferIn.length; j++) {
+									notReadyInstructions.add(bufferIn[j]);
+								}
+								break;
+							}
+						}
+						if(inst.getDest().isPresent()) {
+							setRegisterDirty(inst.getDest().get().getRegNumber());
+						}
+						readyInstructions.add(inst);
+					}
+					
+				} else {
+					notReadyInstructions.add(inst);
 				}
 			}
 			
-			PartialInstruction vinst = maybeRenameInstruction(inst);
-			instsToOutput.add(vinst);
-		}
-		
-		if(instsToKeep.isEmpty()) {
-			bufferIn = null;
-		} else {
-			bufferIn = instsToKeep.toArray(new int[0][]);
-		}
-		if(instsToOutput.isEmpty()) {
-			bufferOut = null;
-		} else {
-			bufferOut = instsToOutput.toArray(new PartialInstruction[0]);
-		}
-		for(Integer reg : acceptedDirtiesInWindow) {
-			setRegisterDirty(reg);
+			if(notReadyInstructions.isEmpty())
+				bufferIn = null;
+			else
+				bufferIn = notReadyInstructions.toArray(new PartialInstruction[0]);
+			
+			if(readyInstructions.isEmpty())
+				bufferOut = null;
+			else
+				bufferOut = readyInstructions.toArray(new PartialInstruction[0]);
+			
 		}
 	}
 	
+	private boolean isVirtualSlotAvailable(int virtualNumber) {
+		return reorderBuffer.inReorderBuffer(virtualNumber);
+	}
+
 	private Optional<Item> formatParam(int data, Usage usage) {
 		switch(usage) {
 		case Null:
@@ -265,11 +298,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						return Optional.of(SourceItem.Register(item.getValue()));
 					}
 				} else {
-					if(isRegisterDirty(i.getValue())) {
-						throw new Exception("Register must be available");
-					} else {
-						return Optional.of(SourceItem.Data(getArchitecturalRegisterValue(i.getValue())));
-					}
+					return Optional.of(SourceItem.Register(i.getValue()));
 				}
 			} else if(i.isDataValue()) {
 				return Optional.of(SourceItem.Data((i.getValue())));
@@ -428,16 +457,16 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			}
 		}
 		if (bufferIn != null) {
-			List<int[]> insts = new LinkedList<>();
-			for (int[] inst : bufferIn) {
-				if (inst[6] <= i) {
+			List<PartialInstruction> insts = new LinkedList<>();
+			for (PartialInstruction inst : bufferIn) {
+				if (inst.getVirtualNumber() <= i) {
 					insts.add(inst);
 				}
 			}
 			if (insts.isEmpty()) {
 				bufferIn = null;
 			} else {
-				bufferIn = insts.toArray(new int[0][]);
+				bufferIn = insts.toArray(new PartialInstruction[0]);
 			}
 		}
 	}
@@ -452,7 +481,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			DrawingHelper.drawBox(gc, "Decoder");
 			gc.setColor(Color.BLACK);
 			if (bufferIn != null)
-				gc.drawString(Arrays.deepToString(bufferIn), 10, 30);
+				gc.drawString(Arrays.toString(bufferIn), 10, 30);
 			if (bufferOut != null)
 				gc.drawString(Arrays.toString(bufferOut), 10, 45);
 		}

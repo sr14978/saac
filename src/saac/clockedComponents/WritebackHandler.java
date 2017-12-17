@@ -41,7 +41,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	int nextInput = 0;
 	Memory memory;
 		
-	public WritebackHandler(Memory memory,
+	public WritebackHandler(Memory memory, ReorderBuffer reorderBuffer,
 			List<FConnection<InstructionResult>.Output> inputEUs,
 			FConnection<InstructionResult>.Output inputLS,
 			FConnection<InstructionResult>.Output inputBr,
@@ -54,7 +54,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		this.virtualRegisterValueBus = virtualRegisterValueBus;
 		Instance = this;
 		this.memory = memory;
-		reorderBuffer = new ReorderBuffer();
+		this.reorderBuffer = reorderBuffer;
 	}
 
 	@Override
