@@ -3,7 +3,6 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -11,7 +10,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import saac.Settings;
-import saac.dataObjects.Instruction.Instruction;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Partial.SourceItem;
@@ -93,7 +91,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	private void fillInSingleParamWithResult(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter,  RegisterResult result) {
 		if(getter.get().isPresent()) {
 			SourceItem p = getter.get().get();
-			if(p.isRegisterNum() && p.getValue() == result.getVirtualNumber()) {
+			if(p.isRegister() && p.getValue() == result.getTarget().getVirtualRegNumber()) {
 				setter.accept(SourceItem.Data(result.getValue()));
 			}
 		}

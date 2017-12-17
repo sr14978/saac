@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.function.BiFunction;
 
+import saac.Settings;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Results.BlankResult;
 import saac.dataObjects.Instruction.Results.InstructionResult;
@@ -89,7 +90,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 			return;
 		else if(resultOut.clear() && virtualRegisterValueBus.clear()) {
 			resultOut.put(bufferOut);
-			if(bufferOut instanceof RegisterResult) {
+			if(bufferOut instanceof RegisterResult && Settings.REGISTER_RENAMING_ENABLED) {
 				virtualRegisterValueBus.put((RegisterResult) bufferOut);
 			}
 			bufferOut = null;

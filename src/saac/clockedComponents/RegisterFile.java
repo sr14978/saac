@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import saac.Settings;
 import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -106,6 +107,9 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 				int archRegNum = update.getTarget().getRegNumber();
 				setRegisterValue(archRegNum, update.getValue());
 				removeRatEntry(archRegNum, update.getVirtualNumber());
+				if(!Settings.REGISTER_RENAMING_ENABLED) {
+					setDirty(archRegNum, false);
+				}
 			}
 		}
 	}

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import saac.Settings;
 import saac.clockedComponents.RegisterFile.RatItem;
 import saac.dataObjects.Instruction.Empty.EmptyInstruction;
 import saac.dataObjects.Instruction.Empty.Item;
@@ -33,6 +34,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	FListConnection<PartialInstruction>.Input outputBR;
 	FListConnection<int[]>.Output input;
 	PartialInstruction[] bufferOut;
+	int[][] bufferIn;
 	RegisterFile registerFile;
 
 	public Decoder(FListConnection<int[]>.Output input, RegisterFile registerFile,
@@ -50,13 +52,17 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	public void tick() throws Exception {
 		if (bufferOut != null)
 			return;
-
 		if (!input.ready())
 			return;
-		int[][] datas = input.pop();
-		List<PartialInstruction> outInsts = new LinkedList<>();
-		for (int i = 0; i < datas.length; i++) {
-			int[] data = datas[i];
+		if(bufferIn == null)
+			bufferIn = input.pop();
+		
+		List<PartialInstruction> instsToOutput = new LinkedList<>();
+		List<int[]> instsToKeep = new LinkedList<>();
+		List<Integer> dirtiesInWindow = new ArrayList<>();
+		List<Integer> acceptedDirtiesInWindow = new ArrayList<>();
+		for (int i = 0; i < bufferIn.length; i++) {
+			int[] data = bufferIn[i];
 						
 			final Usage usageA, usageB, usageC, usageD;
 			final boolean dirtyDest;
@@ -128,7 +134,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			default:
 				throw new NotImplementedException();
 			}
-					
+			
 			EmptyInstruction inst = new EmptyInstruction(data[6],
 					Opcode.fromInt(data[0]), 
 					dirtyDest ? Optional.of(data[1]) : Optional.empty(),
@@ -137,10 +143,67 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					formatParam(data[4], usageC),
 					formatParam(data[5], usageD)
 			);
-			PartialInstruction vinst = renameInstruction(inst);
-			outInsts.add(vinst);
+			
+			if(!Settings.REGISTER_RENAMING_ENABLED) {
+				List<String> dependancies = new ArrayList<>();
+				if(usageA.equals(Usage.Reg)){
+					int val = inst.getParamA().get().getValue();
+					if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+						dependancies.add("A (" + val + ")");
+					}
+				}
+				if(usageB.equals(Usage.Reg)){
+					int val = inst.getParamB().get().getValue();
+					if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+						dependancies.add("B (" + val + ")");
+					}
+				}
+				if(usageC.equals(Usage.Reg)){
+					int val = inst.getParamC().get().getValue();
+					if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+						dependancies.add("C (" + val + ")");
+					}
+				}
+				
+				if(dirtyDest) {
+					dirtiesInWindow.add(inst.getDest().get());
+				}
+				
+				if(!dependancies.isEmpty()) {
+					Output.info.println(inst + " is blocked by " + dependancies);
+					if(Settings.OUT_OF_ORDER_ENABLED) {
+						instsToKeep.add(data);
+						continue;
+					} else {
+						for(int j = i; j<bufferIn.length; j++) {
+							instsToKeep.add(bufferIn[j]);
+						}
+						break;
+					}
+				}
+				
+				if(dirtyDest) {
+					acceptedDirtiesInWindow.add(inst.getDest().get());
+				}
+			}
+			
+			PartialInstruction vinst = maybeRenameInstruction(inst);
+			instsToOutput.add(vinst);
 		}
-		bufferOut = outInsts.toArray(new PartialInstruction[0]);
+		
+		if(instsToKeep.isEmpty()) {
+			bufferIn = null;
+		} else {
+			bufferIn = instsToKeep.toArray(new int[0][]);
+		}
+		if(instsToOutput.isEmpty()) {
+			bufferOut = null;
+		} else {
+			bufferOut = instsToOutput.toArray(new PartialInstruction[0]);
+		}
+		for(Integer reg : acceptedDirtiesInWindow) {
+			setRegisterDirty(reg);
+		}
 	}
 	
 	private Optional<Item> formatParam(int data, Usage usage) {
@@ -156,7 +219,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		}
 	}
 	
-	private PartialInstruction renameInstruction(EmptyInstruction inst) {
+	private PartialInstruction maybeRenameInstruction(EmptyInstruction inst) throws Exception {
 		
 		final Optional<SourceItem> a = renameParam(inst.getParamA());
 		final Optional<SourceItem> b = renameParam(inst.getParamB());
@@ -167,15 +230,23 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c, d);
 	}
 
-	private Optional<SourceItem> renameParam(Optional<Item> o) {
+	private Optional<SourceItem> renameParam(Optional<Item> o) throws Exception {
 		if(o.isPresent()) {
 			Item i = o.get();
 			if(i.isRegisterNum()) {
-				RatItem item = getLatestRegister(i.getValue());
-				if(item.isArchitectural()) {
-					return Optional.of(SourceItem.Data(getArchitecturalRegisterValue(item.getValue())));
+				if(Settings.REGISTER_RENAMING_ENABLED) {
+					RatItem item = getLatestRegister(i.getValue());
+					if(item.isArchitectural()) {
+						return Optional.of(SourceItem.Data(getArchitecturalRegisterValue(item.getValue())));
+					} else {
+						return Optional.of(SourceItem.Register(item.getValue()));
+					}
 				} else {
-					return Optional.of(SourceItem.Register(item.getValue()));
+					if(isRegisterDirty(i.getValue())) {
+						throw new Exception("Register must be available");
+					} else {
+						return Optional.of(SourceItem.Data(getArchitecturalRegisterValue(i.getValue())));
+					}
 				}
 			} else if(i.isDataValue()) {
 				return Optional.of(SourceItem.Data((i.getValue())));
@@ -189,8 +260,12 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	
 	private Optional<DestItem> renameDest(Optional<Integer> o, int id) {
 		if(o.isPresent()) {
-			setLatestRegister(o.get(), id);
-			return Optional.of(new DestItem(o.get(), id));
+			if(Settings.REGISTER_RENAMING_ENABLED) {
+				setLatestRegister(o.get(), id);
+				return Optional.of(new DestItem(o.get(), id));
+			} else {
+				return Optional.of(new DestItem(o.get(), -1));
+			}
 		} else {
 			return Optional.empty();
 		}
@@ -208,6 +283,14 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		return registerFile.getRegisterValue(registerNumber);
 	}
 
+	private boolean isRegisterDirty(int registerNumber) {
+		return registerFile.isDirty(registerNumber);
+	}
+	
+	private void setRegisterDirty(int registerNumber) {
+		registerFile.setDirty(registerNumber, true);
+	}
+	
 	@Override
 	public void tock() throws Exception {
 		if(bufferOut == null) {
@@ -300,6 +383,19 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				bufferOut = insts.toArray(new PartialInstruction[0]);
 			}
 		}
+		if (bufferIn != null) {
+			List<int[]> insts = new LinkedList<>();
+			for (int[] inst : bufferIn) {
+				if (inst[6] <= i) {
+					insts.add(inst);
+				}
+			}
+			if (insts.isEmpty()) {
+				bufferIn = null;
+			} else {
+				bufferIn = insts.toArray(new int[0][]);
+			}
+		}
 	}
 
 	class View extends ComponentView {
@@ -311,8 +407,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		public void paint(Graphics2D gc) {
 			DrawingHelper.drawBox(gc, "Decoder");
 			gc.setColor(Color.BLACK);
+			if (bufferIn != null)
+				gc.drawString(Arrays.deepToString(bufferIn), 10, 30);
 			if (bufferOut != null)
-				gc.drawString(Arrays.toString(bufferOut), 10, 30);
+				gc.drawString(Arrays.toString(bufferOut), 10, 45);
 		}
 	}
 

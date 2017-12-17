@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.util.LinkedList;
 import java.util.List;
 
+import saac.Settings;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Results.InstructionResult;
 import saac.dataObjects.Instruction.Results.MemoryResult;
@@ -100,7 +101,7 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 			return;
 		else {
 			resultOut.put(res);
-			if(res instanceof RegisterResult) {
+			if(res instanceof RegisterResult && Settings.REGISTER_RENAMING_ENABLED) {
 				virtualRegisterValueBus.put((RegisterResult) res);
 			}
 			res = null;

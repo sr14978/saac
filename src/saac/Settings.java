@@ -14,7 +14,7 @@ public class Settings {
 	
 	public static int VIRTUAL_ADDRESS_NUM = 16;
 	
-	public static boolean REGISTER_RENAMING_ENABLED = true;
+	public static boolean REGISTER_RENAMING_ENABLED = false;
 		
 	public static int PARALLEL_INSTRUCTION_FETCH = 4 * SUPERSCALER_WIDTH;
 }
