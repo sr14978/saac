@@ -214,6 +214,33 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(writebackHandler.createView(0, boxHeight*c));
 		}
 		
+		{
+			clearables.add(registerFile);
+			clearables.add(instructionSource);
+			clearables.add(decoder);
+			clearables.add(decodeToAUReservationStation);
+			clearables.add(AUreservationStation);
+			clearables.add(decodeToLSReservationStation);
+			clearables.add(LSreservationStation);
+			clearables.add(resevationStationToLS);
+			clearables.add(decodeToBRReservationStation);
+			clearables.add(BRreservationStation);
+			clearables.add(resevationStationToBR);
+			for(int i = 0; i<Settings.NUMBER_OF_EXECUTION_UNITS; i++) {
+				clearables.add(AUs.get(i));
+				clearables.add(resevationStationToAUs.get(i));
+				clearables.add(AUToWritebacks.get(i));
+			}
+			clearables.add(loadStoreExecutionUnit);
+			clearables.add(branchExecutionUnit);
+			clearables.add(LSToWriteback);
+			clearables.add(BRToWriteback);
+			clearables.add(fetchToDecode);
+			clearables.add(addrInput);
+			clearables.add(clearInput);
+			clearables.add(instructionOutput);
+		}
+		
 		/*
 		
 		

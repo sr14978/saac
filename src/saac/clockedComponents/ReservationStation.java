@@ -3,17 +3,20 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import saac.Settings;
+import saac.dataObjects.Instruction.Instruction;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Partial.SourceItem;
 import saac.dataObjects.Instruction.Results.RegisterResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -24,15 +27,15 @@ import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Output;
 
-public class ReservationStation implements ClockedComponentI, VisibleComponentI{
+public class ReservationStation implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	FListConnection<PartialInstruction>.Output instructionInput;
 	List<FConnection<CompleteInstruction>.Input> instructionOutputs;
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
 	static final int MaxSize = 8;
-	List<PartialInstruction> partialBuffer = new LinkedList<>();
-	List<CompleteInstruction> completeBuffer = new LinkedList<>();
 	
-	
+	TreeSet<PartialInstruction> partialBuffer = new TreeSet<>();
+	TreeSet<CompleteInstruction> completeBuffer = new TreeSet<>();
+		
 	public ReservationStation(FListConnection<PartialInstruction>.Output instructionInput,
 			List<FConnection<CompleteInstruction>.Input> instructionOutputs,
 			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus) {
@@ -72,17 +75,12 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 			}
 		}
 		
-		int i = 0;
-		while(i<partialBuffer.size()) {
-			PartialInstruction inst = partialBuffer.get(i);
+		for(PartialInstruction inst : new TreeSet<>(partialBuffer)) {
 			if(isReady(inst)) {
-				partialBuffer.remove(i);
+				partialBuffer.remove(inst);
 				completeBuffer.add(new CompleteInstruction(inst));
-			} else {
-				i++;
 			}
-		}
-		
+		}		
 	}
 
 	private boolean isReady(PartialInstruction i) {
@@ -109,7 +107,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 		for(int i = 0; i<instructionOutputs.size(); i++) {
 			FConnection<CompleteInstruction>.Input output = instructionOutputs.get(i);
 			if(output.clear()) {
-				CompleteInstruction inst = completeBuffer.remove(0);
+				CompleteInstruction inst = completeBuffer.pollFirst();
 				output.put(inst);
 				Output.info.println(inst + " sent for execution on EU " + i);
 			}
@@ -136,6 +134,25 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI{
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear(int i) {
+		TreeSet<PartialInstruction> newPartialBuffer = new TreeSet<>();
+		for(PartialInstruction inst : partialBuffer) {
+			if(inst.getVirtualNumber() <= i) {
+				newPartialBuffer.add(inst);
+			}
+		}
+		partialBuffer = newPartialBuffer;
+		
+		TreeSet<CompleteInstruction> newCompleteBuffer = new TreeSet<>();
+		for(CompleteInstruction inst : completeBuffer) {
+			if(inst.getVirtualNumber() <= i) {
+				newCompleteBuffer.add(inst);
+			}
+		}
+		completeBuffer = newCompleteBuffer;
 	}
 
 }

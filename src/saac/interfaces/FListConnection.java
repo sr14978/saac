@@ -7,8 +7,11 @@ import java.awt.Graphics2D;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
 
-import saac.dataObjects.Instruction.Instruction;
+import saac.dataObjects.Instruction.Complete.CompleteInstruction;
+import saac.dataObjects.Instruction.Empty.EmptyInstruction;
+import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.utils.DrawingHelper;
 
 public class FListConnection<T extends Object> implements VisibleComponentI, ClearableComponent{
@@ -97,21 +100,31 @@ public class FListConnection<T extends Object> implements VisibleComponentI, Cle
 		return new View(x, y, num);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void clear(int i) {
 		if(value == null)
 			return;
-		if(value instanceof Instruction[]) {
-			List<T> keeps = new LinkedList<>();
-			for(T val : value)
-				if(((Instruction) val).getVirtualNumber() <= i)
-					keeps.add(val);
-			if(!keeps.isEmpty())
-				value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
-			else
-				value = null;
+		if(value instanceof int[][]) {
+			filter(val->((int[]) val)[6] <= i);
+		} else if(value instanceof EmptyInstruction[]) {
+			filter(val->((EmptyInstruction) val).getVirtualNumber() <= i);
+		} else if(value instanceof PartialInstruction[]) {
+			filter(val->((PartialInstruction) val).getVirtualNumber() <= i);
+		} else if(value instanceof CompleteInstruction[]) {
+			filter(val->((CompleteInstruction) val).getVirtualNumber() <= i);
 		} else
-			throw new RuntimeException(value.toString());
+			throw new RuntimeException(value.getClass().toString());
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void filter(Function<T,Boolean> p) {
+		List<T> keeps = new LinkedList<>();
+		for(T val : value)
+			if(p.apply(val))
+				keeps.add(val);
+		if(!keeps.isEmpty())
+			value = keeps.toArray((T[]) java.lang.reflect.Array.newInstance(value[0].getClass(), 0));
+		else
+			value = null;
 	}
 }

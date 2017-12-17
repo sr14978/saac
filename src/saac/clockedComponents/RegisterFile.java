@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import saac.dataObjects.Instruction.Results.RegisterResult;
+import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -15,7 +17,7 @@ import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
-public class RegisterFile implements ClockedComponentI, VisibleComponentI {
+public class RegisterFile implements ClockedComponentI, VisibleComponentI, ClearableComponent {
 
 	private final static int ArchitecturalRegistersNum = 12;
 	private int[] architecturalRegisters = new int[ArchitecturalRegistersNum];
@@ -60,6 +62,10 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI {
 	
 	private void removeRatEntry(int registerNumber, int virtualNumber) {
 		RAT.get(registerNumber).removeIf(i->i.isVirtual() && i.getValue() == virtualNumber);
+	}
+	
+	private void removeRatEntry(int registerNumber, Function<Integer, Boolean> f) {
+		RAT.get(registerNumber).removeIf(i->i.isVirtual() && f.apply(i.getValue()));
 	}
 
 	public static class RatItem {
@@ -128,6 +134,13 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI {
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+
+	@Override
+	public void clear(int i) {
+		for(int x = 0; x<ArchitecturalRegistersNum; x++) {
+			removeRatEntry(x, y->y>=i);
+		}
 	}
 	
 }
