@@ -155,8 +155,12 @@ public class Test {
 										public void run() {
 											try {
 												control.val = runTest(programName, validationFunction);
-											} catch (InterruptedException e) { }
-											catch (WrongAnswerException e) { }
+											} catch (InterruptedException e) {
+												System.err.println("Timeout: " + new Config(branch, bypass, units_w, width_w, order, addr_w, renaming).toString());
+											}
+											catch (WrongAnswerException e) {
+												System.err.println("Incrorrect Answer: " + new Config(branch, bypass, units_w, width_w, order, addr_w, renaming).toString());
+											}
 											catch (Exception e) {
 												//System.err.println(e.getClass());
 												System.err.println(new Config(branch, bypass, units_w, width_w, order, addr_w, renaming));
@@ -167,7 +171,7 @@ public class Test {
 									Thread timer = new Thread() {
 										public void run() {
 											try {
-												Thread.sleep(100);
+												Thread.sleep(500);
 											} catch (InterruptedException e) {}										
 										}
 									};

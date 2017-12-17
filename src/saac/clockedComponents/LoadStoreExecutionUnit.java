@@ -2,6 +2,7 @@ package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -117,8 +118,11 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		public void paint(Graphics2D gc) {
 			DrawingHelper.drawBox(gc, "Load/Store");
 			gc.setColor(Color.BLACK);
-			for( int i = 0; i<buffer.size(); i++)
-				gc.drawString(buffer.get(i).result  + " (" + Integer.toString(buffer.get(i).delay) + ")", 5, 22+10*i);
+			int i = 0;
+			for(Item it : new ArrayList<>(buffer)) {
+				gc.drawString(it.result  + " (" + Integer.toString(it.delay) + ")", 5, 22+10*i);
+				i++;
+			}
 		}
 	}
 

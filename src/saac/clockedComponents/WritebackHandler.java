@@ -76,8 +76,14 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	}
 
 	int delay = 0;
+	boolean stop = false;
 	@Override
 	public void tock() throws Exception {
+		if(stop) {
+			if(Worker.worker != null)
+				Worker.worker.interrupt();
+			Worker.finished = true;
+		}
 		if(delay != 0) {
 			delay--;
 			return;
@@ -103,9 +109,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				regResults.add(rr);
 				//dirtyOutput.put(rr.getTarget().getRegNumber());
 			} else if(res instanceof StopResult) {
-				if(Worker.worker != null)
-					Worker.worker.interrupt();
-				Worker.finished = true;
+				stop = true;
 				break loop;
 			} else if(res instanceof BranchResult) {
 				Saac.InstructionCounter++;

@@ -16,6 +16,7 @@ import saac.dataObjects.Instruction.Empty.Item;
 import saac.dataObjects.Instruction.Partial.DestItem;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Partial.SourceItem;
+import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -23,6 +24,7 @@ import saac.interfaces.ComponentViewI;
 import saac.interfaces.Connection;
 import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
+import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.DrawingHelper;
@@ -41,6 +43,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	FListConnection<PartialInstruction>.Input outputAU;
 	FListConnection<PartialInstruction>.Input outputLS;
 	FListConnection<PartialInstruction>.Input outputBR;
+	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
 	FListConnection<int[]>.Output input;
 	PartialInstruction[] bufferOut;
 	PartialInstruction[] bufferIn;
@@ -56,7 +59,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			Connection<Boolean>.Output isBRReservationStationEmpty,
 			FConnection<CompleteInstruction>.Input toSingleAU,
 			FConnection<CompleteInstruction>.Input toSingleLS,
-			FConnection<CompleteInstruction>.Input toSingleBR
+			FConnection<CompleteInstruction>.Input toSingleBR,
+			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus
 			) {
 		this.outputAU = outputAU;
 		this.outputLS = outputLS;
@@ -70,10 +74,17 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		this.toSingleAU = toSingleAU;
 		this.toSingleLS = toSingleLS;
 		this.toSingleBR = toSingleBR;
+		this.virtualRegisterValueBus = virtualRegisterValueBus;
 	}
 
 	@Override
 	public void tick() throws Exception {
+		
+		List<RegisterResult> results = null;
+		if(virtualRegisterValueBus.ready()) {
+			results = virtualRegisterValueBus.pop();
+		}
+		
 		if(bufferIn == null) {
 			if (input.ready()) {
 				final int[][] incomingInsts = input.pop();
@@ -170,6 +181,15 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				
 			} else {
 				return;
+			}
+		} else if(results != null) {
+			for(RegisterResult result : results) {
+				for(PartialInstruction inst : bufferIn) {
+					ReservationStation.fillInSingleParamWithResult(inst::getParamA, inst::setParamA, result);
+					ReservationStation.fillInSingleParamWithResult(inst::getParamB, inst::setParamB, result);
+					ReservationStation.fillInSingleParamWithResult(inst::getParamC, inst::setParamC, result);
+					ReservationStation.fillInSingleParamWithResult(inst::getParamD, inst::setParamD, result);
+				}
 			}
 		}
 		

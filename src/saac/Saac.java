@@ -49,8 +49,11 @@ public class Saac implements ClockedComponentI {
         	Thread.sleep(delay);
 			step();
 			paint.run();
-			if(Thread.interrupted())
+			if(Thread.interrupted()) {
+				registerFile.tick();
 				throw new InterruptedException();
+			}
+				
 		}
 	}
 	
@@ -110,7 +113,7 @@ public class Saac implements ClockedComponentI {
 		FListConnection<PartialInstruction> decodeToLSReservationStation = new FListConnection<>();
 		FListConnection<PartialInstruction> decodeToBRReservationStation = new FListConnection<>();
 		
-		MultiFConnection<RegisterResult> virtualRegisterValueBus = new MultiFConnection<>(3);
+		MultiFConnection<RegisterResult> virtualRegisterValueBus = new MultiFConnection<>(4);
 		
 		List<FConnection<CompleteInstruction>> resevationStationToAUs = new ArrayList<>();
 		List<ArithmeticUnit> AUs = new ArrayList<>();
@@ -164,7 +167,8 @@ public class Saac implements ClockedComponentI {
 				isBRReservationStationEmpty.getOutputEnd(),
 				resevationStationToAUs.get(0).getInputEnd(),
 				resevationStationToLS.getInputEnd(),
-				resevationStationToBR.getInputEnd()
+				resevationStationToBR.getInputEnd(),
+				virtualRegisterValueBus.getOutputEnd()
 				);
 		
 		WritebackHandler writebackHandler = new WritebackHandler(memory, reorderBuffer,

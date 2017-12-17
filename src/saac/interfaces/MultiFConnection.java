@@ -15,12 +15,16 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 	
 	private List<T> value;
 	int seenNum;
+	boolean[] seens;
+	int givenNum;
 	int fanOutMax;
 	
 	public MultiFConnection(int fanOutMax) {
 		this.fanOutMax = fanOutMax;
 		value = Collections.synchronizedList(new ArrayList<>());
-		seenNum = 0;	
+		seenNum = 0;
+		givenNum = 0;
+		seens = new boolean[fanOutMax];
 	}
 	
 	public Input getInputEnd() throws Exception {
@@ -28,19 +32,26 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 	}
 	
 	public Output getOutputEnd() throws Exception {
-		return new Output();
+		if(givenNum == fanOutMax) {
+			throw new ChannelException();
+		}
+		return new Output(givenNum++);
 	}
 	
 	public class Input {
 		
 		public <H extends T> void put(H val) throws ChannelException {
-			if(seenNum != 0 && seenNum != fanOutMax) {
+			if(clear()) {
+				if(seenNum == fanOutMax) {
+					seenNum = 0;
+					for(int i = 0; i<fanOutMax; i++) {
+						seens[i] = false;
+					}
+				}
+				value.add(val);
+			} else {
 				throw new ChannelException();
 			}
-			if(seenNum == fanOutMax) {
-				seenNum = 0;
-			}
-			value.add(val);
 		}
 		public boolean clear() {
 			return seenNum == 0 || seenNum == fanOutMax;
@@ -48,10 +59,15 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 	}
 	
 	public class Output {
+		final int num;
+		Output(int num) {
+			this.num = num;
+		}
 		
 		public List<T> pop() throws ChannelException {
-			if(seenNum < fanOutMax) {
+			if(ready()) {
 				seenNum++;
+				seens[num] = true;
 				List<T> val = new ArrayList<>(value);
 				if(seenNum == fanOutMax) {
 					value.clear();
@@ -62,7 +78,7 @@ public class MultiFConnection<T extends Object> implements VisibleComponentI {
 			}
 		}
 		public boolean ready() {
-			return seenNum < fanOutMax && !value.isEmpty();
+			return !seens[num] && seenNum < fanOutMax && !value.isEmpty();
 		}
 	}
 	

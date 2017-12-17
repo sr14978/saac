@@ -100,7 +100,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 				&& 	( !i.getParamD().isPresent() || (i.getParamD().isPresent() && i.getParamD().get().isDataValue()) );
 	}
 
-	private void fillInSingleParamWithResult(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter,  RegisterResult result) {
+	public static void fillInSingleParamWithResult(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter,  RegisterResult result) {
 		if(getter.get().isPresent()) {
 			SourceItem p = getter.get().get();
 			if(p.isRegister() && p.getValue() == result.getTarget().getVirtualRegNumber()) {
