@@ -114,8 +114,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				clearOutput.put(true);
 				inInsts.clear();
 				break insts;
-			case JmpN:
-			case JmpZ:
+			case JmpC:
 				inst[4] = inst[5] + 1;
 				inst[3] = inst[2];
 				inst[2] = inst[1];
@@ -142,6 +141,8 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				outInsts.add(inst);
 				halt = true;
 				break insts;
+			case Ldpc:
+				inst[3] = inst[5] + 1;
 			default:
 				inst[6] = instructionCounter++;
 				outInsts.add(inst);

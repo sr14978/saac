@@ -101,14 +101,29 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						usageA = Usage.Data; 
 						usageB = usageC = usageD = Usage.Null;
 						break;
+					case Ldpc:
+						dirtyDest = true;
+						usageA = Usage.Data; 
+						usageB = Usage.Data;
+						usageC = usageD = Usage.Null;
+						break;
 					case Add:
 					case Sub:
 					case Mul:
 					case Div:
 					case Ldmi:
+					case And:
+					case Or:
+					case Lteq:
+					case Eq:
 						dirtyDest = true;
 						usageA = usageB = Usage.Reg; 
 						usageC = usageD = Usage.Null;
+						break;
+					case Not:
+						dirtyDest = true;
+						usageA = Usage.Reg;
+						usageB = usageC = usageD = Usage.Null;
 						break;
 					case Stmi:
 						dirtyDest = false;
@@ -150,8 +165,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						usageA = Usage.Reg;
 						usageB = usageC = usageD = Usage.Null;
 						break;
-					case JmpN:
-					case JmpZ:
+					case JmpC:
 						dirtyDest = false;
 						usageA = usageC = usageD = Usage.Data;
 						usageB = Usage.Reg;
@@ -388,6 +402,12 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Divi:
 			case Nop:
 			case Stop:
+			case And:
+			case Or:
+			case Not:
+			case Lteq:
+			case Eq:
+			case Ldpc:
 				if(outputAU.clear()) {
 					if(ReservationStation.isReady(inst)
 							&& isAUReservationStationEmpty.get()
@@ -420,8 +440,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				break;
 			case Br:
 			case Jmp:
-			case JmpN:
-			case JmpZ:
+			case JmpC:
 				if(outputBR.clear()) {
 					if(ReservationStation.isReady(inst)
 							&& isBRReservationStationEmpty.get()

@@ -100,14 +100,12 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				MemoryResult mr = (MemoryResult) res;
 				memory.setWord(mr.getAddr(), mr.getValue());
 				delay = Instructions.InstructionDelay.get(Instructions.Opcode.Stmi);
-				//depChecker.dirtyMem.remove(mr.getValue());
 				break loop;
 			} else if(res instanceof RegisterResult) {
 				Saac.InstructionCounter++;
 				RegisterResult rr = (RegisterResult) res;
 				Output.info.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget().getRegNumber()));
 				regResults.add(rr);
-				//dirtyOutput.put(rr.getTarget().getRegNumber());
 			} else if(res instanceof StopResult) {
 				stop = true;
 				break loop;
@@ -118,7 +116,6 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 					if(!br.wasCorrect()) {
 						reorderBuffer.clearAfter();
 						reorderBuffer.bufferInstructionStart--;
-						//reorderBuffer.clearDirties(br.getVirtualNumber());//not sure when to put this
 					}
 				}
 			}

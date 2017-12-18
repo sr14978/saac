@@ -9,7 +9,8 @@ mul r4 r4 r5
 stmi r4 r7 r0
 add r1 r1 r4
 addi r0 r0 1
-subi r6 r0 10
-jmpz 1 r6
-jmp -9
+ldc r6 10
+eq r6 r6 r0
+jmpc 1 r6
+jmp -10
 stop

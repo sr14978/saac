@@ -29,6 +29,13 @@ public class Parsers {
 					pure(new int[] { Opcode.toInt(op), a, 0, 0, 0 })));
 	}
 	
+	static Parser<int[]> binaryRR(String inst, Opcode op) {
+		return padded(string(inst)).thenSecond(
+					string("r").thenSecond(padded(decimalNumber)).thenWith((a) ->
+						string("r").thenSecond(padded(decimalNumber).thenWith((b) ->
+							pure(new int[] { Opcode.toInt(op), a, b, 0, 0 })))));
+	}
+	
 	static Parser<int[]> binaryRN(String inst, Opcode op) {
 		return padded(string(inst)).thenSecond(
 					string("r").thenSecond(padded(decimalNumber)).thenWith((a) ->
@@ -94,8 +101,12 @@ public class Parsers {
 		instructions.add(unaryN("br", Opcode.Br));
 		instructions.add(unaryR("ln", Opcode.Ln));
 		instructions.add(unaryN("jmp", Opcode.Jmp));
-		instructions.add(binaryNR("jmpz", Opcode.JmpZ));
-		instructions.add(binaryNR("jmpn", Opcode.JmpN));
+		instructions.add(binaryNR("jmpc", Opcode.JmpC));
+		instructions.add(tertiaryRRR("and", Opcode.And));
+		instructions.add(tertiaryRRR("or", Opcode.Or));
+		instructions.add(tertiaryRRR("lteq", Opcode.Lteq));
+		instructions.add(tertiaryRRR("eq", Opcode.Eq));
+		instructions.add(binaryRR("not", Opcode.Not));
 	}
 
 	public static int[] parseInstruction(String line) throws ParserException {

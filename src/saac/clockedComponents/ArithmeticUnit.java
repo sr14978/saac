@@ -55,11 +55,29 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 			break;
 		case Sub:
 		case Subi:
-			bufferOut = binaryOperator(inst, (x,y)->x-y);;
+			bufferOut = binaryOperator(inst, (x,y)->x-y);
 			break;
 		case Mul:
 		case Muli:
-			bufferOut = binaryOperator(inst, (x,y)->x*y);;
+			bufferOut = binaryOperator(inst, (x,y)->x*y);
+			break;
+		case And:
+			bufferOut = binaryOperator(inst, (x,y)->x&y);
+			break;
+		case Or:
+			bufferOut = binaryOperator(inst, (x,y)->x|y);
+			break;
+		case Not:
+			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), ~inst.getParamA().get());
+			break;
+		case Lteq:
+			bufferOut = binaryOperator(inst, (x,y)->x<=y?1:0);
+			break;
+		case Eq:
+			bufferOut = binaryOperator(inst, (x,y)->x==y?1:0);
+			break;
+		case Ldpc:
+			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), inst.getParamA().get() + inst.getParamB().get());
 			break;
 		case Nop:
 			bufferOut = new BlankResult(inst.getVirtualNumber());

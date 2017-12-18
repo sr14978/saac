@@ -7,9 +7,13 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
 public class Instructions {
+	
+	/*
+	 * All register values are 4 byte signed integers
+	 */
 	public enum Opcode {
 		Nop,	// nop	.  .  .  -> 
-		Ldc, 	// ldc 	rI #n .  -> rI = #n  
+		Ldc, 	// ldc 	rI #n .  -> rI = #n 
 		Add, 	// add 	rI rJ rK -> rI = rJ + rK
 		Addi, 	// addi	rI rJ #n -> rI = rJ + #n
 		Sub, 	// Ssub	rI rJ rK -> rI = rJ - rK
@@ -25,8 +29,13 @@ public class Instructions {
 		Br,  	// br 	#n .  .  -> pc = #n
 		Ln,  	// ln 	rK .  .  -> pc = rK
 		Jmp,	// jmp  #n .  .  -> pc = pc + #n
-		JmpZ,	// jmpz  #n rI .  -> pc = if rI=0 then pc + #n else pc
-		JmpN,	// jmpn  #n rI .  -> pc = if rI<0 then pc + #n else pc
+		JmpC,	// jmpc #n rI .  -> pc = if rI!=0 then pc + #n else pc
+		Ldpc,	// ldpc rI #n .  -> rI = pc + 1 + #n
+		And,	// and  rI rJ rK -> rI = rJ and rK
+		Or,		// or   rI rJ rK -> rI = rJ or rK
+		Not,	// not  rI rJ .  -> rI = not rJ
+		Lteq,	// lteq rI rJ rK -> rI = 1 if rJ <= rK else 0
+		Eq,		// eq   rI rJ rK -> rI = 1 if rJ == rK else 0
 		Stop;
 		
 		public static Opcode fromInt(int code) {
@@ -48,9 +57,14 @@ public class Instructions {
 			case 0xE: return Br;
 			case 0xF: return Ln;
 			case 0x10: return Jmp;
-			case 0x11: return JmpZ;
-			case 0x12: return JmpN;
+			case 0x11: return JmpC;
+			case 0x12: return Ldpc;
 			case 0x13: return Stop;
+			case 0x14: return And;
+			case 0x15: return Or;
+			case 0x16: return Not;
+			case 0x17: return Lteq;
+			case 0x18: return Eq;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -74,9 +88,14 @@ public class Instructions {
 			case Br: return 0xE;
 			case Ln: return 0xF;
 			case Jmp: return 0x10;
-			case JmpZ: return 0x11;
-			case JmpN: return 0x12;
+			case JmpC: return 0x11;
+			case Ldpc: return 0x12;
 			case Stop: return 0x13;
+			case And: return 0x14;
+			case Or: return 0x15;
+			case Not: return 0x16;
+			case Lteq: return 0x17;
+			case Eq: return 0x18;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -85,6 +104,12 @@ public class Instructions {
 		private static final long serialVersionUID = 1L;
 	{
 		put(Opcode.Nop, 0);
+		put(Opcode.And, 0);
+		put(Opcode.Or, 0);
+		put(Opcode.Not, 0);
+		put(Opcode.Lteq, 0);
+		put(Opcode.Eq, 0);
+		put(Opcode.Ldpc, 0);
 		put(Opcode.Stop, 0);
 		put(Opcode.Ldc, 0);
 		put(Opcode.Add, 0);
