@@ -441,6 +441,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Br:
 			case Jmp:
 			case JmpC:
+			case Ln:
 				if(outputBR.clear()) {
 					if(ReservationStation.isReady(inst)
 							&& isBRReservationStationEmpty.get()

@@ -83,6 +83,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			if(Worker.worker != null)
 				Worker.worker.interrupt();
 			Worker.finished = true;
+			return;
 		}
 		if(delay != 0) {
 			delay--;

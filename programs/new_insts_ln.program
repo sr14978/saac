@@ -1,0 +1,12 @@
+
+ldc r0 0
+ldpc r2 1
+br 8
+ldc r1 1
+eq r1 r0 r1
+jmpc 1 r1
+jmp -1
+stop
+
+addi r0 r0 1
+ln r2

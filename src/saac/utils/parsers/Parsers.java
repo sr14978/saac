@@ -102,6 +102,7 @@ public class Parsers {
 		instructions.add(unaryR("ln", Opcode.Ln));
 		instructions.add(unaryN("jmp", Opcode.Jmp));
 		instructions.add(binaryNR("jmpc", Opcode.JmpC));
+		instructions.add(binaryRN("ldpc", Opcode.Ldpc));
 		instructions.add(tertiaryRRR("and", Opcode.And));
 		instructions.add(tertiaryRRR("or", Opcode.Or));
 		instructions.add(tertiaryRRR("lteq", Opcode.Lteq));

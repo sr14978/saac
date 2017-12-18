@@ -33,6 +33,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	int[][] instructionInputBuff;
 	List<ClearableComponent> clearables;
 	boolean halt = false;
+	int haltingInstruction = -1;
 	BranchPredictor predictor;
 	
 	public Fetcher(List<ClearableComponent> clearables, BranchPredictor predictor,
@@ -54,25 +55,25 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	@Override
 	public void tick() throws Exception {
 		
-		
-		if(halt) {
-			if(!fromBrUnit.ready())
-				return;
+		if(fromBrUnit.ready()){
 			BranchResult res = fromBrUnit.pop();
-			programCounter = res.getNewPc();
-			halt = false;
-		} else if(fromBrUnit.ready()) {
-			
-			BranchResult res = fromBrUnit.pop();
-			predictor.update(res);
-			if(!res.wasCorrect()) {
-				for(ClearableComponent cc : clearables)
-					cc.clear(res.getVirtualNumber());
-				instructionCounter = res.getVirtualNumber();
+			if(halt && res.getVirtualNumber() == haltingInstruction) {
 				programCounter = res.getNewPc();
-				clearOutput.put(true);
+				halt = false;
+			} else {
+				predictor.update(res);
+				if(!res.wasCorrect()) {
+					for(ClearableComponent cc : clearables)
+						cc.clear(res.getVirtualNumber());
+					instructionCounter = res.getVirtualNumber();
+					programCounter = res.getNewPc();
+					clearOutput.put(true);
+					halt = false;
+				}
 			}
-		} else if(addrOutput.clear()) {
+		} else {
+			if(halt || !addrOutput.clear())
+				return;
 			addrOutput.put(programCounter);
 			programCounter += Settings.SUPERSCALER_WIDTH;
 		}
@@ -132,14 +133,17 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 					clearOutput.put(true);
 					inInsts.clear();
 					halt = true;
+					haltingInstruction = inst[6]; //instruction number
 					break insts;
 				}
 				break;
-			case Ln://broken
+			case Ln:
 				clearOutput.put(true);
+				inst[2] = inst[1];
 				inst[6] = instructionCounter++;
 				outInsts.add(inst);
 				halt = true;
+				haltingInstruction = inst[6]; //instruction number
 				break insts;
 			case Ldpc:
 				inst[3] = inst[5] + 1;

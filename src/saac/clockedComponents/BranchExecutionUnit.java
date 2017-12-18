@@ -56,6 +56,9 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 			} else
 				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamC().get(), inst.getParamD().get(), false, inst.getParamC().get()-1);
 			break;
+		case Ln:
+			bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get(), true, true, -1);
+			break;
 		default:
 			throw new NotImplementedException();
 		}
