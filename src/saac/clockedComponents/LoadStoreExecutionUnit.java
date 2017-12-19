@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import saac.Settings;
+import saac.dataObjects.DelayQueueItem;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Results.InstructionResult;
 import saac.dataObjects.Instruction.Results.MemoryResult;
@@ -25,20 +26,12 @@ import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
-	static final int LDLimit = 3;
-	private class Item{
-		InstructionResult result;
-		int delay;
-		Item(InstructionResult r, int d) {
-			this.result = r;
-			this.delay = d;
-		}
-	}
-	
+	static final int LDLimit = 5;
+		
 	private FConnection<CompleteInstruction>.Output instructionIn;
 	private FConnection<InstructionResult>.Input resultOut;
 	MultiFConnection<RegisterResult>.Input virtualRegisterValueBus;
-	private List<Item> buffer = new LinkedList<>();
+	private List<DelayQueueItem<InstructionResult>> buffer = new LinkedList<>();
 	private Memory memory;
 	
 	public LoadStoreExecutionUnit(Memory memory,
@@ -84,17 +77,17 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		default:
 			throw new NotImplementedException();
 		}
-		buffer.add(new Item(res, delay));
+		buffer.add(new DelayQueueItem<InstructionResult>(res, delay));
 	}
 
 	@Override
 	public void tock() throws ChannelException {
 		InstructionResult res = null;
-		for(Item i : new LinkedList<>(buffer)) {
-			if(i.delay > 0)
-				i.delay -= 1;
+		for(DelayQueueItem<InstructionResult> i : new LinkedList<>(buffer)) {
+			if(i.getDelay() > 0)
+				i.decrementResultToZero();
 			else if(res == null && resultOut.clear()) {
-				res = i.result;
+				res = i.getResult();
 				buffer.remove(i);
 			}
 		}
@@ -119,8 +112,8 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 			DrawingHelper.drawBox(gc, "Load/Store");
 			gc.setColor(Color.BLACK);
 			int i = 0;
-			for(Item it : new ArrayList<>(buffer)) {
-				gc.drawString(it.result  + " (" + Integer.toString(it.delay) + ")", 5, 22+10*i);
+			for(DelayQueueItem<InstructionResult> it : new ArrayList<>(buffer)) {
+				gc.drawString(it.getResult()  + " (" + Integer.toString(it.getDelay()) + ")", 5, 22+10*i);
 				i++;
 			}
 		}
@@ -135,9 +128,9 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 	public void clear(int i) {
 		if(buffer == null)
 			return;
-		List<Item> results = new LinkedList<>();
-		for(Item inst : buffer) {
-			if(inst.result.getVirtualNumber() <= i) {
+		List<DelayQueueItem<InstructionResult>> results = new LinkedList<>();
+		for(DelayQueueItem<InstructionResult> inst : buffer) {
+			if(inst.getResult().getVirtualNumber() <= i) {
 				results.add(inst);
 			}
 		}

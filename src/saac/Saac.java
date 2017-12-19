@@ -11,6 +11,7 @@ import saac.clockedComponents.BranchExecutionUnit;
 import saac.clockedComponents.Decoder;
 import saac.clockedComponents.Fetcher;
 import saac.clockedComponents.InstructionsSource;
+import saac.clockedComponents.LSReservationStation;
 import saac.clockedComponents.LoadStoreExecutionUnit;
 import saac.clockedComponents.RegisterFile;
 import saac.clockedComponents.ReservationStation;
@@ -19,6 +20,7 @@ import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.dataObjects.Instruction.Results.InstructionResult;
+import saac.dataObjects.Instruction.Results.MemoryResult;
 import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -82,7 +84,10 @@ public class Saac implements ClockedComponentI {
 		
 		FListConnection<RegisterResult> writeBackToRegisters = new FListConnection<>();
 		registerFile = new RegisterFile(writeBackToRegisters.getOutputEnd());
-		Memory memory = new Memory();
+		
+		FListConnection<MemoryResult> sendStoresToMem = new FListConnection<>();
+		FListConnection<Integer> storeDonesFromMem = new FListConnection<>();
+		Memory memory = new Memory(sendStoresToMem.getOutputEnd(), storeDonesFromMem.getInputEnd());
 		
 		FConnection<Integer> addrInput = new FConnection<>();
 		FConnection<Boolean> clearInput = new FConnection<>();
@@ -134,10 +139,12 @@ public class Saac implements ClockedComponentI {
 				isAUReservationStationEmpty.getInputEnd()); 
 		
 		FConnection<CompleteInstruction> resevationStationToLS = new FConnection<>();
-		ReservationStation LSreservationStation = new ReservationStation(decodeToLSReservationStation.getOutputEnd(),
+		LSReservationStation LSreservationStation = new LSReservationStation(decodeToLSReservationStation.getOutputEnd(),
 				resevationStationToLS.getInputEnd(),
 				virtualRegisterValueBus.getOutputEnd(),
-				isLSReservationStationEmpty.getInputEnd());
+				isLSReservationStationEmpty.getInputEnd(),
+				storeDonesFromMem.getOutputEnd()
+				);
 		
 		FConnection<CompleteInstruction> resevationStationToBR = new FConnection<>();
 		ReservationStation BRreservationStation = new ReservationStation(decodeToBRReservationStation.getOutputEnd(),
@@ -158,7 +165,7 @@ public class Saac implements ClockedComponentI {
 
 		ReorderBuffer reorderBuffer = new ReorderBuffer();
 		
-		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile, reorderBuffer,
+		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile, reorderBuffer, memory,
 				decodeToAUReservationStation.getInputEnd(),
 				decodeToLSReservationStation.getInputEnd(),
 				decodeToBRReservationStation.getInputEnd(),
@@ -176,7 +183,8 @@ public class Saac implements ClockedComponentI {
 				LSToWriteback.getOutputEnd(),
 				BRToWriteback.getOutputEnd(),
 				writeBackToRegisters.getInputEnd(),
-				virtualRegisterValueBus.getInputEnd());
+				virtualRegisterValueBus.getInputEnd(),
+				sendStoresToMem.getInputEnd());
 		
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{
@@ -193,6 +201,7 @@ public class Saac implements ClockedComponentI {
 			clockedComponents.add(loadStoreExecutionUnit);
 			clockedComponents.add(branchExecutionUnit);
 			clockedComponents.add(writebackHandler);
+			clockedComponents.add(memory);
 		}
 		
 		{
@@ -234,6 +243,12 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(BRToWriteback.createView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(writebackHandler.createView(0, boxHeight*c));
+			c++;
+			visibleComponents.add(sendStoresToMem.createView(middleOffset, boxHeight*c));
+			c++;
+			visibleComponents.add(memory.createView(middleOffset, boxHeight*c));
+			c++;
+			visibleComponents.add(storeDonesFromMem.createView(middleOffset, boxHeight*c));
 		}
 		
 		{
@@ -261,6 +276,7 @@ public class Saac implements ClockedComponentI {
 			clearables.add(addrInput);
 			clearables.add(clearInput);
 			clearables.add(instructionOutput);
+			clearables.add(memory);
 		}
 		
 		/*

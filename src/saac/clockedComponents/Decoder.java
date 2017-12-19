@@ -15,6 +15,7 @@ import saac.dataObjects.Instruction.Empty.EmptyInstruction;
 import saac.dataObjects.Instruction.Empty.Item;
 import saac.dataObjects.Instruction.Partial.DestItem;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
+import saac.dataObjects.Instruction.Partial.PartialLSInstruction;
 import saac.dataObjects.Instruction.Partial.SourceItem;
 import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
@@ -26,6 +27,7 @@ import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
+import saac.unclockedComponents.Memory;
 import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
@@ -48,9 +50,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	PartialInstruction[] bufferOut;
 	PartialInstruction[] bufferIn;
 	RegisterFile registerFile;
-	ReorderBuffer reorderBuffer;	
-
-	public Decoder(FListConnection<int[]>.Output input, RegisterFile registerFile, ReorderBuffer reorderBuffer,
+	ReorderBuffer reorderBuffer;
+	Memory memory;
+	
+	public Decoder(FListConnection<int[]>.Output input, RegisterFile registerFile, ReorderBuffer reorderBuffer, Memory memory,
 			FListConnection<PartialInstruction>.Input outputAU,
 			FListConnection<PartialInstruction>.Input outputLS,
 			FListConnection<PartialInstruction>.Input outputBR,
@@ -68,6 +71,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		this.input = input;
 		this.registerFile = registerFile;
 		this.reorderBuffer = reorderBuffer;
+		this.memory = memory;
 		this.isAUReservationStationEmpty = isAUReservationStationEmpty;
 		this.isLSReservationStationEmpty = isLSReservationStationEmpty;
 		this.isBRReservationStationEmpty = isBRReservationStationEmpty;
@@ -216,7 +220,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				if(isVirtualSlotAvailable(inst.getVirtualNumber())) {
 					
 					if(Settings.REGISTER_RENAMING_ENABLED) {
-						readyInstructions.add(inst);
+						if(loadStoreInstructionsReady(inst)) {
+							readyInstructions.add(addMemoryDependancies(inst));
+						} else {
+							notReadyInstructions.add(inst);
+						}
 					} else {
 						List<String> dependancies = new ArrayList<>();
 						if(inst.getParamA().isPresent() && inst.getParamA().get().isRegister()){
@@ -271,7 +279,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						if(inst.getDest().isPresent()) {
 							setRegisterDirty(inst.getDest().get().getRegNumber());
 						}
-						readyInstructions.add(inst);
+						
+						readyInstructions.add(addMemoryDependancies(inst));
 					}
 					
 				} else {
@@ -289,6 +298,48 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			else
 				bufferOut = readyInstructions.toArray(new PartialInstruction[0]);
 			
+		}
+	}
+	
+	private boolean loadStoreInstructionsReady(PartialInstruction inst) {
+		if(inst.getOpcode().equals(Opcode.Ldmi)) {
+			return inst.getParamA().get().isDataValue() && inst.getParamB().get().isDataValue();
+		} else if(inst.getOpcode().equals(Opcode.Stmi)) {
+			return inst.getParamB().get().isDataValue() && inst.getParamC().get().isDataValue();
+		} else {
+			return true;
+		}
+	}
+
+	private PartialInstruction addMemoryDependancies(PartialInstruction inst) {
+		if(inst.getOpcode().equals(Opcode.Ldma)|| inst.getOpcode().equals(Opcode.Ldmi)) {
+			final Optional<Integer> val;
+			if(inst.getOpcode().equals(Opcode.Ldma)) {
+				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getValue());				
+			} else if(inst.getOpcode().equals(Opcode.Ldmi)){
+				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getValue() + inst.getParamB().get().getValue());
+			} else {
+				throw new RuntimeException("Must be either ldma or ldmi");
+			}
+			if(val.isPresent()) {
+				return new PartialLSInstruction(inst, Optional.of(val.get()));
+			} else {
+				return new PartialLSInstruction(inst, Optional.empty());
+			}
+		} else if(inst.getOpcode().equals(Opcode.Stma)|| inst.getOpcode().equals(Opcode.Stmi)){
+			if(inst.getOpcode().equals(Opcode.Stma)) {
+				memory.addLatestMemoryAddressWrite(
+						inst.getParamB().get().getValue(), inst.getVirtualNumber());
+			} else if(inst.getOpcode().equals(Opcode.Stmi)){
+				memory.addLatestMemoryAddressWrite(
+						inst.getParamB().get().getValue() + inst.getParamC().get().getValue(),
+						inst.getVirtualNumber());
+			} else {
+				throw new RuntimeException("Must be either ldma or ldmi");
+			}
+			return new PartialLSInstruction(inst, Optional.empty());
+		} else {
+			return inst;
 		}
 	}
 	
@@ -316,8 +367,9 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		final Optional<SourceItem> c = renameParam(inst.getParamC());
 		final Optional<SourceItem> d = renameParam(inst.getParamD());
 		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getVirtualNumber());
-				
+		
 		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c, d);
+		
 	}
 
 	private Optional<SourceItem> renameParam(Optional<Item> o) throws Exception {
@@ -409,7 +461,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Eq:
 			case Ldpc:
 				if(outputAU.clear()) {
-					if(ReservationStation.isReady(inst)
+					if(ReservationStation.isAllParametersPresent(inst)
 							&& isAUReservationStationEmpty.get()
 							&& toSingleAU.clear()
 							&& Settings.RESERVATION_STATION_BYPASS_ENABLED) {
@@ -426,7 +478,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Stma:
 			case Ldmi:
 				if(outputLS.clear()) {
-					if(ReservationStation.isReady(inst)
+					if(LSReservationStation.isAllParametersAndMemPresent(inst)
 							&& isLSReservationStationEmpty.get()
 							&& toSingleLS.clear()
 							&& Settings.RESERVATION_STATION_BYPASS_ENABLED) {
@@ -443,7 +495,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case JmpC:
 			case Ln:
 				if(outputBR.clear()) {
-					if(ReservationStation.isReady(inst)
+					if(ReservationStation.isAllParametersPresent(inst)
 							&& isBRReservationStationEmpty.get()
 							&& toSingleBR.clear()
 							&& Settings.RESERVATION_STATION_BYPASS_ENABLED) {

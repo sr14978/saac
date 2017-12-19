@@ -26,7 +26,6 @@ import saac.interfaces.VisibleComponentI;
 import saac.unclockedComponents.Memory;
 import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.DrawingHelper;
-import saac.utils.Instructions;
 import saac.utils.Output;
 
 public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
@@ -37,16 +36,19 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	FListConnection<RegisterResult>.Input resultOutput;
 	MultiFConnection<RegisterResult>.Input virtualRegisterValueBus;
 	
+	FListConnection<MemoryResult>.Input sendStoresToMem;
+	
 	//to enforce round robin collection of inputs
 	int nextInput = 0;
 	Memory memory;
-		
+	
 	public WritebackHandler(Memory memory, ReorderBuffer reorderBuffer,
 			List<FConnection<InstructionResult>.Output> inputEUs,
 			FConnection<InstructionResult>.Output inputLS,
 			FConnection<InstructionResult>.Output inputBr,
 			FListConnection<RegisterResult>.Input resultOutput,
-			MultiFConnection<RegisterResult>.Input virtualRegisterValueBus) {
+			MultiFConnection<RegisterResult>.Input virtualRegisterValueBus,
+			FListConnection<MemoryResult>.Input sendStoresToMem) {
 		this.inputs = new ArrayList<>(inputEUs);
 		this.inputs.add(inputLS);
 		this.inputs.add(inputBr);
@@ -55,6 +57,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		Instance = this;
 		this.memory = memory;
 		this.reorderBuffer = reorderBuffer;
+		this.sendStoresToMem = sendStoresToMem;
 	}
 
 	@Override
@@ -90,6 +93,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			return;
 		}
 		List<RegisterResult> regResults = new ArrayList<>();
+		List<MemoryResult> stores= new ArrayList<>();
 		loop:
 		for(int i = 0; i<Settings.SUPERSCALER_WIDTH; i++) {
 			InstructionResult res = reorderBuffer.getFirst();
@@ -99,8 +103,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			if(res instanceof MemoryResult) {
 				Saac.InstructionCounter++;
 				MemoryResult mr = (MemoryResult) res;
-				memory.setWord(mr.getAddr(), mr.getValue());
-				delay = Instructions.InstructionDelay.get(Instructions.Opcode.Stmi);
+				stores.add(mr);
+				//memory.setWord(mr.getAddr(), mr.getValue());
+				//delay = Instructions.InstructionDelay.get(Instructions.Opcode.Stmi);
 				break loop;
 			} else if(res instanceof RegisterResult) {
 				Saac.InstructionCounter++;
@@ -126,6 +131,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			for(RegisterResult res :regResults ) {
 				virtualRegisterValueBus.put(res);
 			}
+		}
+		if(!stores.isEmpty()) {
+			sendStoresToMem.put(stores.toArray(new MemoryResult[0]));
 		}
 	}
 

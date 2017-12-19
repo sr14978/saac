@@ -93,7 +93,11 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 		}
 	}
 
-	public static boolean isReady(PartialInstruction i) {
+	public boolean isReady(PartialInstruction i) {
+		return isAllParametersPresent(i);
+	}
+	
+	public static boolean isAllParametersPresent(PartialInstruction i) {
 		return 		( !i.getParamA().isPresent() || (i.getParamA().isPresent() && i.getParamA().get().isDataValue()) )
 				&& 	( !i.getParamB().isPresent() || (i.getParamB().isPresent() && i.getParamB().get().isDataValue()) )
 				&& 	( !i.getParamC().isPresent() || (i.getParamC().isPresent() && i.getParamC().get().isDataValue()) )
