@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import saac.Settings;
 import saac.clockedComponents.RegisterFile.RatItem;
@@ -17,6 +19,7 @@ import saac.dataObjects.Instruction.Partial.DestItem;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Partial.PartialLSInstruction;
 import saac.dataObjects.Instruction.Partial.SourceItem;
+import saac.dataObjects.Instruction.Results.InstructionResult;
 import saac.dataObjects.Instruction.Results.RegisterResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -220,6 +223,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				if(isVirtualSlotAvailable(inst.getVirtualNumber())) {
 					
 					if(Settings.REGISTER_RENAMING_ENABLED) {
+						tryGrabbingVirtualRegisterValues(inst);						
 						if(loadStoreInstructionsReady(inst)) {
 							readyInstructions.add(addMemoryDependancies(inst));
 						} else {
@@ -301,6 +305,28 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		}
 	}
 	
+	private void tryGrabbingVirtualRegisterValues(PartialInstruction inst) {
+		tryGrabbingVirtualRegisterValue(inst::getParamA, inst::setParamA);
+		tryGrabbingVirtualRegisterValue(inst::getParamB, inst::setParamB);
+		tryGrabbingVirtualRegisterValue(inst::getParamC, inst::setParamC);
+		tryGrabbingVirtualRegisterValue(inst::getParamD, inst::setParamD);
+	}
+
+	private void tryGrabbingVirtualRegisterValue(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter) {
+		if(Settings.REGISTER_RENAMING_ENABLED) {
+			Optional<SourceItem> o = getter.get();
+			if(o.isPresent()) {
+				SourceItem item = o.get();
+				if(item.isRegister()) {
+					Optional<Integer> value = getVirtualSlotValue(item.getValue());
+					if(value.isPresent()) {
+						setter.accept(SourceItem.Data(value.get()));
+					}
+				}
+			}
+		}
+	}
+
 	private boolean loadStoreInstructionsReady(PartialInstruction inst) {
 		if(inst.getOpcode().equals(Opcode.Ldmi)) {
 			return inst.getParamA().get().isDataValue() && inst.getParamB().get().isDataValue();
@@ -345,6 +371,17 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	
 	private boolean isVirtualSlotAvailable(int virtualNumber) {
 		return reorderBuffer.inReorderBuffer(virtualNumber);
+	}
+	
+	private Optional<Integer> getVirtualSlotValue(int virtualNumber) {
+		InstructionResult res = reorderBuffer.getVirtualSlotValue(virtualNumber);
+		if(res == null) {
+			return Optional.empty();
+		} else if(res instanceof RegisterResult) {
+			return Optional.of(((RegisterResult) res).getValue());
+		} else {
+			throw new RuntimeException("Getting value of a non register result");
+		}
 	}
 
 	private Optional<Item> formatParam(int data, Usage usage) {

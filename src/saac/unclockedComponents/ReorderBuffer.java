@@ -67,7 +67,7 @@ public class ReorderBuffer {
 		bufferIndexEnd = bufferIndex;
 	}
 	
-	public InstructionResult getOffsetted(int offset) {
+	public InstructionResult getVirtualSlotValue(int offset) {
 		return reorderBuffer[(bufferIndexStart+(offset-bufferInstructionStart)) % BUFF_SIZE];
 	}
 	
