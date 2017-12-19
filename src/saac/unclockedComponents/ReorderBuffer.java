@@ -5,7 +5,7 @@ import saac.dataObjects.Instruction.Results.InstructionResult;
 
 public class ReorderBuffer {
 	
-	public final static int BUFF_SIZE = Settings.VIRTUAL_ADDRESS_NUM;
+	public int BUFF_SIZE = Settings.VIRTUAL_ADDRESS_NUM;
 	public InstructionResult[] reorderBuffer = new InstructionResult[BUFF_SIZE];
 	public int bufferIndexStart = 0;
 	public int bufferIndexEnd = 0;

@@ -2,14 +2,18 @@ package saac;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 import saac.Settings.BranchPrediciton;
+import saac.Test.Config;
 import saac.clockedComponents.RegisterFile;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
@@ -35,6 +39,12 @@ public class Test {
 		
 		System.out.println("Testing...");
 		Results results = runCombinations("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 440));
+		/*
+		Results results = new Results(new HashMap<Test.Config, Float>(), new ArrayList<Test.Config>(), 0);
+		results.results.put(new Config(Settings.BRANCH_PREDICTION_MODE, Settings.RESERVATION_STATION_BYPASS_ENABLED, 
+				Settings.NUMBER_OF_EXECUTION_UNITS, Settings.SUPERSCALER_WIDTH, Settings.OUT_OF_ORDER_ENABLED,
+				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED), runTest("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 440)));
+		*/
 		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
@@ -142,9 +152,11 @@ public class Test {
 						Settings.SUPERSCALER_WIDTH = width;
 						for(int units = 1; units<=8; units*=2) {
 							Settings.NUMBER_OF_EXECUTION_UNITS = units;
-							for(int addr = 8; addr<=32; addr*=2) {
+							for(int addr = 16; addr<=32; addr*=2) {
 								Settings.VIRTUAL_ADDRESS_NUM = addr;
 								for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
+								//{
+								//	BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static;
 									total++;
 									Settings.BRANCH_PREDICTION_MODE = branch;
 									final Control control = new Control();
@@ -213,10 +225,11 @@ public class Test {
         	if(Thread.interrupted())
     			throw new InterruptedException();
 		}
-		if(p.apply(saac.registerFile))
+		if(p.apply(saac.registerFile)) {
 			return RateUtils.round((float) Saac.InstructionCounter / Saac.CycleCounter);
-		else
+		} else {
 			throw new WrongAnswerException();
+		}
 	}
 	
 	@SuppressWarnings("serial")

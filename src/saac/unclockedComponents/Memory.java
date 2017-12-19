@@ -3,11 +3,11 @@ package saac.unclockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import saac.dataObjects.DelayQueueItem;
@@ -37,7 +37,7 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 	List<DelayQueueItem<MemoryResult>> queue = new LinkedList<>(); 
 	FListConnection<MemoryResult>.Output input;
 	FListConnection<Integer>.Input output;
-	Map<Integer, List<Integer>> memoryAddressDirtyLookup = new HashMap<Integer, List<Integer>>();
+	Map<Integer, List<Integer>> memoryAddressDirtyLookup = new ConcurrentHashMap<Integer, List<Integer>>();
 	
 	public Memory(FListConnection<MemoryResult>.Output input, FListConnection<Integer>.Input output) {
 		this.input = input;
