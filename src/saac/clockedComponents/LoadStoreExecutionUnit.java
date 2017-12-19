@@ -26,7 +26,7 @@ import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
-	static final int LDLimit = 5;
+	static final int LDLimit = Settings.LOAD_LIMIT;
 		
 	private FConnection<CompleteInstruction>.Output instructionIn;
 	private FConnection<InstructionResult>.Input resultOut;

@@ -78,7 +78,6 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		}
 	}
 
-	int delay = 0;
 	boolean stop = false;
 	@Override
 	public void tock() throws Exception {
@@ -86,10 +85,6 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			if(Worker.worker != null)
 				Worker.worker.interrupt();
 			Worker.finished = true;
-			return;
-		}
-		if(delay != 0) {
-			delay--;
 			return;
 		}
 		List<RegisterResult> regResults = new ArrayList<>();
@@ -152,10 +147,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				else
 					gc.drawString("|X|", i*40 + 20, 30);
 			
-			gc.drawString("start index: " + Integer.toString(reorderBuffer.bufferIndexStart), 700, 30);
-			gc.drawString("end index: " + Integer.toString(reorderBuffer.bufferIndexEnd), 800, 30);
-			gc.drawString("start inst: " + Integer.toString(reorderBuffer.bufferInstructionStart), 900, 30);
-			gc.drawString("delay: " + Integer.toString(delay), 1000, 30);
+			gc.drawString("start index: " + Integer.toString(reorderBuffer.bufferIndexStart), 900, 30);
+			gc.drawString("end index: " + Integer.toString(reorderBuffer.bufferIndexEnd), 1000, 30);
+			gc.drawString("start inst: " + Integer.toString(reorderBuffer.bufferInstructionStart), 1100, 30);
 		}
 	}
 
