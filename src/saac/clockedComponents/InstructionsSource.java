@@ -59,40 +59,43 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 
 	@Override
 	public void tick() throws Exception {
-		
-		if(bufferOut.isEmpty()) {
-			return;
+		synchronized(bufferOut) {
+			if(bufferOut.isEmpty()) {
+				return;
+			}
+			for(Item item : bufferOut) {
+				item.delay = item.delay > 0? item.delay-1 : 0;
+			}
+			if(!instructionOutput.clear()) {
+				return;
+			}	
+			if(bufferOut.get(0).delay == 0) {
+				int[][] insts = new int[Settings.SUPERSCALER_WIDTH][];
+				for(int i = 0; i<Settings.SUPERSCALER_WIDTH; i++)
+					insts[i] = bufferOut.remove(0).value;
+				instructionOutput.put(insts);
+			}
 		}
-		for(Item item : bufferOut) {
-			item.delay = item.delay > 0? item.delay-1 : 0;
-		}
-		if(!instructionOutput.clear()) {
-			return;
-		}	
-		if(bufferOut.get(0).delay == 0) {
-			int[][] insts = new int[Settings.SUPERSCALER_WIDTH][];
-			for(int i = 0; i<Settings.SUPERSCALER_WIDTH; i++)
-				insts[i] = bufferOut.remove(0).value;
-			instructionOutput.put(insts);
-		}		
 	}
 
 	@Override
 	public void tock() throws Exception {
-		if(clearInput.ready() && clearInput.pop()) {
-			bufferOut.clear();
-			if(addrInput.ready())
-				addrInput.pop();
-		}
-		
-		if(!addrInput.ready())
-			return;
-		if(bufferOut.size() > BufferSize - Settings.SUPERSCALER_WIDTH)
-			return;
-		int pc = addrInput.pop();
-		for(int i = pc; i<pc+Settings.SUPERSCALER_WIDTH; i++) {
-			int[] bytes = getInstruction(i);
-			bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], i}, 4));
+		synchronized(bufferOut) {
+			if(clearInput.ready() && clearInput.pop()) {
+				bufferOut.clear();
+				if(addrInput.ready())
+					addrInput.pop();
+			}
+			
+			if(!addrInput.ready())
+				return;
+			if(bufferOut.size() > BufferSize - Settings.SUPERSCALER_WIDTH)
+				return;
+			int pc = addrInput.pop();
+			for(int i = pc; i<pc+Settings.SUPERSCALER_WIDTH; i++) {
+				int[] bytes = getInstruction(i);
+				bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], i}, 4));
+			}
 		}
 	}
 	
@@ -104,13 +107,15 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 		
 		public void paint(Graphics2D gc) {
 			DrawingHelper.drawBox(gc, "Instruction Source");
-			for(int i = 0; i<bufferOut.size(); i++) {
-				int[] item = bufferOut.get(i).value;
-				int delay = bufferOut.get(i).delay;
-				gc.drawString(
-						String.format("Opcode: %s, params: (a,%d), (b,%d), (c,%d)",
-								Opcode.fromInt(item[0]).toString(), item[1], item[2], item[3]) 
-						+ " (" + delay + ")", 5, 22+10*i);
+			synchronized(bufferOut) {
+				for(int i = 0; i<bufferOut.size(); i++) {
+					int[] item = bufferOut.get(i).value;
+					int delay = bufferOut.get(i).delay;
+					gc.drawString(
+							String.format("Opcode: %s, params: (a,%d), (b,%d), (c,%d)",
+									Opcode.fromInt(item[0]).toString(), item[1], item[2], item[3]) 
+							+ " (" + delay + ")", 5, 22+10*i);
+				}
 			}
 		}
 	}
@@ -122,7 +127,9 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 
 	@Override
 	public void clear(int i) {
-		bufferOut.clear();
+		synchronized(bufferOut) {
+			bufferOut.clear();
+		}
 	}
 	
 }

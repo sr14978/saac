@@ -12,6 +12,7 @@ import java.util.function.Function;
 import saac.Settings.BranchPrediciton;
 import saac.Settings.IssueWindow;
 import saac.clockedComponents.RegisterFile;
+import saac.test.TestOutput;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
 
@@ -19,12 +20,14 @@ public class Test {
 	
 	static class Results {
 		Map<Config, Float> results;
+		float[][][][][][][][][] resultsArray;
 		List<Config> failures;
 		double failureRate;
-		Results(Map<Config, Float> results, List<Config> failures, double failureRate) {
+		Results(Map<Config, Float> results, List<Config> failures, double failureRate, float[][][][][][][][][] resultsArray) {
 			this.results = results;
 			this.failures = failures;
 			this.failureRate = failureRate;
+			this.resultsArray = resultsArray;
 		}
 	}
 	
@@ -35,18 +38,22 @@ public class Test {
 	public static void main(String[] args) throws Exception {		
 		
 		System.out.println("Testing...");
-		Results results = runCombinations("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == /*5658112/*440*/1632));
+		Results results = runCombinations("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 5658112/*440*//*1632*/));
 		/*
-		Results results = new Results(new HashMap<Test.Config, Float>(), new ArrayList<Test.Config>(), 0);
+		Results results = new Results(new HashMap<Test.Config, Float>(), new ArrayList<Test.Config>(), 0, null);
 		results.results.put(new Config(Settings.ISSUE_WINDOW_METHOD, Settings.BRANCH_PREDICTION_MODE, Settings.RESERVATION_STATION_BYPASS_ENABLED, 
 				Settings.NUMBER_OF_EXECUTION_UNITS, Settings.SUPERSCALER_WIDTH, Settings.OUT_OF_ORDER_ENABLED,
-				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED, Settings.LOAD_LIMIT), runTest("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 1632)));
+				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED, Settings.LOAD_LIMIT), runTest("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 5658112)));
 		*/
 		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
+		TestOutput.writeOutputs(results.resultsArray);		
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
 	}
+
+	
+
 
 	private static void printResults(Results results) {
 		System.out.println("Bests");
@@ -150,31 +157,39 @@ public class Test {
 
 	public static Results runCombinations(String programName, Function<RegisterFile, Boolean> validationFunction) {
 		Map<Config, Float> results = new HashMap<>();
+		float[][][][][][][][][] resultsArray = new float[Settings.IssueWindow.values().length][Settings.BranchPrediciton.values().length][2][7][7][2][5][2][6];
 		List<Config> failures = new ArrayList<>();
-		int total = /*bypass*/2 * /*units*/2 * /*width*/2 * /*order*/2 * /*addr*/2 * /*renaming*/2 * /*load*/2 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
+		int total = /*bypass*/2 * /*units*/7 * /*width*/7 * /*order*/2 * /*addr*/5 * /*renaming*/2 * /*load*/6 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
 		int runNum = 0;
 		int failureNum = 0;
+		long startTime = System.currentTimeMillis();
 		for(IssueWindow window : Settings.IssueWindow.values()) {
 		//IssueWindow window = Settings.IssueWindow.Aligned; {
 			Settings.ISSUE_WINDOW_METHOD = window;
 			for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
 			//BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static; {
 				Settings.BRANCH_PREDICTION_MODE = branch;
-				for(boolean bypass : new boolean[] {true, false}) {
+				for(boolean bypass : new boolean[] {false, true}) {
 					Settings.RESERVATION_STATION_BYPASS_ENABLED = bypass;
-					for(int units = 32; units<=64; units*=2) {
+					for(int units = 1, u=0; units<=64; units*=2, u++) {
 						Settings.NUMBER_OF_EXECUTION_UNITS = units;
-						for(int width = 32; width<=64; width*=2) {
+						for(int width = 1, w=0; width<=64; width*=2, w++) {
 							Settings.SUPERSCALER_WIDTH = width;
-							for(boolean order : new boolean[] {true, false}) {
+							for(boolean order : new boolean[] {/*false, */true}) {
+								if(runNum>0) {
+									long timeLeft = (System.currentTimeMillis() - startTime) * (total-runNum) / runNum;
+									long seconds = timeLeft/1000 % 60;
+									long minutes = timeLeft/60000;
+									System.out.println(String.format("%.2f%%, time left: %d:%02d",100*((float) runNum)/total, minutes, seconds));
+								}
 								Settings.OUT_OF_ORDER_ENABLED = order;
-								for(int addr = 64; addr<=128; addr*=2) {
+								for(int addr = 8, a=0; addr<=128; addr*=2, a++) {
 									Settings.VIRTUAL_ADDRESS_NUM = addr;
-									for(boolean renaming : new boolean[] {true, false}) {
+									for(boolean renaming : new boolean[] {false/*, true*/}) {
 										Settings.REGISTER_RENAMING_ENABLED = renaming;
-										for(int load = 16; load<=32; load*=2) {
+										for(int load = 1, l=0; load<=32; load*=2, l++) {
 											Settings.LOAD_LIMIT = load;
-											System.out.println(String.format("%.2f%%",100*((float) runNum++)/total));
+											runNum++;
 											final Control control = new Control();
 											final int units_w = units;
 											final int width_w = width;
@@ -191,7 +206,6 @@ public class Test {
 														System.err.println("Incrorrect Answer: " + new Config(window, branch, bypass, units_w, width_w, order, addr_w, renaming, load_w).toString());
 													}
 													catch (Exception e) {
-														//System.err.println(e.getClass());
 														System.err.println(new Config(window, branch, bypass, units_w, width_w, order, addr_w, renaming, load_w));
 														e.printStackTrace(System.err);
 													}
@@ -200,7 +214,7 @@ public class Test {
 											Thread timer = new Thread() {
 												public void run() {
 													try {
-														Thread.sleep(1000);
+														Thread.sleep(4000);
 													} catch (InterruptedException e) {}										
 												}
 											};
@@ -209,6 +223,7 @@ public class Test {
 											while(true) {
 												if(!timer.isAlive()) {
 													failures.add(new Config(window, branch, bypass, units, width, order, addr, renaming, load));
+													resultsArray[window.ordinal()][branch.ordinal()][bypass?1:0][u][w][order?1:0][a][renaming?1:0][l] = -1;
 													worker.interrupt();
 													failureNum++;
 													break;
@@ -216,8 +231,10 @@ public class Test {
 												if(!worker.isAlive()) {
 													if(control.val != null) {
 														results.put(new Config(window, branch, bypass, units, width, order, addr, renaming, load), control.val);
+														resultsArray[window.ordinal()][branch.ordinal()][bypass?1:0][u][w][order?1:0][a][renaming?1:0][l] = control.val;
 													} else {
 														failures.add(new Config(window, branch, bypass, units, width, order, addr, renaming, load));
+														resultsArray[window.ordinal()][branch.ordinal()][bypass?1:0][u][w][order?1:0][a][renaming?1:0][l] = -1;
 														failureNum++;
 													}
 													timer.interrupt();
@@ -233,7 +250,7 @@ public class Test {
 				}
 			}
 		}
-		return new Results(results, failures, (double) failureNum / total);
+		return new Results(results, failures, (double) failureNum / total, resultsArray);
 	}
 	
 	private static float runTest(String programName, Function<RegisterFile, Boolean> p) throws IOException, ParserException, Exception {
