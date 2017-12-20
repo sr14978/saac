@@ -23,7 +23,6 @@ import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
-import saac.unclockedComponents.Memory;
 import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.DrawingHelper;
 import saac.utils.Output;

@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import saac.Settings;
+import saac.Settings.IssueWindow;
 import saac.clockedComponents.RegisterFile.RatItem;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Empty.EmptyInstruction;
@@ -21,6 +22,7 @@ import saac.dataObjects.Instruction.Partial.PartialLSInstruction;
 import saac.dataObjects.Instruction.Partial.SourceItem;
 import saac.dataObjects.Instruction.Results.InstructionResult;
 import saac.dataObjects.Instruction.Results.RegisterResult;
+import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -30,7 +32,6 @@ import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
-import saac.unclockedComponents.Memory;
 import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
@@ -49,14 +50,14 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	FListConnection<PartialInstruction>.Input outputLS;
 	FListConnection<PartialInstruction>.Input outputBR;
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
-	FListConnection<int[]>.Output input;
+	BufferedConnection<int[]>.Output input;
 	PartialInstruction[] bufferOut;
 	PartialInstruction[] bufferIn;
 	RegisterFile registerFile;
 	ReorderBuffer reorderBuffer;
 	Memory memory;
 	
-	public Decoder(FListConnection<int[]>.Output input, RegisterFile registerFile, ReorderBuffer reorderBuffer, Memory memory,
+	public Decoder(BufferedConnection<int[]>.Output input, RegisterFile registerFile, ReorderBuffer reorderBuffer, Memory memory,
 			FListConnection<PartialInstruction>.Input outputAU,
 			FListConnection<PartialInstruction>.Input outputLS,
 			FListConnection<PartialInstruction>.Input outputBR,
@@ -92,9 +93,17 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			results = virtualRegisterValueBus.pop();
 		}
 		
-		if(bufferIn == null) {
+		if(bufferIn == null || Settings.ISSUE_WINDOW_METHOD == IssueWindow.Unaligned && bufferIn.length < Settings.SUPERSCALER_WIDTH) {
 			if (input.ready()) {
-				final int[][] incomingInsts = input.pop();
+				
+				final int[][] incomingInsts;
+				if(Settings.ISSUE_WINDOW_METHOD == IssueWindow.Aligned || bufferIn == null) {
+					incomingInsts = input.popAll();
+				} else if(Settings.ISSUE_WINDOW_METHOD == IssueWindow.Unaligned) {
+					incomingInsts = input.pop(Math.min(Settings.SUPERSCALER_WIDTH - bufferIn.length, input.getCount()));
+				} else {
+					throw new Exception("Invalid window method");
+				}
 				
 				List<PartialInstruction> instructions = new LinkedList<>();
 				for (int i = 0; i < incomingInsts.length; i++) {
@@ -197,13 +206,25 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					PartialInstruction vinst = maybeRenameInstruction(inst);
 					instructions.add(vinst);
 				}
+				if(bufferIn == null) {
+					bufferIn = instructions.toArray(new PartialInstruction[0]);
+				} else {
+					List<PartialInstruction> allInstructions = new ArrayList<>();
+					for(PartialInstruction inst : bufferIn) {
+						allInstructions.add(inst);
+					}
+					allInstructions.addAll(instructions);
+					bufferIn = allInstructions.toArray(new PartialInstruction[0]);
+				}
 				
-				bufferIn = instructions.toArray(new PartialInstruction[0]);
-				
-			} else {
-				return;
 			}
-		} else if(results != null) {
+		}
+		
+		if(bufferIn == null) {
+			return;
+		}
+		
+		if(results != null) {
 			for(RegisterResult result : results) {
 				for(PartialInstruction inst : bufferIn) {
 					ReservationStation.fillInSingleParamWithResult(inst::getParamA, inst::setParamA, result);
@@ -265,6 +286,9 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						}
 						
 						if(inst.getDest().isPresent()) {
+							if(isRegisterDirty(inst.getDest().get().getRegNumber())) {
+								dependancies.add("Dest (" + inst.getDest().get().getRegNumber() + ")");
+							}
 							dirtiesInWindow.add(inst.getDest().get().getRegNumber());
 						}
 						

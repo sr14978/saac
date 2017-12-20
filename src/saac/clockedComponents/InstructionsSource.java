@@ -43,7 +43,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 	}
 	
 	List<Item> bufferOut = new LinkedList<>();
-	static final int BufferSize = Settings.PARALLEL_INSTRUCTION_FETCH;
+	final int BufferSize = Settings.PARALLEL_INSTRUCTION_FETCH.get();
 	
 	public InstructionsSource(
 			FConnection<Integer>.Output addrInput,

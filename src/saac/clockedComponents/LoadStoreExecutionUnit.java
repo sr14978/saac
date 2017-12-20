@@ -20,13 +20,12 @@ import saac.interfaces.ComponentViewI;
 import saac.interfaces.FConnection;
 import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
-import saac.unclockedComponents.Memory;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
-	static final int LDLimit = Settings.LOAD_LIMIT;
+	int LDLimit = Settings.LOAD_LIMIT;
 		
 	private FConnection<CompleteInstruction>.Output instructionIn;
 	private FConnection<InstructionResult>.Input resultOut;

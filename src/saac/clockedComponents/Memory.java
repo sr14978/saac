@@ -1,4 +1,4 @@
-package saac.unclockedComponents;
+package saac.clockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -27,11 +27,11 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 	
 	//initialise with values
 	static {
-		for(int i=0; i<10; i++)
-			values[0x10+i] = i+1;
+		for(int i=0; i<0x100; i++)
+			values[0x0+i] = i+1;
 		
-		for(int i=0; i<10; i++)
-			values[0x20+i] = (i+2);
+		for(int i=0; i<0x100; i++)
+			values[0x100+i] = (i+2);
 	}
 	
 	List<DelayQueueItem<MemoryResult>> queue = new LinkedList<>(); 

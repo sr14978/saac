@@ -2,18 +2,15 @@ package saac;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 import saac.Settings.BranchPrediciton;
-import saac.Test.Config;
+import saac.Settings.IssueWindow;
 import saac.clockedComponents.RegisterFile;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
@@ -38,12 +35,12 @@ public class Test {
 	public static void main(String[] args) throws Exception {		
 		
 		System.out.println("Testing...");
-		Results results = runCombinations("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 440));
+		Results results = runCombinations("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == /*5658112/*440*/1632));
 		/*
 		Results results = new Results(new HashMap<Test.Config, Float>(), new ArrayList<Test.Config>(), 0);
-		results.results.put(new Config(Settings.BRANCH_PREDICTION_MODE, Settings.RESERVATION_STATION_BYPASS_ENABLED, 
+		results.results.put(new Config(Settings.ISSUE_WINDOW_METHOD, Settings.BRANCH_PREDICTION_MODE, Settings.RESERVATION_STATION_BYPASS_ENABLED, 
 				Settings.NUMBER_OF_EXECUTION_UNITS, Settings.SUPERSCALER_WIDTH, Settings.OUT_OF_ORDER_ENABLED,
-				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED), runTest("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 440)));
+				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED, Settings.LOAD_LIMIT), runTest("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 1632)));
 		*/
 		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
@@ -67,6 +64,7 @@ public class Test {
 			}
 		}
 		if(bestConfigs != null) {
+			Set<IssueWindow> windowAlignment = new HashSet<>();
 			Set<BranchPrediciton> branchPrediction = new HashSet<>();
 			Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
 			Set<Integer> numberOfExecutionUnits = new HashSet<>();
@@ -74,7 +72,10 @@ public class Test {
 			Set<Boolean> outOfOrderEnabled = new HashSet<>();
 			Set<Integer> virtualAddressNum = new HashSet<>();
 			Set<Boolean> registerRenaming = new HashSet<>();
+			Set<Integer> loadLimit = new HashSet<>();
 			for(Config c : bestConfigs) {
+				if(!windowAlignment.contains(c.windowAlignment))
+					windowAlignment.add(c.windowAlignment);
 				if(!branchPrediction.contains(c.branchPrediction))
 					branchPrediction.add(c.branchPrediction);
 				if(!reservationStationBypassEnabled.contains(c.reservationStationBypassEnabled))
@@ -89,6 +90,8 @@ public class Test {
 					virtualAddressNum.add(c.virtualAddressNum);
 				if(!registerRenaming.contains(c.registerRenaming))
 					registerRenaming.add(c.registerRenaming);
+				if(!loadLimit.contains(c.loadLimit))
+					loadLimit.add(c.loadLimit);
 			}
 			System.out.println("branchPrediction:" + branchPrediction);
 			System.out.println("reservationStationBypassEnabled:" + reservationStationBypassEnabled);
@@ -97,6 +100,7 @@ public class Test {
 			System.out.println("outOfOrderEnabled:" + outOfOrderEnabled);
 			System.out.println("virtualAddressNum:" + virtualAddressNum);
 			System.out.println("registerRenaming:" + registerRenaming);
+			System.out.println("loadLimit:" + loadLimit);
 			System.out.println(bestRate);
 		}
 		
@@ -104,6 +108,7 @@ public class Test {
 		if(results.failures.isEmpty())
 			System.out.println("All passed");
 		else {
+			Set<IssueWindow> windowAlignment = new HashSet<>();
 			Set<BranchPrediciton> branchPrediction = new HashSet<>();
 			Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
 			Set<Integer> numberOfExecutionUnits = new HashSet<>();
@@ -111,7 +116,10 @@ public class Test {
 			Set<Boolean> outOfOrderEnabled = new HashSet<>();
 			Set<Integer> virtualAddressNum = new HashSet<>();
 			Set<Boolean> registerRenaming = new HashSet<>();
+			Set<Integer> loadLimit = new HashSet<>();
 			for(Config c : results.failures) {
+				if(!windowAlignment.contains(c.windowAlignment))
+					windowAlignment.add(c.windowAlignment);
 				if(!branchPrediction.contains(c.branchPrediction))
 					branchPrediction.add(c.branchPrediction);
 				if(!reservationStationBypassEnabled.contains(c.reservationStationBypassEnabled))
@@ -126,6 +134,8 @@ public class Test {
 					virtualAddressNum.add(c.virtualAddressNum);
 				if(!registerRenaming.contains(c.registerRenaming))
 					registerRenaming.add(c.registerRenaming);
+				if(!loadLimit.contains(c.loadLimit))
+					loadLimit.add(c.loadLimit);
 			}
 			System.out.println("branchPrediction:" + branchPrediction);
 			System.out.println("reservationStationBypassEnabled:" + reservationStationBypassEnabled);
@@ -134,77 +144,86 @@ public class Test {
 			System.out.println("outOfOrderEnabled:" + outOfOrderEnabled);
 			System.out.println("virtualAddressNum:" + virtualAddressNum);
 			System.out.println("registerRenaming:" + registerRenaming);
+			System.out.println("loadLimit:" + loadLimit);
 		}
 	}
 
 	public static Results runCombinations(String programName, Function<RegisterFile, Boolean> validationFunction) {
 		Map<Config, Float> results = new HashMap<>();
 		List<Config> failures = new ArrayList<>();
-		int total = 0;
+		int total = /*bypass*/2 * /*units*/2 * /*width*/2 * /*order*/2 * /*addr*/2 * /*renaming*/2 * /*load*/2 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
+		int runNum = 0;
 		int failureNum = 0;
-		for(boolean bypass : new boolean[] {true, false}) {
-			Settings.RESERVATION_STATION_BYPASS_ENABLED = bypass;
-			for(boolean order : new boolean[] {true, false}) {
-				Settings.OUT_OF_ORDER_ENABLED = order;
-				for(boolean renaming : new boolean[] {true, false}) {
-					Settings.REGISTER_RENAMING_ENABLED = renaming;
-					for(int width = 1; width<=8; width*=2) {
-						Settings.SUPERSCALER_WIDTH = width;
-						for(int units = 1; units<=8; units*=2) {
-							Settings.NUMBER_OF_EXECUTION_UNITS = units;
-							for(int addr = 16; addr<=32; addr*=2) {
-								Settings.VIRTUAL_ADDRESS_NUM = addr;
-								for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
-								//{
-								//	BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static;
-									total++;
-									Settings.BRANCH_PREDICTION_MODE = branch;
-									final Control control = new Control();
-									final int units_w = units;
-									final int width_w = width;
-									final int addr_w = addr;
-									Thread worker = new Thread() {
-										public void run() {
-											try {
-												control.val = runTest(programName, validationFunction);
-											} catch (InterruptedException e) {
-												System.err.println("Timeout: " + new Config(branch, bypass, units_w, width_w, order, addr_w, renaming).toString());
+		for(IssueWindow window : Settings.IssueWindow.values()) {
+		//IssueWindow window = Settings.IssueWindow.Aligned; {
+			Settings.ISSUE_WINDOW_METHOD = window;
+			for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
+			//BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static; {
+				Settings.BRANCH_PREDICTION_MODE = branch;
+				for(boolean bypass : new boolean[] {true, false}) {
+					Settings.RESERVATION_STATION_BYPASS_ENABLED = bypass;
+					for(int units = 32; units<=64; units*=2) {
+						Settings.NUMBER_OF_EXECUTION_UNITS = units;
+						for(int width = 32; width<=64; width*=2) {
+							Settings.SUPERSCALER_WIDTH = width;
+							for(boolean order : new boolean[] {true, false}) {
+								Settings.OUT_OF_ORDER_ENABLED = order;
+								for(int addr = 64; addr<=128; addr*=2) {
+									Settings.VIRTUAL_ADDRESS_NUM = addr;
+									for(boolean renaming : new boolean[] {true, false}) {
+										Settings.REGISTER_RENAMING_ENABLED = renaming;
+										for(int load = 16; load<=32; load*=2) {
+											Settings.LOAD_LIMIT = load;
+											System.out.println(String.format("%.2f%%",100*((float) runNum++)/total));
+											final Control control = new Control();
+											final int units_w = units;
+											final int width_w = width;
+											final int addr_w = addr;
+											final int load_w = load;
+											Thread worker = new Thread() {
+												public void run() {
+													try {
+														control.val = runTest(programName, validationFunction);
+													} catch (InterruptedException e) {
+														System.err.println("Timeout: " + new Config(window, branch, bypass, units_w, width_w, order, addr_w, renaming, load_w).toString());
+													}
+													catch (WrongAnswerException e) {
+														System.err.println("Incrorrect Answer: " + new Config(window, branch, bypass, units_w, width_w, order, addr_w, renaming, load_w).toString());
+													}
+													catch (Exception e) {
+														//System.err.println(e.getClass());
+														System.err.println(new Config(window, branch, bypass, units_w, width_w, order, addr_w, renaming, load_w));
+														e.printStackTrace(System.err);
+													}
+												}
+											};
+											Thread timer = new Thread() {
+												public void run() {
+													try {
+														Thread.sleep(1000);
+													} catch (InterruptedException e) {}										
+												}
+											};
+											worker.start();
+											timer.start();
+											while(true) {
+												if(!timer.isAlive()) {
+													failures.add(new Config(window, branch, bypass, units, width, order, addr, renaming, load));
+													worker.interrupt();
+													failureNum++;
+													break;
+												}
+												if(!worker.isAlive()) {
+													if(control.val != null) {
+														results.put(new Config(window, branch, bypass, units, width, order, addr, renaming, load), control.val);
+													} else {
+														failures.add(new Config(window, branch, bypass, units, width, order, addr, renaming, load));
+														failureNum++;
+													}
+													timer.interrupt();
+													break;
+												}
 											}
-											catch (WrongAnswerException e) {
-												System.err.println("Incrorrect Answer: " + new Config(branch, bypass, units_w, width_w, order, addr_w, renaming).toString());
-											}
-											catch (Exception e) {
-												//System.err.println(e.getClass());
-												System.err.println(new Config(branch, bypass, units_w, width_w, order, addr_w, renaming));
-												e.printStackTrace(System.err);
-											}
-										}
-									};
-									Thread timer = new Thread() {
-										public void run() {
-											try {
-												Thread.sleep(500);
-											} catch (InterruptedException e) {}										
-										}
-									};
-									worker.start();
-									timer.start();
-									while(true) {
-										if(!timer.isAlive()) {
-											failures.add(new Config(branch, bypass, units, width, order, addr, renaming));
-											worker.interrupt();
-											failureNum++;
-											break;
-										}
-										if(!worker.isAlive()) {
-											if(control.val != null) {
-												results.put(new Config(branch, bypass, units, width, order, addr, renaming), control.val);
-											} else {
-												failures.add(new Config(branch, bypass, units, width, order, addr, renaming));
-												failureNum++;
-											}
-											timer.interrupt();
-											break;
 										}
 									}
 								}
@@ -236,6 +255,7 @@ public class Test {
 	static class WrongAnswerException extends Exception {}
 	
 	static class Config {
+		IssueWindow windowAlignment;
 		BranchPrediciton branchPrediction;
 		boolean reservationStationBypassEnabled;
 		int numberOfExecutionUnits;
@@ -243,13 +263,18 @@ public class Test {
 		boolean outOfOrderEnabled;
 		int virtualAddressNum;
 		boolean registerRenaming;
-		Config(BranchPrediciton branchPrediction,
+		int loadLimit;
+		Config(
+			IssueWindow windowAlignment,
+			BranchPrediciton branchPrediction,
 			boolean reservationStationBypassEnabled,
 			int numberOfExecutionUnits,
 			int superScalerWidth,
 			boolean outOfOrderEnabled,
 			int virtualAddressNum,
-			boolean registerRenaming) {
+			boolean registerRenaming,
+			int loadLimit) {
+			this.windowAlignment = windowAlignment;
 			this.branchPrediction = branchPrediction;
 			this.reservationStationBypassEnabled = reservationStationBypassEnabled;
 			this.numberOfExecutionUnits = numberOfExecutionUnits;
@@ -257,17 +282,20 @@ public class Test {
 			this.outOfOrderEnabled = outOfOrderEnabled;
 			this.virtualAddressNum = virtualAddressNum;
 			this.registerRenaming = registerRenaming;
+			this.loadLimit = loadLimit;
 		}
 		
 		public String toString() {
-			return String.format("Branch: %s, Bypass: %s, EUs: %d, Width:%d, OOO: %s, VirtAdresses: %d, Renaming: %s",
+			return String.format("Alignment: %s, Branch: %s, Bypass: %s, EUs: %d, Width:%d, OOO: %s, VirtAdresses: %d, Renaming: %s, LoadLimit %d",
+					windowAlignment.toString(),
 					branchPrediction.toString(),
 					Boolean.toString(reservationStationBypassEnabled),
 					numberOfExecutionUnits,
 					superScalerWidth,
 					Boolean.toString(outOfOrderEnabled),
 					virtualAddressNum,
-					Boolean.toString(registerRenaming)
+					Boolean.toString(registerRenaming),
+					loadLimit
 					);
 		}
 	}

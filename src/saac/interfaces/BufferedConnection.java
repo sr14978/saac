@@ -4,6 +4,8 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,6 +35,14 @@ public class BufferedConnection<T> implements VisibleComponentI, ClearableCompon
 			else
 				throw new ChannelException();
 		}
+		public <H extends T> void put(H[] vals) throws ChannelException {
+			if(buffer.size() + vals.length <= MAX_BUFFER_SIZE) {
+				for(H val : vals)
+					buffer.add(val);
+			} else {
+				throw new ChannelException();
+			}
+		}		
 		public boolean notFull() {
 			return buffer.size() < MAX_BUFFER_SIZE;
 		}
@@ -49,8 +59,34 @@ public class BufferedConnection<T> implements VisibleComponentI, ClearableCompon
 				return buffer.remove(0);
 			
 		}
+		@SuppressWarnings("unchecked")
+		public T[] pop(int popNum) throws ChannelException {
+			if(popNum < 1 || buffer.isEmpty() || buffer.size() < popNum)
+				throw new ChannelException();
+			else {
+				List<T> out = new ArrayList<T>();
+				for(int i = 0; i<popNum; i++) {
+					out.add(buffer.remove(0));
+				}
+				return out.toArray((T[]) java.lang.reflect.Array.newInstance(out.get(0).getClass(), 0));
+			}
+		}
+		@SuppressWarnings("unchecked")
+		public T[] popAll() throws ChannelException {
+			if(buffer.isEmpty())
+				throw new ChannelException();
+			else {
+				List<T> out = new ArrayList<T>(buffer);
+				buffer.clear();
+				return out.toArray((T[]) java.lang.reflect.Array.newInstance(out.get(0).getClass(), 0));
+			}
+			
+		}
 		public boolean ready() {
 			return !buffer.isEmpty();
+		}
+		public int getCount() {
+			return buffer.size();
 		}
 		public T peak() throws ChannelException {
 			if(buffer.isEmpty())
@@ -71,15 +107,7 @@ public class BufferedConnection<T> implements VisibleComponentI, ClearableCompon
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, -12);
 			DrawingHelper.drawArrow(gc, C_BOX_SIZE/2, 23);
 			DrawingHelper.drawBox(gc, "", 0, 0, C_BOX_SIZE, 20, Color.LIGHT_GRAY, Color.BLACK);
-			for(int i = 0; i< buffer.size(); i++) {
-				T value = buffer.get(i);
-				if(value instanceof int[]) {
-					int[] val = (int[]) value;
-					if(val.length > 3)
-						gc.drawString(val[0] + " " + val[1] + " " + val[2] + " " + val[3], 5, 15);
-				} else
-					gc.drawString(value.toString(), 5 + 20*i, 15);
-			}
+			gc.drawString(Arrays.deepToString(buffer.toArray(new int[0][])), 5, 15);
 		}
 	}
 

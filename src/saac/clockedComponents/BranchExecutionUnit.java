@@ -50,7 +50,7 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 			break;
 		*/
 		case JmpC:
-			if((inst.getParamB().get() & 1) == 1) {
+			if(inst.getParamB().get() != 0) {
 				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get() + inst.getParamC().get(), inst.getParamD().get(), true, inst.getParamC().get()-1);
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else

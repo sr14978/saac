@@ -50,12 +50,14 @@ public class Main extends JFrame {
 			JButton step1 = new JButton("Step 1");
 			JButton step8 = new JButton("Step 8");
 			JButton step64 = new JButton("Step 64");
+			JButton step512 = new JButton("Step 512");
 			
 			start.addActionListener(e -> start());
 			stop.addActionListener(e -> stop());
 			step1.addActionListener(e -> step(1));
 			step8.addActionListener(e -> step(8));
 			step64.addActionListener(e -> step(64));
+			step512.addActionListener(e -> step(512));
 			
 			JSlider slider = new JSlider();
 			slider.setMinimum(0);
@@ -68,6 +70,7 @@ public class Main extends JFrame {
 			toolbar.add(step1);
 			toolbar.add(step8);
 			toolbar.add(step64);
+			toolbar.add(step512);
 			toolbar.add(slider);
 			toolbar.add(rateLable);
 		}

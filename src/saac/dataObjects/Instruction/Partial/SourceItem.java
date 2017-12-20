@@ -28,6 +28,6 @@ public class SourceItem {
 		return register.isPresent()?register.get():data.get();
 	}
 	public String toString() {
-		return register.isPresent()?"v"+register.get():"d" + data.get();
+		return register.isPresent()?"r"+register.get():"d" + data.get();
 	}
 }

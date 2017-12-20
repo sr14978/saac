@@ -3,8 +3,10 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -31,9 +33,9 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	FListConnection<PartialInstruction>.Output instructionInput;
 	List<FConnection<CompleteInstruction>.Input> instructionOutputs;
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
-	static final int MaxSize = 16;
+	int MaxSize = Settings.RESERVATION_STATION_SIZE.get();
 	
-	TreeSet<PartialInstruction> partialBuffer = new TreeSet<>();
+	Set<PartialInstruction> partialBuffer = Collections.synchronizedSet(new TreeSet<>());
 	TreeSet<CompleteInstruction> completeBuffer = new TreeSet<>();
 		
 	public ReservationStation(FListConnection<PartialInstruction>.Output instructionInput,
@@ -62,7 +64,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	@Override
 	public void tick() throws Exception {
 		
-		if(instructionInput.ready() && partialBuffer.size() + completeBuffer.size() < MaxSize - Settings.SUPERSCALER_WIDTH) {
+		if(instructionInput.ready() && partialBuffer.size() + completeBuffer.size() + instructionInput.peak().length <= MaxSize) {
 			PartialInstruction[] insts = instructionInput.pop();
 			for(PartialInstruction inst : insts) {
 				partialBuffer.add(inst);

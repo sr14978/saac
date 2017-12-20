@@ -13,6 +13,7 @@ import saac.clockedComponents.Fetcher;
 import saac.clockedComponents.InstructionsSource;
 import saac.clockedComponents.LSReservationStation;
 import saac.clockedComponents.LoadStoreExecutionUnit;
+import saac.clockedComponents.Memory;
 import saac.clockedComponents.RegisterFile;
 import saac.clockedComponents.ReservationStation;
 import saac.clockedComponents.WritebackHandler;
@@ -22,6 +23,7 @@ import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.dataObjects.Instruction.Results.InstructionResult;
 import saac.dataObjects.Instruction.Results.MemoryResult;
 import saac.dataObjects.Instruction.Results.RegisterResult;
+import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentViewI;
@@ -30,7 +32,6 @@ import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.MultiFConnection;
 import saac.unclockedComponents.BranchPredictor;
-import saac.unclockedComponents.Memory;
 import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.Output;
 import saac.utils.RateUtils;
@@ -100,7 +101,7 @@ public class Saac implements ClockedComponentI {
 			);
 		
 		BranchPredictor branchPredictor = new BranchPredictor();
-		FListConnection<int[]> fetchToDecode = new FListConnection<>();
+		BufferedConnection<int[]> fetchToDecode = new BufferedConnection<>(Settings.SUPERSCALER_WIDTH);
 		FConnection<BranchResult> BRToFetch = new FConnection<>();
 
 		Fetcher fetcher = new Fetcher(clearables, branchPredictor,
@@ -241,9 +242,11 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(AUToWritebacks.get(0).createView(middleOffset - BOX_SIZE, boxHeight*c));
 			visibleComponents.add(LSToWriteback.createView(middleOffset, boxHeight*c));
 			visibleComponents.add(BRToWriteback.createView(middleOffset + BOX_SIZE, boxHeight*c));
+			visibleComponents.add(BRToFetch.createView(middleOffset + 2*BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(writebackHandler.createView(0, boxHeight*c));
 			c++;
+			visibleComponents.add(writeBackToRegisters.createView(0, boxHeight*c));
 			visibleComponents.add(sendStoresToMem.createView(middleOffset, boxHeight*c));
 			c++;
 			visibleComponents.add(memory.createView(middleOffset, boxHeight*c));

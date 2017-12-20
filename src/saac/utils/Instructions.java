@@ -120,9 +120,9 @@ public class Instructions {
 		put(Opcode.Muli, 2);
 		put(Opcode.Div, 10);
 		put(Opcode.Divi, 10);
-		put(Opcode.Ldma, 20);
-		put(Opcode.Stma, 20);
-		put(Opcode.Ldmi, 20);
-		put(Opcode.Stmi, 20);
+		put(Opcode.Ldma, /*20*/10);
+		put(Opcode.Stma, /*20*/10);
+		put(Opcode.Ldmi, /*20*/10);
+		put(Opcode.Stmi, /*20*/10);
 	}};
 }

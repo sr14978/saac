@@ -8,6 +8,7 @@ import java.util.List;
 import saac.Settings;
 import saac.Settings.BranchPrediciton;
 import saac.dataObjects.Instruction.Results.BranchResult;
+import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
@@ -22,7 +23,7 @@ import saac.utils.Output;
 
 public class Fetcher implements ClockedComponentI, VisibleComponentI {
 
-	FListConnection<int[]>.Input output;
+	BufferedConnection<int[]>.Input output;
 
 	FConnection<BranchResult>.Output fromBrUnit;
 	int programCounter = 0;
@@ -37,7 +38,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	BranchPredictor predictor;
 	
 	public Fetcher(List<ClearableComponent> clearables, BranchPredictor predictor,
-			FListConnection<int[]>.Input output,
+			BufferedConnection<int[]>.Input output,
 			FConnection<BranchResult>.Output fromBrUnit,
 			FConnection<Integer>.Input addrOutput,
 			FConnection<Boolean>.Input clearOutput,
@@ -82,7 +83,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	@Override
 	public void tock() throws Exception {
 		
-		if(!output.clear()) {
+		if(!output.empty()) {
 			return;
 		}
 		

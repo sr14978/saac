@@ -74,7 +74,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 			bufferOut = binaryOperator(inst, (x,y)->x<=y?1:0);
 			break;
 		case Eq:
-			bufferOut = binaryOperator(inst, (x,y)->x==y?1:0);
+			bufferOut = binaryOperator(inst, (x,y)->x.intValue()==y.intValue()?1:0);
 			break;
 		case Ldpc:
 			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), inst.getParamA().get() + inst.getParamB().get());
