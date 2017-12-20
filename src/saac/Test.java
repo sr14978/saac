@@ -160,7 +160,7 @@ public class Test {
 		float[][][][][][][][][] resultsArray = new float[Settings.IssueWindow.values().length][Settings.BranchPrediciton.values().length][2][7][7][2][5][2][6];
 		List<Config> failures = new ArrayList<>();
 		//int total = /*bypass*/2 * /*units*/7 * /*width*/7 * /*order*/2 * /*addr*/5 * /*renaming*/2 * /*load*/6 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
-		int total = /*bypass*/2 * /*units*/3 * /*width*/4 * /*order*/2 * /*addr*/4 * /*renaming*/2 * /*load*/5 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
+		int total = /*bypass*/2 * /*units*/3 * /*width*/4 * /*order*/2 * /*addr*/4 * /*renaming*/2 * /*load*/4 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
 		int runNum = 0;
 		int failureNum = 0;
 		long startTime = System.currentTimeMillis();
@@ -191,7 +191,8 @@ public class Test {
 									Settings.VIRTUAL_ADDRESS_NUM = addr;
 									for(boolean renaming : new boolean[] {false, true}) {
 										Settings.REGISTER_RENAMING_ENABLED = renaming;
-										for(int load = 1, l=0; load<=16; load*=2, l++) {
+										//for(int load = 1, l=0; load<=16; load*=2, l++) {
+										for(int load = 1, l=0; load<=4; load*=2, l++) {
 											Settings.LOAD_LIMIT = load;
 											runNum++;
 											final Control control = new Control();

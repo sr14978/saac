@@ -19,6 +19,7 @@ public class Instructions {
 		Sub, 	// Ssub	rI rJ rK -> rI = rJ - rK
 		Subi, 	// subi	rI rJ #n -> rI = rJ - #n
 		Mul, 	// mul	rI rJ rK -> rI = rJ * rK
+		vMul,	// mul	rI rJ rK -> rI[i] = rJ[i] * rK[i] for i in [0..3]
 		Muli, 	// muli	rI rJ #n -> rI = rJ * #n
 		Div, 	// div	rI rJ rK -> rI = rJ / rK
 		Divi, 	// divi	rI rJ #n -> rI = rJ / #n
@@ -65,6 +66,7 @@ public class Instructions {
 			case 0x16: return Not;
 			case 0x17: return Lteq;
 			case 0x18: return Eq;
+			case 0x19: return vMul;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -96,6 +98,7 @@ public class Instructions {
 			case Not: return 0x16;
 			case Lteq: return 0x17;
 			case Eq: return 0x18;
+			case vMul: return 0x19;
 			default: throw new NotImplementedException();
 			}
 		}

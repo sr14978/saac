@@ -253,35 +253,35 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					} else {
 						List<String> dependancies = new ArrayList<>();
 						if(inst.getParamA().isPresent() && inst.getParamA().get().isRegister()){
-							int val = inst.getParamA().get().getValue();
+							int val = inst.getParamA().get().getRegisterNumber();
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("A (" + val + ")");
 							} else {
-								inst.setParamA(SourceItem.Data(getArchitecturalRegisterValue(val)));
+								inst.setParamA(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
 							}
 						}
 						if(inst.getParamB().isPresent() && inst.getParamB().get().isRegister()){
-							int val = inst.getParamB().get().getValue();
+							int val = inst.getParamB().get().getRegisterNumber();
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("B (" + val + ")");
 							} else {
-								inst.setParamB(SourceItem.Data(getArchitecturalRegisterValue(val)));
+								inst.setParamB(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
 							}
 						}
 						if(inst.getParamC().isPresent() && inst.getParamC().get().isRegister()){
-							int val = inst.getParamC().get().getValue();
+							int val = inst.getParamC().get().getRegisterNumber();
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("C (" + val + ")");
 							} else {
-								inst.setParamC(SourceItem.Data(getArchitecturalRegisterValue(val)));
+								inst.setParamC(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
 							}
 						}
 						if(inst.getParamD().isPresent() && inst.getParamD().get().isRegister()){
-							int val = inst.getParamD().get().getValue();
+							int val = inst.getParamD().get().getRegisterNumber();
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("D (" + val + ")");
 							} else {
-								inst.setParamD(SourceItem.Data(getArchitecturalRegisterValue(val)));
+								inst.setParamD(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
 							}
 						}
 						
@@ -342,9 +342,9 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			if(o.isPresent()) {
 				SourceItem item = o.get();
 				if(item.isRegister()) {
-					Optional<Integer> value = getVirtualSlotValue(item.getValue());
+					Optional<Integer> value = getVirtualSlotValue(item.getRegisterNumber());
 					if(value.isPresent()) {
-						setter.accept(SourceItem.Data(value.get()));
+						setter.accept(SourceItem.ScalarData(value.get()));
 					}
 				}
 			}
@@ -365,9 +365,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		if(inst.getOpcode().equals(Opcode.Ldma)|| inst.getOpcode().equals(Opcode.Ldmi)) {
 			final Optional<Integer> val;
 			if(inst.getOpcode().equals(Opcode.Ldma)) {
-				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getValue());				
+				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue());				
 			} else if(inst.getOpcode().equals(Opcode.Ldmi)){
-				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getValue() + inst.getParamB().get().getValue());
+				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue()
+						+ inst.getParamB().get().getDataValue().getScalarValue());
 			} else {
 				throw new RuntimeException("Must be either ldma or ldmi");
 			}
@@ -379,10 +380,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		} else if(inst.getOpcode().equals(Opcode.Stma)|| inst.getOpcode().equals(Opcode.Stmi)){
 			if(inst.getOpcode().equals(Opcode.Stma)) {
 				memory.addLatestMemoryAddressWrite(
-						inst.getParamB().get().getValue(), inst.getVirtualNumber());
+						inst.getParamB().get().getDataValue().getScalarValue(), inst.getVirtualNumber());
 			} else if(inst.getOpcode().equals(Opcode.Stmi)){
 				memory.addLatestMemoryAddressWrite(
-						inst.getParamB().get().getValue() + inst.getParamC().get().getValue(),
+						inst.getParamB().get().getDataValue().getScalarValue()
+						+ inst.getParamC().get().getDataValue().getScalarValue(),
 						inst.getVirtualNumber());
 			} else {
 				throw new RuntimeException("Must be either ldma or ldmi");
@@ -440,7 +442,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				if(Settings.REGISTER_RENAMING_ENABLED) {
 					RatItem item = getLatestRegister(i.getValue());
 					if(item.isArchitectural()) {
-						return Optional.of(SourceItem.Data(getArchitecturalRegisterValue(item.getValue())));
+						return Optional.of(SourceItem.ScalarData(getArchitecturalRegisterValue(item.getValue())));
 					} else {
 						return Optional.of(SourceItem.Register(item.getValue()));
 					}
@@ -448,7 +450,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					return Optional.of(SourceItem.Register(i.getValue()));
 				}
 			} else if(i.isDataValue()) {
-				return Optional.of(SourceItem.Data((i.getValue())));
+				return Optional.of(SourceItem.ScalarData((i.getValue())));
 			} else {
 				throw new NotImplementedException();
 			}
@@ -479,7 +481,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	}
 	
 	private int getArchitecturalRegisterValue(int registerNumber) {
-		return registerFile.getRegisterValue(registerNumber);
+		return registerFile.getScalarRegisterValue(registerNumber);
 	}
 
 	private boolean isRegisterDirty(int registerNumber) {

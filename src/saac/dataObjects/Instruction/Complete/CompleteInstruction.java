@@ -4,27 +4,28 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import saac.dataObjects.Instruction.Instruction;
+import saac.dataObjects.Instruction.Value;
 import saac.dataObjects.Instruction.Partial.DestItem;
 import saac.dataObjects.Instruction.Partial.PartialInstruction;
 import saac.dataObjects.Instruction.Partial.SourceItem;
 import saac.utils.Instructions.Opcode;
 
-public class CompleteInstruction extends Instruction<Optional<DestItem>, Optional<Integer>>{
+public class CompleteInstruction extends Instruction<Optional<DestItem>, Optional<Value>>{
 		
 	private final int instructionNumber;
 	private final Opcode opcode;
 
 	private final Optional<DestItem> dest; 
-	private Optional<Integer> paramA;
-	private Optional<Integer> paramB;
-	private Optional<Integer> paramC;
-	private Optional<Integer> paramD;
+	private Optional<Value> paramA;
+	private Optional<Value> paramB;
+	private Optional<Value> paramC;
+	private Optional<Value> paramD;
 	
 	public CompleteInstruction(int instructionNumber, Opcode opcode, Optional<DestItem> dest,
-			Optional<Integer> paramA,
-			Optional<Integer> paramB,
-			Optional<Integer> paramC,
-			Optional<Integer> paramD) {
+			Optional<Value> paramA,
+			Optional<Value> paramB,
+			Optional<Value> paramC,
+			Optional<Value> paramD) {
 		this.instructionNumber = instructionNumber;
 		this.opcode = opcode;
 		this.dest = dest;
@@ -44,13 +45,13 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		setParam(p.getParamD(), this::setParamD);
 	}
 	
-	private void setParam(Optional<SourceItem> param, Consumer<Optional<Integer>> setter) throws Exception {
+	private void setParam(Optional<SourceItem> param, Consumer<Optional<Value>> setter) throws Exception {
 		if(!param.isPresent()) {
 			setter.accept(Optional.empty());
 		} else {
 			SourceItem i = param.get();
 			if(i.isDataValue()) {
-				setter.accept(Optional.of(i.getValue()));
+				setter.accept(Optional.of(i.getDataValue()));
 			} else {
 				throw new Exception("Instruction not Complete");
 			}
@@ -69,35 +70,35 @@ public class CompleteInstruction extends Instruction<Optional<DestItem>, Optiona
 		return dest;
 	}
 	
-	public Optional<Integer> getParamA() {
+	public Optional<Value> getParamA() {
 		return paramA;
 	}
 
-	public Optional<Integer> getParamB() {
+	public Optional<Value> getParamB() {
 		return paramB;
 	}
 
-	public Optional<Integer> getParamC() {
+	public Optional<Value> getParamC() {
 		return paramC;
 	}
 	
-	public Optional<Integer> getParamD() {
+	public Optional<Value> getParamD() {
 		return paramD;
 	}
 	
-	private void setParamA(Optional<Integer> a) {
+	private void setParamA(Optional<Value> a) {
 		paramA = a;
 	}
 
-	private void setParamB(Optional<Integer> b) {
+	private void setParamB(Optional<Value> b) {
 		paramB = b;
 	}
 
-	private void setParamC(Optional<Integer> c) {
+	private void setParamC(Optional<Value> c) {
 		paramC = c;
 	}
 	
-	public void setParamD(Optional<Integer> d) {
+	public void setParamD(Optional<Value> d) {
 		paramD = d;
 	}
 	

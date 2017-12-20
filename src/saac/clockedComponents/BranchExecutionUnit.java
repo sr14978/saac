@@ -50,14 +50,20 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 			break;
 		*/
 		case JmpC:
-			if(inst.getParamB().get() != 0) {
-				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get() + inst.getParamC().get(), inst.getParamD().get(), true, inst.getParamC().get()-1);
+			if(inst.getParamB().get().getScalarValue() != 0) {
+				bufferOut = new BranchResult(inst.getVirtualNumber(),
+						inst.getParamA().get().getScalarValue() + inst.getParamC().get().getScalarValue(),
+						inst.getParamD().get().getScalarValue(),
+						true, inst.getParamC().get().getScalarValue()-1);
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamC().get(), inst.getParamD().get(), false, inst.getParamC().get()-1);
+				bufferOut = new BranchResult(inst.getVirtualNumber(),
+						inst.getParamC().get().getScalarValue(),
+						inst.getParamD().get().getScalarValue(),
+						false, inst.getParamC().get().getScalarValue()-1);
 			break;
 		case Ln:
-			bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get(), true, true, -1);
+			bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get().getScalarValue(), true, true, -1);
 			break;
 		default:
 			throw new NotImplementedException();

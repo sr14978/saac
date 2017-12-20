@@ -47,7 +47,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 		CompleteInstruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Ldc:
-			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), inst.getParamA().get());
+			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), inst.getParamA().get().getScalarValue());
 			break;
 		case Add:
 		case Addi:
@@ -68,7 +68,9 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 			bufferOut = binaryOperator(inst, (x,y)->x|y);
 			break;
 		case Not:
-			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), ~inst.getParamA().get());
+			bufferOut = new RegisterResult(inst.getVirtualNumber(),
+					inst.getDest().get(),
+					~inst.getParamA().get().getScalarValue());
 			break;
 		case Lteq:
 			bufferOut = binaryOperator(inst, (x,y)->x<=y?1:0);
@@ -77,7 +79,9 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 			bufferOut = binaryOperator(inst, (x,y)->x.intValue()==y.intValue()?1:0);
 			break;
 		case Ldpc:
-			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), inst.getParamA().get() + inst.getParamB().get());
+			bufferOut = new RegisterResult(inst.getVirtualNumber(),
+					inst.getDest().get(),
+					inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue());
 			break;
 		case Nop:
 			bufferOut = new BlankResult(inst.getVirtualNumber());
@@ -97,7 +101,9 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 	}
 
 	private static RegisterResult binaryOperator(CompleteInstruction inst, BiFunction<Integer, Integer, Integer> f) {
-		return new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), f.apply(inst.getParamA().get(), inst.getParamB().get()));
+		return new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
+				f.apply(inst.getParamA().get().getScalarValue(),
+				inst.getParamB().get().getScalarValue()));
 	}
 	
 	@Override

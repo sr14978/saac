@@ -19,11 +19,11 @@ import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 
 public class RegisterFile implements ClockedComponentI, VisibleComponentI, ClearableComponent {
-
-	private final static int ArchitecturalRegistersNum = 12;
+	
+	private final static int ArchitecturalRegistersNum = 16;
 	private int[] architecturalRegisters = new int[ArchitecturalRegistersNum];
 	private boolean[] architecturalDirties = new boolean[ArchitecturalRegistersNum];
-	
+	private static int VectorWidth = 4;
 	List<List<RatItem>> RAT = new ArrayList<List<RatItem>>();
 	
 	FListConnection<RegisterResult>.Output writeBackToRegisters;
@@ -45,12 +45,29 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 		architecturalDirties[registerNumber] = value;
 	}
 	
-	public int getRegisterValue(int registerNumber) {
+	public int getScalarRegisterValue(int registerNumber) {
 		return architecturalRegisters[registerNumber];
 	}
 		
-	public void setRegisterValue(int registerNumber, int value) {
+	public void setScalarRegisterValue(int registerNumber, int value) {
 		architecturalRegisters[registerNumber] = value;
+	}
+	
+	public int[] getVectorRegisterValue(int registerNumber) {
+		assert registerNumber + VectorWidth < ArchitecturalRegistersNum;
+		return new int[] {
+				architecturalRegisters[registerNumber],
+				architecturalRegisters[registerNumber+1],
+				architecturalRegisters[registerNumber+2],
+				architecturalRegisters[registerNumber+3]
+			};
+	}
+	
+	public void setVectorRegisterValue(int registerNumber, int[] value) {
+		assert value != null && value.length == VectorWidth && registerNumber + VectorWidth < ArchitecturalRegistersNum; 
+		for(int i = 0; i<4; i++) {
+			architecturalRegisters[registerNumber+i] = value[i];
+		}
 	}
 
 	public RatItem getLatestRegister(int registerNumber) {
@@ -105,7 +122,7 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 			RegisterResult[] updates = writeBackToRegisters.pop();
 			for(RegisterResult update : updates) {
 				int archRegNum = update.getTarget().getRegNumber();
-				setRegisterValue(archRegNum, update.getValue());
+				setScalarRegisterValue(archRegNum, update.getValue());
 				removeRatEntry(archRegNum, update.getVirtualNumber());
 				if(!Settings.REGISTER_RENAMING_ENABLED) {
 					setDirty(archRegNum, false);

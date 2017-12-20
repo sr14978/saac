@@ -109,8 +109,8 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	public static void fillInSingleParamWithResult(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter,  RegisterResult result) {
 		if(getter.get().isPresent()) {
 			SourceItem p = getter.get().get();
-			if(p.isRegister() && p.getValue() == result.getTarget().getVirtualRegNumber()) {
-				setter.accept(SourceItem.Data(result.getValue()));
+			if(p.isRegister() && p.getRegisterNumber() == result.getTarget().getVirtualRegNumber()) {
+				setter.accept(SourceItem.ScalarData(result.getValue()));
 			}
 		}
 	}
