@@ -5,6 +5,7 @@ import static saac.utils.DrawingHelper.BOX_SIZE;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import saac.Saac;
@@ -104,7 +105,12 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			} else if(res instanceof RegisterResult) {
 				Saac.InstructionCounter++;
 				RegisterResult rr = (RegisterResult) res;
-				Output.info.println(String.format("%d is written back to r%d", rr.getValue(), rr.getTarget().getRegNumber()));
+				Output.info.println(String.format("%s is written back to r%d",
+						rr.getValue().isScalar()?
+								Integer.toString(rr.getValue().getScalarValue()):
+								Arrays.toString(rr.getValue().getVectorValues()
+							),
+						rr.getTarget().getRegNumber()));
 				regResults.add(rr);
 			} else if(res instanceof StopResult) {
 				stop = true;

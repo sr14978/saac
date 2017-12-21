@@ -122,7 +122,11 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 			RegisterResult[] updates = writeBackToRegisters.pop();
 			for(RegisterResult update : updates) {
 				int archRegNum = update.getTarget().getRegNumber();
-				setScalarRegisterValue(archRegNum, update.getValue());
+				if(update.getValue().isScalar()) {
+					setScalarRegisterValue(archRegNum, update.getValue().getScalarValue());
+				} else {
+					setVectorRegisterValue(archRegNum, update.getValue().getVectorValues());
+				}
 				removeRatEntry(archRegNum, update.getVirtualNumber());
 				if(!Settings.REGISTER_RENAMING_ENABLED) {
 					setDirty(archRegNum, false);

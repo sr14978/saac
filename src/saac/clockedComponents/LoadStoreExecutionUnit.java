@@ -8,6 +8,7 @@ import java.util.List;
 
 import saac.Settings;
 import saac.dataObjects.DelayQueueItem;
+import saac.dataObjects.Instruction.Value;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Results.InstructionResult;
 import saac.dataObjects.Instruction.Results.MemoryResult;
@@ -59,7 +60,7 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		switch(inst.getOpcode()) {
 		case Ldma:
 			res = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
-					memory.getWord(inst.getParamA().get().getScalarValue()));
+					Value.Scalar(memory.getWord(inst.getParamA().get().getScalarValue())));
 			delay = Instructions.InstructionDelay.get(inst.getOpcode());
 			break;
 		case Stma:
@@ -71,7 +72,7 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		case Ldmi:
 			res = new RegisterResult(inst.getVirtualNumber(),
 					inst.getDest().get(),
-					memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue()));
+					Value.Scalar(memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue())));
 			delay = Instructions.InstructionDelay.get(inst.getOpcode());
 			break;
 		case Stmi:

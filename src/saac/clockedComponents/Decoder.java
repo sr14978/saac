@@ -191,6 +191,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						dirtyDest = false;
 						usageA = usageB = usageC = usageD = Usage.Null;
 						break;
+					case vLdc:
+						dirtyDest = true;
+						usageA = usageB = usageC = usageD = Usage.Data;
+						break;
 					default:
 						throw new NotImplementedException();
 					}
@@ -347,21 +351,28 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	}
 	
 	private void tryGrabbingVirtualRegisterValues(PartialInstruction inst) {
-		tryGrabbingVirtualRegisterValue(inst::getParamA, inst::setParamA);
-		tryGrabbingVirtualRegisterValue(inst::getParamB, inst::setParamB);
-		tryGrabbingVirtualRegisterValue(inst::getParamC, inst::setParamC);
-		tryGrabbingVirtualRegisterValue(inst::getParamD, inst::setParamD);
+		tryGrabbingVirtualRegisterValue(inst::getParamA, inst::setParamA, isVectorInstuction(inst.getOpcode()));
+		tryGrabbingVirtualRegisterValue(inst::getParamB, inst::setParamB, isVectorInstuction(inst.getOpcode()));
+		tryGrabbingVirtualRegisterValue(inst::getParamC, inst::setParamC, isVectorInstuction(inst.getOpcode()));
+		tryGrabbingVirtualRegisterValue(inst::getParamD, inst::setParamD, isVectorInstuction(inst.getOpcode()));
 	}
 
-	private void tryGrabbingVirtualRegisterValue(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter) {
+	private void tryGrabbingVirtualRegisterValue(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter, boolean isVector) {
 		if(Settings.REGISTER_RENAMING_ENABLED) {
 			Optional<SourceItem> o = getter.get();
 			if(o.isPresent()) {
 				SourceItem item = o.get();
 				if(item.isRegister()) {
-					Optional<Integer> value = getVirtualSlotValue(item.getRegisterNumber());
-					if(value.isPresent()) {
-						setter.accept(SourceItem.ScalarData(value.get()));
+					if(isVector) {
+						Optional<int[]> value = getVectorVirtualSlotValue(item.getRegisterNumber());
+						if(value.isPresent()) {
+							setter.accept(SourceItem.VectorData(value.get()));
+						}
+					} else {
+						Optional<Integer> value = getScalarVirtualSlotValue(item.getRegisterNumber());
+						if(value.isPresent()) {
+							setter.accept(SourceItem.ScalarData(value.get()));
+						}
 					}
 				}
 			}
@@ -416,17 +427,28 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		return reorderBuffer.inReorderBuffer(virtualNumber);
 	}
 	
-	private Optional<Integer> getVirtualSlotValue(int virtualNumber) {
+	private Optional<Integer> getScalarVirtualSlotValue(int virtualNumber) {
 		InstructionResult res = reorderBuffer.getVirtualSlotValue(virtualNumber);
 		if(res == null) {
 			return Optional.empty();
 		} else if(res instanceof RegisterResult) {
-			return Optional.of(((RegisterResult) res).getValue());
+			return Optional.of(((RegisterResult) res).getValue().getScalarValue());
 		} else {
 			throw new RuntimeException("Getting value of a non register result");
 		}
 	}
 
+	private Optional<int[]> getVectorVirtualSlotValue(int virtualNumber) {
+		InstructionResult res = reorderBuffer.getVirtualSlotValue(virtualNumber);
+		if(res == null) {
+			return Optional.empty();
+		} else if(res instanceof RegisterResult) {
+			return Optional.of(((RegisterResult) res).getValue().getVectorValues());
+		} else {
+			throw new RuntimeException("Getting value of a non register result");
+		}
+	}
+	
 	private Optional<Item> formatParam(int data, Usage usage) {
 		switch(usage) {
 		case Null:
@@ -558,6 +580,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Lteq:
 			case Eq:
 			case Ldpc:
+			case vLdc:
 				if(outputAU.clear()) {
 					if(ReservationStation.isAllParametersPresent(inst)
 							&& isAUReservationStationEmpty.get()

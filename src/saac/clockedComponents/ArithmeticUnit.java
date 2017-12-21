@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.util.function.BiFunction;
 
 import saac.Settings;
+import saac.dataObjects.Instruction.Value;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Results.BlankResult;
 import saac.dataObjects.Instruction.Results.InstructionResult;
@@ -47,7 +48,9 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 		CompleteInstruction inst = instructionIn.pop();
 		switch(inst.getOpcode()) {
 		case Ldc:
-			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(), inst.getParamA().get().getScalarValue());
+			bufferOut = new RegisterResult(inst.getVirtualNumber(),
+					inst.getDest().get(),
+					Value.Scalar(inst.getParamA().get().getScalarValue()));
 			break;
 		case Add:
 		case Addi:
@@ -70,7 +73,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 		case Not:
 			bufferOut = new RegisterResult(inst.getVirtualNumber(),
 					inst.getDest().get(),
-					~inst.getParamA().get().getScalarValue());
+					Value.Scalar(~inst.getParamA().get().getScalarValue()));
 			break;
 		case Lteq:
 			bufferOut = binaryOperator(inst, (x,y)->x<=y?1:0);
@@ -81,7 +84,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 		case Ldpc:
 			bufferOut = new RegisterResult(inst.getVirtualNumber(),
 					inst.getDest().get(),
-					inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue());
+					Value.Scalar(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue()));
 			break;
 		case Nop:
 			bufferOut = new BlankResult(inst.getVirtualNumber());
@@ -93,6 +96,15 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 		case Divi:
 			bufferOut = binaryOperator(inst, (x,y)->x/y);;
 			break;
+		case vLdc:
+			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
+					Value.Vector(new int[] {
+							inst.getParamA().get().getScalarValue(),
+							inst.getParamB().get().getScalarValue(),
+							inst.getParamC().get().getScalarValue(),
+							inst.getParamD().get().getScalarValue()
+							}));
+			break;
 		default:
 			throw new NotImplementedException();
 		}
@@ -102,8 +114,7 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 
 	private static RegisterResult binaryOperator(CompleteInstruction inst, BiFunction<Integer, Integer, Integer> f) {
 		return new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
-				f.apply(inst.getParamA().get().getScalarValue(),
-				inst.getParamB().get().getScalarValue()));
+				Value.Scalar(f.apply(inst.getParamA().get().getScalarValue(), inst.getParamB().get().getScalarValue())));
 	}
 	
 	@Override

@@ -1,5 +1,6 @@
 package saac.dataObjects.Instruction;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 public class Value {
@@ -29,5 +30,8 @@ public class Value {
 	}
 	public int[] getVectorValues() {
 		return vector.get();
+	}
+	public String toString() {
+		return scalar.isPresent()?scalar.get().toString():Arrays.toString(vector.get());
 	}
 }

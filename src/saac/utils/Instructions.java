@@ -118,11 +118,13 @@ public class Instructions {
 		put(Opcode.Ldpc, 0);
 		put(Opcode.Stop, 0);
 		put(Opcode.Ldc, 0);
+		put(Opcode.vLdc, 0);
 		put(Opcode.Add, 0);
 		put(Opcode.Addi, 0);
 		put(Opcode.Sub, 0);
 		put(Opcode.Subi, 0);
 		put(Opcode.Mul, 2);
+		put(Opcode.vMul, 2);
 		put(Opcode.Muli, 2);
 		put(Opcode.Div, 10);
 		put(Opcode.Divi, 10);

@@ -110,7 +110,11 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 		if(getter.get().isPresent()) {
 			SourceItem p = getter.get().get();
 			if(p.isRegister() && p.getRegisterNumber() == result.getTarget().getVirtualRegNumber()) {
-				setter.accept(SourceItem.ScalarData(result.getValue()));
+				if(result.getValue().isScalar()) {
+					setter.accept(SourceItem.ScalarData(result.getValue().getScalarValue()));
+				} else {
+					setter.accept(SourceItem.VectorData(result.getValue().getVectorValues()));
+				}
 			}
 		}
 	}
