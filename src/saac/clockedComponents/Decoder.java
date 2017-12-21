@@ -259,7 +259,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						List<String> dependancies = new ArrayList<>();
 						if(inst.getParamA().isPresent() && inst.getParamA().get().isRegister()){
 							int val = inst.getParamA().get().getRegisterNumber();
-							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("A (" + val + ")");
 							} else {
 								if(isVectorInstuction(inst.getOpcode())) {
@@ -271,7 +272,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						}
 						if(inst.getParamB().isPresent() && inst.getParamB().get().isRegister()){
 							int val = inst.getParamB().get().getRegisterNumber();
-							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("B (" + val + ")");
 							} else {
 								if(isVectorInstuction(inst.getOpcode())) {
@@ -283,7 +285,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						}
 						if(inst.getParamC().isPresent() && inst.getParamC().get().isRegister()){
 							int val = inst.getParamC().get().getRegisterNumber();
-							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("C (" + val + ")");
 							} else {
 								if(isVectorInstuction(inst.getOpcode())) {
@@ -295,7 +298,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						}
 						if(inst.getParamD().isPresent() && inst.getParamD().get().isRegister()){
 							int val = inst.getParamD().get().getRegisterNumber();
-							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
+							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("D (" + val + ")");
 							} else {
 								if(isVectorInstuction(inst.getOpcode())) {
@@ -307,7 +311,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						}
 						
 						if(inst.getDest().isPresent()) {
-							if(isRegisterDirty(inst.getDest().get().getRegNumber())) {
+							if((isVectorInstuction(inst.getOpcode())
+									&& isVectorRegisterDirty(inst.getDest().get().getRegNumber(), dirtiesInWindow))
+									|| (!isVectorInstuction(inst.getOpcode())
+											&& isScalarRegisterDirty(inst.getDest().get().getRegNumber(), dirtiesInWindow))) {
 								dependancies.add("Dest (" + inst.getDest().get().getRegNumber() + ")");
 							}
 							dirtiesInWindow.add(inst.getDest().get().getRegNumber());
@@ -326,7 +333,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							}
 						}
 						if(inst.getDest().isPresent()) {
-							setRegisterDirty(inst.getDest().get().getRegNumber());
+							if(isVectorInstuction(inst.getOpcode())) {
+								setVectorRegisterDirty(inst.getDest().get().getRegNumber());
+							} else {
+								setScalarRegisterDirty(inst.getDest().get().getRegNumber());
+							}
 						}
 						
 						readyInstructions.add(addMemoryDependancies(inst));
@@ -541,12 +552,26 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		return registerFile.getVectorRegisterValue(registerNumber);
 	}
 
-	private boolean isRegisterDirty(int registerNumber) {
-		return registerFile.isDirty(registerNumber);
+	private boolean isScalarRegisterDirty(int registerNumber, List<Integer> dirtiesInWindow) {
+		return registerFile.isDirty(registerNumber) || dirtiesInWindow.contains(registerNumber);
 	}
 	
-	private void setRegisterDirty(int registerNumber) {
+	private boolean isVectorRegisterDirty(int registerNumber, List<Integer> dirtiesInWindow) {
+		return isScalarRegisterDirty(registerNumber, dirtiesInWindow)
+				|| isScalarRegisterDirty(registerNumber+1, dirtiesInWindow)
+				|| isScalarRegisterDirty(registerNumber+2, dirtiesInWindow)
+				|| isScalarRegisterDirty(registerNumber+3, dirtiesInWindow);
+	}
+	
+	private void setScalarRegisterDirty(int registerNumber) {
 		registerFile.setDirty(registerNumber, true);
+	}
+	
+	private void setVectorRegisterDirty(int registerNumber) {
+		setScalarRegisterDirty(registerNumber);
+		setScalarRegisterDirty(registerNumber+1);
+		setScalarRegisterDirty(registerNumber+2);
+		setScalarRegisterDirty(registerNumber+3);
 	}
 	
 	@Override

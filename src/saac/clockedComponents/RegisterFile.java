@@ -129,7 +129,15 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 				}
 				removeRatEntry(archRegNum, update.getVirtualNumber());
 				if(!Settings.REGISTER_RENAMING_ENABLED) {
-					setDirty(archRegNum, false);
+					if(update.getValue().isVector()) {
+						setDirty(archRegNum, false);
+						setDirty(archRegNum+1, false);
+						setDirty(archRegNum+2, false);
+						setDirty(archRegNum+3, false);
+					} else {
+						setDirty(archRegNum, false);
+					}
+					
 				}
 			}
 		}
