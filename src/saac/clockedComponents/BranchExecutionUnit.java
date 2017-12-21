@@ -15,7 +15,7 @@ import saac.interfaces.ChannelException;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Output;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import saac.utils.NotImplementedException;
 
 public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	private FConnection<CompleteInstruction>.Output instructionIn;

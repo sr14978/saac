@@ -1,0 +1,4 @@
+ldc r0 42
+stma r0 10
+ldma r1 10
+stop

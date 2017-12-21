@@ -23,7 +23,7 @@ import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import saac.utils.NotImplementedException;
 
 public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	int LDLimit = Settings.LOAD_LIMIT;

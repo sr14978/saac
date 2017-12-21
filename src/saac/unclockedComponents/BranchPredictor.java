@@ -12,7 +12,7 @@ import saac.interfaces.ComponentViewI;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.RateUtils;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import saac.utils.NotImplementedException;
 
 public class BranchPredictor implements VisibleComponentI{
 	

@@ -3,8 +3,6 @@ package saac.utils;
 import java.util.HashMap;
 import java.util.Map;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 
 public class Instructions {
 	
@@ -115,7 +113,7 @@ public class Instructions {
 			}
 		}
 	}
-	public static Map<Opcode, Integer> InstructionDelay = new HashMap<Opcode, Integer>(){
+	public static Map<Opcode, Integer> InstructionDelay = new HashMap<Opcode, Integer>() {
 		private static final long serialVersionUID = 1L;
 	{
 		put(Opcode.Nop, 0);

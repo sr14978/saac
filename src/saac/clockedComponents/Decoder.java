@@ -37,7 +37,7 @@ import saac.unclockedComponents.ReorderBuffer;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions.Opcode;
 import saac.utils.Output;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import saac.utils.NotImplementedException;;
 
 public class Decoder implements ClearableComponent, ClockedComponentI, VisibleComponentI {
 	enum Usage {ScalarReg, VectorReg, Data, Null};

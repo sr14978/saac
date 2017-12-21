@@ -1,0 +1,17 @@
+ldc r0 0
+ldc r1 0
+ldc r2 0x0
+ldc r3 0x100
+ldc r4 0x200
+vldmi r8 r2 r0
+vldmi r12 r3 r0
+vmul r8 r8 r12
+vstmi r8 r4 r0
+vsum r8 r8
+add r1 r1 r8
+addi r0 r0 4
+ldc r6 0x100
+eq r6 r6 r0
+jmpc 1 r6
+jmp -11
+stop

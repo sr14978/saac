@@ -21,7 +21,7 @@ import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
 import saac.utils.Instructions;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import saac.utils.NotImplementedException;;
 
 public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 

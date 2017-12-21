@@ -1,0 +1,21 @@
+ldc r0 1
+ldc r1 0
+
+ldc r2 1
+ldc r3 1
+
+ldc r4 1
+ldc r5 1
+
+lteq r6 r0 r1
+eq r7 r2 r3
+
+lteq r8 r4 r5
+
+and r9 r6 r7
+or r10 r8 r8
+not r11 r10
+
+jmpc -1 r10
+
+stop

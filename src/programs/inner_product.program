@@ -1,0 +1,16 @@
+ldc r0 0
+ldc r1 0
+ldc r2 0x10
+ldc r3 0x20
+ldc r7 0x30
+ldmi r4 r2 0
+ldmi r5 r3 0
+mul r4 r4 r5
+stmi r4 r7 0
+add r1 r1 r4
+addi r0 r0 1
+subi r6 r0 10
+jmpz 1 r6
+jmp -9
+addi r1 r1 0
+jmp -2
