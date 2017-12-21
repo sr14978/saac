@@ -102,10 +102,10 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		for(int i = 0; i<instructionInputBuff.length; i++) {
 			int[] inst = instructionInputBuff[i];
 			inInsts.remove(inst);
-			inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], inst[5], 0 }; 
+			inst = new int[] {inst[0], inst[1], inst[2], inst[3], inst[4], inst[5], inst[6], 0}; 
 			switch(Opcode.fromInt(inst[0])) {
 			case Jmp:
-				programCounter = inst[5] + 1 + inst[1];
+				programCounter = inst[6] + 1 + inst[1];
 				Output.jumping_info.println("Fetch is jumping");
 				clearOutput.put(true);
 				inInsts.clear();
@@ -117,7 +117,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				inInsts.clear();
 				break insts;
 			case JmpC:
-				inst[4] = inst[5] + 1;
+				inst[4] = inst[6] + 1;
 				inst[3] = inst[2];
 				inst[2] = inst[1];
 				inst[6] = instructionCounter++;
@@ -145,7 +145,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				outInsts.add(inst);
 				halt = true;
 				haltingInstruction = inst[6]; //instruction number
-				break insts;
+				break insts;	
 			case Ldpc:
 				inst[3] = inst[5] + 1;
 			default:

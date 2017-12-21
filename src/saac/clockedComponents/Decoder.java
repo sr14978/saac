@@ -126,6 +126,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					case Add:
 					case Sub:
 					case Mul:
+					case vMul:
 					case Div:
 					case Ldmi:
 					case And:
@@ -257,7 +258,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("A (" + val + ")");
 							} else {
-								inst.setParamA(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
+								if(isVectorInstuction(inst.getOpcode())) {
+									inst.setParamA(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
+								} else {
+									inst.setParamA(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
+								}
 							}
 						}
 						if(inst.getParamB().isPresent() && inst.getParamB().get().isRegister()){
@@ -265,7 +270,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("B (" + val + ")");
 							} else {
-								inst.setParamB(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
+								if(isVectorInstuction(inst.getOpcode())) {
+									inst.setParamB(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
+								} else {
+									inst.setParamB(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
+								}
 							}
 						}
 						if(inst.getParamC().isPresent() && inst.getParamC().get().isRegister()){
@@ -273,7 +282,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("C (" + val + ")");
 							} else {
-								inst.setParamC(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
+								if(isVectorInstuction(inst.getOpcode())) {
+									inst.setParamC(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
+								} else {
+									inst.setParamC(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
+								}
 							}
 						}
 						if(inst.getParamD().isPresent() && inst.getParamD().get().isRegister()){
@@ -281,7 +294,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							if(isRegisterDirty(val) || dirtiesInWindow.contains(val)) {
 								dependancies.add("D (" + val + ")");
 							} else {
-								inst.setParamD(SourceItem.ScalarData(getArchitecturalRegisterValue(val)));
+								if(isVectorInstuction(inst.getOpcode())) {
+									inst.setParamD(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
+								} else {
+									inst.setParamD(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
+								}
 							}
 						}
 						
@@ -425,24 +442,38 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	
 	private PartialInstruction maybeRenameInstruction(EmptyInstruction inst) throws Exception {
 		
-		final Optional<SourceItem> a = renameParam(inst.getParamA());
-		final Optional<SourceItem> b = renameParam(inst.getParamB());
-		final Optional<SourceItem> c = renameParam(inst.getParamC());
-		final Optional<SourceItem> d = renameParam(inst.getParamD());
+		final Optional<SourceItem> a = renameParam(inst.getParamA(), isVectorInstuction(inst.getOpcode()));
+		final Optional<SourceItem> b = renameParam(inst.getParamB(), isVectorInstuction(inst.getOpcode()));
+		final Optional<SourceItem> c = renameParam(inst.getParamC(), isVectorInstuction(inst.getOpcode()));
+		final Optional<SourceItem> d = renameParam(inst.getParamD(), isVectorInstuction(inst.getOpcode()));
 		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getVirtualNumber());
 		
 		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c, d);
 		
 	}
 
-	private Optional<SourceItem> renameParam(Optional<Item> o) throws Exception {
+	private boolean isVectorInstuction(Opcode op) {
+		switch(op) {
+		case vMul:
+		case vLdc:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	private Optional<SourceItem> renameParam(Optional<Item> o, boolean isVector) throws Exception {
 		if(o.isPresent()) {
 			Item i = o.get();
 			if(i.isRegisterNum()) {
 				if(Settings.REGISTER_RENAMING_ENABLED) {
 					RatItem item = getLatestRegister(i.getValue());
 					if(item.isArchitectural()) {
-						return Optional.of(SourceItem.ScalarData(getArchitecturalRegisterValue(item.getValue())));
+						if(isVector) {
+							return Optional.of(SourceItem.VectorData(getVectorArchitecturalRegisterValue(item.getValue())));
+						} else {
+							return Optional.of(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(item.getValue())));
+						}
 					} else {
 						return Optional.of(SourceItem.Register(item.getValue()));
 					}
@@ -480,8 +511,12 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		return registerFile.getLatestRegister(registerNumber);
 	}
 	
-	private int getArchitecturalRegisterValue(int registerNumber) {
+	private int getScalarArchitecturalRegisterValue(int registerNumber) {
 		return registerFile.getScalarRegisterValue(registerNumber);
+	}
+	
+	private int[] getVectorArchitecturalRegisterValue(int registerNumber) {
+		return registerFile.getVectorRegisterValue(registerNumber);
 	}
 
 	private boolean isRegisterDirty(int registerNumber) {

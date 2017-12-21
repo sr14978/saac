@@ -14,7 +14,7 @@ public class Settings {
 	
 	public static int NUMBER_OF_EXECUTION_UNITS = 1;
 	
-	public static int SUPERSCALER_WIDTH = 32;
+	public static int SUPERSCALER_WIDTH = 2;
 	
 	public static boolean OUT_OF_ORDER_ENABLED = true;
 	

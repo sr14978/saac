@@ -26,7 +26,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 		if(addr < instructions.length && addr >= 0)
 			return instructions[addr];
 		else 
-			return new int[] {0x0, 0x0, 0x0, 0x0, 0x0};
+			return new int[] {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 	}
 	
 	FConnection<Integer>.Output addrInput;
@@ -94,7 +94,7 @@ public class InstructionsSource implements ClockedComponentI, VisibleComponentI,
 			int pc = addrInput.pop();
 			for(int i = pc; i<pc+Settings.SUPERSCALER_WIDTH; i++) {
 				int[] bytes = getInstruction(i);
-				bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], i}, 4));
+				bufferOut.add(new Item(new int[] { bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], i}, 4));
 			}
 		}
 	}

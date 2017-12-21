@@ -19,7 +19,7 @@ public class Instructions {
 		Sub, 	// Ssub	rI rJ rK -> rI = rJ - rK
 		Subi, 	// subi	rI rJ #n -> rI = rJ - #n
 		Mul, 	// mul	rI rJ rK -> rI = rJ * rK
-		vMul,	// mul	rI rJ rK -> rI[i] = rJ[i] * rK[i] for i in [0..3]
+		vMul,	// vmul	rI rJ rK -> rI[i] = rJ[i] * rK[i] for i in [0..3]
 		Muli, 	// muli	rI rJ #n -> rI = rJ * #n
 		Div, 	// div	rI rJ rK -> rI = rJ / rK
 		Divi, 	// divi	rI rJ #n -> rI = rJ / #n
@@ -37,6 +37,7 @@ public class Instructions {
 		Not,	// not  rI rJ .  -> rI = not rJ
 		Lteq,	// lteq rI rJ rK -> rI = 1 if rJ <= rK else 0
 		Eq,		// eq   rI rJ rK -> rI = 1 if rJ == rK else 0
+		vLdc,   // vldc rI #a #b #c #d -> rI[0]=#a, rI[1]=#b, rI[2]=#c, rI[3]=#d 
 		Stop;
 		
 		public static Opcode fromInt(int code) {
@@ -67,6 +68,7 @@ public class Instructions {
 			case 0x17: return Lteq;
 			case 0x18: return Eq;
 			case 0x19: return vMul;
+			case 0x1A: return vLdc;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -99,6 +101,7 @@ public class Instructions {
 			case Lteq: return 0x17;
 			case Eq: return 0x18;
 			case vMul: return 0x19;
+			case vLdc: return 0x1A;
 			default: throw new NotImplementedException();
 			}
 		}
