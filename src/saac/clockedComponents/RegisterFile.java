@@ -14,6 +14,7 @@ import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
+import saac.interfaces.FConnection;
 import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
@@ -27,14 +28,26 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 	List<List<RatItem>> RAT = new ArrayList<List<RatItem>>();
 	
 	FListConnection<RegisterResult>.Output writeBackToRegisters;
+	FConnection<Boolean>.Output clearDirtiesFromWriteback;
 	
-	public RegisterFile(FListConnection<RegisterResult>.Output writeBackToRegisters){
+	public RegisterFile(FListConnection<RegisterResult>.Output writeBackToRegisters,
+			FConnection<Boolean>.Output clearDirtiesFromWriteback){
 		for(int i = 0; i<ArchitecturalRegistersNum; i++) {
 			List<RatItem> l = new LinkedList<>();
 			l.add(RatItem.Architectural(i));
 			RAT.add(l);
 		}
 		this.writeBackToRegisters = writeBackToRegisters;
+		this.clearDirtiesFromWriteback = clearDirtiesFromWriteback;
+	}
+	
+	public boolean anyDirty() {
+		for(int i = 0; i<ArchitecturalRegistersNum; i++) {
+			if(architecturalDirties[i]) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public boolean isDirty(int registerNumber) {
@@ -43,6 +56,12 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 	
 	public void setDirty(int registerNumber, boolean value) {
 		architecturalDirties[registerNumber] = value;
+	}
+	
+	public void clearDirties() {
+		for(int i = 0; i<ArchitecturalRegistersNum; i++) {
+			architecturalDirties[i] = false;
+		}
 	}
 	
 	public int getScalarRegisterValue(int registerNumber) {
@@ -118,6 +137,12 @@ public class RegisterFile implements ClockedComponentI, VisibleComponentI, Clear
 
 	@Override
 	public void tick() throws Exception {
+		if(clearDirtiesFromWriteback.ready()) {
+			if(clearDirtiesFromWriteback.pop()) {
+				clearDirties();
+			}
+		}
+		
 		if(writeBackToRegisters.ready()) {
 			RegisterResult[] updates = writeBackToRegisters.pop();
 			for(RegisterResult update : updates) {

@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import saac.Settings;
 import saac.Settings.IssueWindow;
 import saac.clockedComponents.RegisterFile.RatItem;
+import saac.dataObjects.Instruction.Register;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Empty.EmptyInstruction;
 import saac.dataObjects.Instruction.Empty.Item;
@@ -39,7 +40,8 @@ import saac.utils.Output;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Decoder implements ClearableComponent, ClockedComponentI, VisibleComponentI {
-	enum Usage {Reg, Data, Null};
+	enum Usage {ScalarReg, VectorReg, Data, Null};
+	enum Store {ScalarReg, VectorReg, Null};
 	Connection<Boolean>.Output isAUReservationStationEmpty;
 	Connection<Boolean>.Output isLSReservationStationEmpty;
 	Connection<Boolean>.Output isBRReservationStationEmpty;	
@@ -51,11 +53,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	FListConnection<PartialInstruction>.Input outputBR;
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
 	BufferedConnection<int[]>.Output input;
+	FConnection<Boolean>.Output fromWriteback;
 	PartialInstruction[] bufferOut;
 	PartialInstruction[] bufferIn;
 	RegisterFile registerFile;
 	ReorderBuffer reorderBuffer;
 	Memory memory;
+	boolean halt;
 	
 	public Decoder(BufferedConnection<int[]>.Output input, RegisterFile registerFile, ReorderBuffer reorderBuffer, Memory memory,
 			FListConnection<PartialInstruction>.Input outputAU,
@@ -67,7 +71,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			FConnection<CompleteInstruction>.Input toSingleAU,
 			FConnection<CompleteInstruction>.Input toSingleLS,
 			FConnection<CompleteInstruction>.Input toSingleBR,
-			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus
+			MultiFConnection<RegisterResult>.Output virtualRegisterValueBus,
+			FConnection<Boolean>.Output fromWriteback
 			) {
 		this.outputAU = outputAU;
 		this.outputLS = outputLS;
@@ -83,6 +88,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		this.toSingleLS = toSingleLS;
 		this.toSingleBR = toSingleBR;
 		this.virtualRegisterValueBus = virtualRegisterValueBus;
+		this.fromWriteback = fromWriteback;
 	}
 
 	@Override
@@ -93,8 +99,12 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			results = virtualRegisterValueBus.pop();
 		}
 		
+		if(fromWriteback.ready()) {
+			halt = fromWriteback.pop();
+		}
+		
 		if(bufferIn == null || Settings.ISSUE_WINDOW_METHOD == IssueWindow.Unaligned && bufferIn.length < Settings.SUPERSCALER_WIDTH) {
-			if (input.ready()) {
+			if (input.ready() && !halt) {
 				
 				final int[][] incomingInsts;
 				if(Settings.ISSUE_WINDOW_METHOD == IssueWindow.Aligned || bufferIn == null) {
@@ -110,15 +120,15 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					int[] data = incomingInsts[i];
 								
 					final Usage usageA, usageB, usageC, usageD;
-					final boolean dirtyDest;
+					final Store dest;
 					switch (Opcode.fromInt(data[0])) {
 					case Ldc:
-						dirtyDest = true;
+						dest = Store.ScalarReg;
 						usageA = Usage.Data; 
 						usageB = usageC = usageD = Usage.Null;
 						break;
 					case Ldpc:
-						dirtyDest = true;
+						dest = Store.ScalarReg;
 						usageA = Usage.Data; 
 						usageB = Usage.Data;
 						usageC = usageD = Usage.Null;
@@ -126,73 +136,88 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					case Add:
 					case Sub:
 					case Mul:
-					case vMul:
 					case Div:
 					case Ldmi:
 					case And:
 					case Or:
 					case Lteq:
 					case Eq:
-						dirtyDest = true;
-						usageA = usageB = Usage.Reg; 
+						dest = Store.ScalarReg;
+						usageA = usageB = Usage.ScalarReg; 
+						usageC = usageD = Usage.Null;
+						break;
+					case vLdmi:
+						dest = Store.VectorReg;
+						usageA = usageB = Usage.ScalarReg; 
+						usageC = usageD = Usage.Null;
+						break;
+					case vMul:
+						dest = Store.VectorReg;
+						usageA = usageB = Usage.VectorReg; 
 						usageC = usageD = Usage.Null;
 						break;
 					case Not:
-						dirtyDest = true;
-						usageA = Usage.Reg;
+						dest = Store.ScalarReg;
+						usageA = Usage.ScalarReg;
 						usageB = usageC = usageD = Usage.Null;
 						break;
 					case Stmi:
-						dirtyDest = false;
-						usageA = usageB = usageC = Usage.Reg; 
+						dest = Store.Null;
+						usageA = usageB = usageC = Usage.ScalarReg; 
+						usageD = Usage.Null;
+						break;
+					case vStmi:
+						dest = Store.Null;
+						usageA = Usage.VectorReg; 
+						usageB = usageC = Usage.ScalarReg; 
 						usageD = Usage.Null;
 						break;
 					case Addi:
 					case Subi:
 					case Muli:
 					case Divi:
-						dirtyDest = true;
-						usageA = Usage.Reg;
+						dest = Store.ScalarReg;
+						usageA = Usage.ScalarReg;
 						usageB = Usage.Data;
 						usageC = usageD = Usage.Null;
 						break;
 					case Nop:
-						dirtyDest = false;
+						dest = Store.Null;
 						usageA = usageB = usageC = usageD = Usage.Null;
 						break;
 					case Ldma:
-						dirtyDest = true;
+						dest = Store.ScalarReg;
 						usageA = Usage.Data;
 						usageB = usageC = usageD = Usage.Null;
 						break;
 					case Stma:
-						dirtyDest = false;
-						usageA = Usage.Reg;
+						dest = Store.Null;
+						usageA = Usage.ScalarReg;
 						usageB = Usage.Data;
 						usageC = usageD = Usage.Null;
 						break;
 					case Br:
 					case Jmp:
-						dirtyDest = false;
+						dest = Store.Null;
 						usageA = Usage.Data;
 						usageB = usageC = usageD = Usage.Null;
 						break;
 					case Ln:
-						dirtyDest = false;
-						usageA = Usage.Reg;
+						dest = Store.Null;
+						usageA = Usage.ScalarReg;
 						usageB = usageC = usageD = Usage.Null;
 						break;
 					case JmpC:
-						dirtyDest = false;
+						dest = Store.Null;
 						usageA = usageC = usageD = Usage.Data;
-						usageB = Usage.Reg;
+						usageB = Usage.ScalarReg;
 						break;
 					case Stop:
-						dirtyDest = false;
+						dest = Store.Null;
 						usageA = usageB = usageC = usageD = Usage.Null;
 						break;
 					case vLdc:
-						dirtyDest = true;
+						dest = Store.ScalarReg;
 						usageA = usageB = usageC = usageD = Usage.Data;
 						break;
 					default:
@@ -201,7 +226,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					
 					EmptyInstruction inst = new EmptyInstruction(data[6],
 							Opcode.fromInt(data[0]), 
-							dirtyDest ? Optional.of(data[1]) : Optional.empty(),
+							formatDest(data[1], dest),
 							formatParam(data[2], usageA),
 							formatParam(data[3], usageB),
 							formatParam(data[4], usageC),
@@ -246,10 +271,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			List<PartialInstruction> notReadyInstructions = new LinkedList<>();
 			for(int i = 0; i<bufferIn.length; i++) {
 				PartialInstruction inst = bufferIn[i];
-				if(isVirtualSlotAvailable(inst.getVirtualNumber())) {
+				if(inst.getOpcode() == Opcode.Stop
+						&& (anyRegisterDirty() || !memory.memoryAddressDirtyLookup.isEmpty())) {
+					notReadyInstructions.add(inst);
+				} else if(isVirtualSlotAvailable(inst.getVirtualNumber())) {
 					
 					if(Settings.REGISTER_RENAMING_ENABLED) {
-						tryGrabbingVirtualRegisterValues(inst);						
+						tryGrabbingVirtualRegisterAddressValues(inst);						
 						if(loadStoreInstructionsReady(inst)) {
 							readyInstructions.add(addMemoryDependancies(inst));
 						} else {
@@ -258,12 +286,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					} else {
 						List<String> dependancies = new ArrayList<>();
 						if(inst.getParamA().isPresent() && inst.getParamA().get().isRegister()){
-							int val = inst.getParamA().get().getRegisterNumber();
-							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
-									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
+							Register reg = inst.getParamA().get().getRegisterNumber();
+							int val = reg.getValue();
+							if((reg.isVector() && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (reg.isScalar() && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("A (" + val + ")");
 							} else {
-								if(isVectorInstuction(inst.getOpcode())) {
+								if(reg.isVector()) {
 									inst.setParamA(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
 								} else {
 									inst.setParamA(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
@@ -271,12 +300,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							}
 						}
 						if(inst.getParamB().isPresent() && inst.getParamB().get().isRegister()){
-							int val = inst.getParamB().get().getRegisterNumber();
-							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
-									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
+							Register reg = inst.getParamB().get().getRegisterNumber();
+							int val = reg.getValue();
+							if((reg.isVector() && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (reg.isScalar() && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("B (" + val + ")");
 							} else {
-								if(isVectorInstuction(inst.getOpcode())) {
+								if(reg.isVector()) {
 									inst.setParamB(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
 								} else {
 									inst.setParamB(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
@@ -284,12 +314,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							}
 						}
 						if(inst.getParamC().isPresent() && inst.getParamC().get().isRegister()){
-							int val = inst.getParamC().get().getRegisterNumber();
-							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
-									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
+							Register reg = inst.getParamC().get().getRegisterNumber();
+							int val = reg.getValue();
+							if((reg.isVector() && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (reg.isScalar() && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("C (" + val + ")");
 							} else {
-								if(isVectorInstuction(inst.getOpcode())) {
+								if(reg.isVector()) {
 									inst.setParamC(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
 								} else {
 									inst.setParamC(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
@@ -297,12 +328,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							}
 						}
 						if(inst.getParamD().isPresent() && inst.getParamD().get().isRegister()){
-							int val = inst.getParamD().get().getRegisterNumber();
-							if((isVectorInstuction(inst.getOpcode()) && isVectorRegisterDirty(val, dirtiesInWindow))
-									|| (!isVectorInstuction(inst.getOpcode()) && isScalarRegisterDirty(val, dirtiesInWindow))) {
+							Register reg = inst.getParamD().get().getRegisterNumber();
+							int val = reg.getValue();
+							if((reg.isVector() && isVectorRegisterDirty(val, dirtiesInWindow))
+									|| (reg.isScalar() && isScalarRegisterDirty(val, dirtiesInWindow))) {
 								dependancies.add("D (" + val + ")");
 							} else {
-								if(isVectorInstuction(inst.getOpcode())) {
+								if(reg.isVector()) {
 									inst.setParamD(SourceItem.VectorData(getVectorArchitecturalRegisterValue(val)));
 								} else {
 									inst.setParamD(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(val)));
@@ -311,9 +343,9 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						}
 						
 						if(inst.getDest().isPresent()) {
-							if((isVectorInstuction(inst.getOpcode())
+							if((inst.getDest().get().isVector()
 									&& isVectorRegisterDirty(inst.getDest().get().getRegNumber(), dirtiesInWindow))
-									|| (!isVectorInstuction(inst.getOpcode())
+									|| (!inst.getDest().get().isVector()
 											&& isScalarRegisterDirty(inst.getDest().get().getRegNumber(), dirtiesInWindow))) {
 								dependancies.add("Dest (" + inst.getDest().get().getRegNumber() + ")");
 							}
@@ -333,7 +365,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 							}
 						}
 						if(inst.getDest().isPresent()) {
-							if(isVectorInstuction(inst.getOpcode())) {
+							if(inst.getDest().get().isVector()) {
+								System.out.println("hi");
 								setVectorRegisterDirty(inst.getDest().get().getRegNumber());
 							} else {
 								setScalarRegisterDirty(inst.getDest().get().getRegNumber());
@@ -361,26 +394,26 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		}
 	}
 	
-	private void tryGrabbingVirtualRegisterValues(PartialInstruction inst) {
-		tryGrabbingVirtualRegisterValue(inst::getParamA, inst::setParamA, isVectorInstuction(inst.getOpcode()));
-		tryGrabbingVirtualRegisterValue(inst::getParamB, inst::setParamB, isVectorInstuction(inst.getOpcode()));
-		tryGrabbingVirtualRegisterValue(inst::getParamC, inst::setParamC, isVectorInstuction(inst.getOpcode()));
-		tryGrabbingVirtualRegisterValue(inst::getParamD, inst::setParamD, isVectorInstuction(inst.getOpcode()));
+	private void tryGrabbingVirtualRegisterAddressValues(PartialInstruction inst) {
+		tryGrabbingVirtualRegisterValue(inst::getParamA, inst::setParamA);
+		tryGrabbingVirtualRegisterValue(inst::getParamB, inst::setParamB);
+		tryGrabbingVirtualRegisterValue(inst::getParamC, inst::setParamC);
+		tryGrabbingVirtualRegisterValue(inst::getParamD, inst::setParamD);
 	}
 
-	private void tryGrabbingVirtualRegisterValue(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter, boolean isVector) {
+	private void tryGrabbingVirtualRegisterValue(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter) {
 		if(Settings.REGISTER_RENAMING_ENABLED) {
 			Optional<SourceItem> o = getter.get();
 			if(o.isPresent()) {
 				SourceItem item = o.get();
 				if(item.isRegister()) {
-					if(isVector) {
-						Optional<int[]> value = getVectorVirtualSlotValue(item.getRegisterNumber());
+					if(item.getRegisterNumber().isVector()) {
+						Optional<int[]> value = getVectorVirtualSlotValue(item.getRegisterNumber().getVectorValues());
 						if(value.isPresent()) {
 							setter.accept(SourceItem.VectorData(value.get()));
 						}
 					} else {
-						Optional<Integer> value = getScalarVirtualSlotValue(item.getRegisterNumber());
+						Optional<Integer> value = getScalarVirtualSlotValue(item.getRegisterNumber().getScalarValue());
 						if(value.isPresent()) {
 							setter.accept(SourceItem.ScalarData(value.get()));
 						}
@@ -401,22 +434,45 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	}
 
 	private PartialInstruction addMemoryDependancies(PartialInstruction inst) {
-		if(inst.getOpcode().equals(Opcode.Ldma)|| inst.getOpcode().equals(Opcode.Ldmi)) {
-			final Optional<Integer> val;
+		if(inst.getOpcode().equals(Opcode.Ldma)
+				|| inst.getOpcode().equals(Opcode.Ldmi)
+				|| inst.getOpcode().equals(Opcode.vLdmi)) {
+			final List<Integer> val = new LinkedList<>();
 			if(inst.getOpcode().equals(Opcode.Ldma)) {
-				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue());				
+				Optional<Integer> o = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue());
+				if(o.isPresent()) {
+					val.add(o.get());
+				}
 			} else if(inst.getOpcode().equals(Opcode.Ldmi)){
-				val = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue()
+				Optional<Integer> o = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue()
 						+ inst.getParamB().get().getDataValue().getScalarValue());
+				if(o.isPresent()) {
+					val.add(o.get());
+				}
+			} else if(inst.getOpcode().equals(Opcode.vLdmi)){
+				Optional<Integer> a = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue()
+						+ inst.getParamB().get().getDataValue().getScalarValue());
+				if(a.isPresent()) val.add(a.get());
+				Optional<Integer> b = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue()
+						+ inst.getParamB().get().getDataValue().getScalarValue() +1);
+				if(b.isPresent()) val.add(b.get());
+				Optional<Integer> c = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue()
+						+ inst.getParamB().get().getDataValue().getScalarValue() +2);
+				if(c.isPresent()) val.add(c.get());
+				Optional<Integer> d = memory.getLatestMemoryAddressWrite(inst.getParamA().get().getDataValue().getScalarValue()
+						+ inst.getParamB().get().getDataValue().getScalarValue() +3);
+				if(d.isPresent()) val.add(d.get());
 			} else {
 				throw new RuntimeException("Must be either ldma or ldmi");
 			}
-			if(val.isPresent()) {
-				return new PartialLSInstruction(inst, Optional.of(val.get()));
+			if(!val.isEmpty()) {
+				return new PartialLSInstruction(inst, val);
 			} else {
-				return new PartialLSInstruction(inst, Optional.empty());
+				return new PartialLSInstruction(inst);
 			}
-		} else if(inst.getOpcode().equals(Opcode.Stma)|| inst.getOpcode().equals(Opcode.Stmi)){
+		} else if(inst.getOpcode().equals(Opcode.Stma)
+					|| inst.getOpcode().equals(Opcode.Stmi)
+					|| inst.getOpcode().equals(Opcode.vStmi)){
 			if(inst.getOpcode().equals(Opcode.Stma)) {
 				memory.addLatestMemoryAddressWrite(
 						inst.getParamB().get().getDataValue().getScalarValue(), inst.getVirtualNumber());
@@ -425,10 +481,27 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						inst.getParamB().get().getDataValue().getScalarValue()
 						+ inst.getParamC().get().getDataValue().getScalarValue(),
 						inst.getVirtualNumber());
+			} else if(inst.getOpcode().equals(Opcode.vStmi)){
+				memory.addLatestMemoryAddressWrite(
+						inst.getParamB().get().getDataValue().getScalarValue()
+						+ inst.getParamC().get().getDataValue().getScalarValue(),
+						inst.getVirtualNumber());
+				memory.addLatestMemoryAddressWrite(
+						inst.getParamB().get().getDataValue().getScalarValue()
+						+ inst.getParamC().get().getDataValue().getScalarValue() + 1,
+						inst.getVirtualNumber());
+				memory.addLatestMemoryAddressWrite(
+						inst.getParamB().get().getDataValue().getScalarValue()
+						+ inst.getParamC().get().getDataValue().getScalarValue() + 2,
+						inst.getVirtualNumber());
+				memory.addLatestMemoryAddressWrite(
+						inst.getParamB().get().getDataValue().getScalarValue()
+						+ inst.getParamC().get().getDataValue().getScalarValue() + 3,
+						inst.getVirtualNumber());
 			} else {
 				throw new RuntimeException("Must be either ldma or ldmi");
 			}
-			return new PartialLSInstruction(inst, Optional.empty());
+			return new PartialLSInstruction(inst);
 		} else {
 			return inst;
 		}
@@ -460,14 +533,29 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		}
 	}
 	
+	private Optional<Register> formatDest(int data, Store usage) {
+		switch(usage) {
+		case Null:
+			return Optional.empty();
+		case ScalarReg:
+			return Optional.of(Register.Scalar(data));
+		case VectorReg:
+			return Optional.of(Register.Vector(data));
+		default:
+			throw new NotImplementedException();
+		}
+	}
+	
 	private Optional<Item> formatParam(int data, Usage usage) {
 		switch(usage) {
 		case Null:
 			return Optional.empty();
 		case Data:
 			return Optional.of(Item.Data(data));
-		case Reg:
-			return Optional.of(Item.Register(data));
+		case ScalarReg:
+			return Optional.of(Item.Register(Register.Scalar(data)));
+		case VectorReg:
+			return Optional.of(Item.Register(Register.Vector(data)));
 		default:
 			throw new NotImplementedException();
 		}
@@ -475,46 +563,43 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	
 	private PartialInstruction maybeRenameInstruction(EmptyInstruction inst) throws Exception {
 		
-		final Optional<SourceItem> a = renameParam(inst.getParamA(), isVectorInstuction(inst.getOpcode()));
-		final Optional<SourceItem> b = renameParam(inst.getParamB(), isVectorInstuction(inst.getOpcode()));
-		final Optional<SourceItem> c = renameParam(inst.getParamC(), isVectorInstuction(inst.getOpcode()));
-		final Optional<SourceItem> d = renameParam(inst.getParamD(), isVectorInstuction(inst.getOpcode()));
+		final Optional<SourceItem> a = renameParam(inst.getParamA());
+		final Optional<SourceItem> b = renameParam(inst.getParamB());
+		final Optional<SourceItem> c = renameParam(inst.getParamC());
+		final Optional<SourceItem> d = renameParam(inst.getParamD());
 		final Optional<DestItem> dest = renameDest(inst.getDest(), inst.getVirtualNumber());
 		
 		return new PartialInstruction(inst.getVirtualNumber(), inst.getOpcode(), dest, a, b, c, d);
 		
 	}
 
-	private boolean isVectorInstuction(Opcode op) {
-		switch(op) {
-		case vMul:
-		case vLdc:
-			return true;
-		default:
-			return false;
-		}
-	}
-	
-	private Optional<SourceItem> renameParam(Optional<Item> o, boolean isVector) throws Exception {
+	private Optional<SourceItem> renameParam(Optional<Item> o) throws Exception {
 		if(o.isPresent()) {
 			Item i = o.get();
 			if(i.isRegisterNum()) {
 				if(Settings.REGISTER_RENAMING_ENABLED) {
-					RatItem item = getLatestRegister(i.getValue());
+					RatItem item = getLatestRegister(i.getRegisterNumber().isScalar()?
+							i.getRegisterNumber().getScalarValue():
+							i.getRegisterNumber().getVectorValues()
+						);
 					if(item.isArchitectural()) {
-						if(isVector) {
+						if(i.getRegisterNumber().isVector()) {
 							return Optional.of(SourceItem.VectorData(getVectorArchitecturalRegisterValue(item.getValue())));
 						} else {
 							return Optional.of(SourceItem.ScalarData(getScalarArchitecturalRegisterValue(item.getValue())));
 						}
 					} else {
-						return Optional.of(SourceItem.Register(item.getValue()));
+						if(i.getRegisterNumber().isScalar()) {
+							return Optional.of(SourceItem.Register(Register.Scalar(item.getValue())));
+						} else {
+							return Optional.of(SourceItem.Register(Register.Vector(item.getValue())));
+						}
 					}
 				} else {
-					return Optional.of(SourceItem.Register(i.getValue()));
+					return Optional.of(SourceItem.Register(i.getRegisterNumber()));
 				}
 			} else if(i.isDataValue()) {
-				return Optional.of(SourceItem.ScalarData((i.getValue())));
+				return Optional.of(SourceItem.ScalarData((i.getDataValue())));
 			} else {
 				throw new NotImplementedException();
 			}
@@ -523,13 +608,13 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 		}
 	}
 	
-	private Optional<DestItem> renameDest(Optional<Integer> o, int id) {
+	private Optional<DestItem> renameDest(Optional<Register> o, int id) {
 		if(o.isPresent()) {
 			if(Settings.REGISTER_RENAMING_ENABLED) {
-				setLatestRegister(o.get(), id);
-				return Optional.of(new DestItem(o.get(), id));
+				setLatestRegister(o.get().getValue(), id);
+				return Optional.of(new DestItem(o.get().getValue(), id, o.get().isVector()));
 			} else {
-				return Optional.of(new DestItem(o.get(), -1));
+				return Optional.of(new DestItem(o.get().getValue(), -1, o.get().isVector()));
 			}
 		} else {
 			return Optional.empty();
@@ -561,6 +646,10 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				|| isScalarRegisterDirty(registerNumber+1, dirtiesInWindow)
 				|| isScalarRegisterDirty(registerNumber+2, dirtiesInWindow)
 				|| isScalarRegisterDirty(registerNumber+3, dirtiesInWindow);
+	}
+	
+	private boolean anyRegisterDirty() {
+		return registerFile.anyDirty();
 	}
 	
 	private void setScalarRegisterDirty(int registerNumber) {
@@ -621,9 +710,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 				}
 				break;
 			case Ldma:
-			case Stmi:
 			case Stma:
+			case vLdmi:
+			case vStmi:
 			case Ldmi:
+			case Stmi:
 				if(outputLS.clear()) {
 					if(LSReservationStation.isAllParametersAndMemPresent(inst)
 							&& isLSReservationStationEmpty.get()
@@ -682,6 +773,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 
 	@Override
 	public void clear(int i) {
+		halt = true;
 		if (bufferOut != null) {
 			List<PartialInstruction> insts = new LinkedList<>();
 			for (PartialInstruction inst : bufferOut) {

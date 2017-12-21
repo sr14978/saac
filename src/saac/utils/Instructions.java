@@ -12,32 +12,34 @@ public class Instructions {
 	 * All register values are 4 byte signed integers
 	 */
 	public enum Opcode {
-		Nop,	// nop	.  .  .  -> 
-		Ldc, 	// ldc 	rI #n .  -> rI = #n 
-		Add, 	// add 	rI rJ rK -> rI = rJ + rK
-		Addi, 	// addi	rI rJ #n -> rI = rJ + #n
-		Sub, 	// Ssub	rI rJ rK -> rI = rJ - rK
-		Subi, 	// subi	rI rJ #n -> rI = rJ - #n
-		Mul, 	// mul	rI rJ rK -> rI = rJ * rK
-		vMul,	// vmul	rI rJ rK -> rI[i] = rJ[i] * rK[i] for i in [0..3]
-		Muli, 	// muli	rI rJ #n -> rI = rJ * #n
-		Div, 	// div	rI rJ rK -> rI = rJ / rK
-		Divi, 	// divi	rI rJ #n -> rI = rJ / #n
-		Ldma,	// ldma	rI #n .  -> rI = mem[#m] 
-		Stma,	// stma	rI #n .  -> mem[#m] = rI 
-		Ldmi,	// ldmi	rI rJ rK -> rI = mem[rJ + rk] 
-		Stmi,	// stmi	rI rJ rK -> mem[rJ + rk] = rI 
-		Br,  	// br 	#n .  .  -> pc = #n
-		Ln,  	// ln 	rK .  .  -> pc = rK
-		Jmp,	// jmp  #n .  .  -> pc = pc + #n
-		JmpC,	// jmpc #n rI .  -> pc = if rI!=0 then pc + #n else pc
-		Ldpc,	// ldpc rI #n .  -> rI = pc + 1 + #n
-		And,	// and  rI rJ rK -> rI = rJ and rK
-		Or,		// or   rI rJ rK -> rI = rJ or rK
-		Not,	// not  rI rJ .  -> rI = not rJ
-		Lteq,	// lteq rI rJ rK -> rI = 1 if rJ <= rK else 0
-		Eq,		// eq   rI rJ rK -> rI = 1 if rJ == rK else 0
-		vLdc,   // vldc rI #a #b #c #d -> rI[0]=#a, rI[1]=#b, rI[2]=#c, rI[3]=#d 
+		Nop,	// nop	 .  .  .  -> 
+		Ldc, 	// ldc 	 rI #n .  -> rI = #n 
+		Add, 	// add 	 rI rJ rK -> rI = rJ + rK
+		Addi, 	// addi	 rI rJ #n -> rI = rJ + #n
+		Sub, 	// Ssub	 rI rJ rK -> rI = rJ - rK
+		Subi, 	// subi	 rI rJ #n -> rI = rJ - #n
+		Mul, 	// mul	 rI rJ rK -> rI = rJ * rK
+		vMul,	// vmul	 rI rJ rK -> rI[i] = rJ[i] * rK[i] for i in [0..3]
+		Muli, 	// muli	 rI rJ #n -> rI = rJ * #n
+		Div, 	// div	 rI rJ rK -> rI = rJ / rK
+		Divi, 	// divi	 rI rJ #n -> rI = rJ / #n
+		Ldma,	// ldma	 rI #n .  -> rI = mem[#m] 
+		Stma,	// stma	 rI #n .  -> mem[#m] = rI 
+		Ldmi,	// ldmi	 rI rJ rK -> rI = mem[rJ + rk] 
+		Stmi,	// stmi	 rI rJ rK -> mem[rJ + rk] = rI 
+		Br,  	// br 	 #n .  .  -> pc = #n
+		Ln,  	// ln 	 rK .  .  -> pc = rK
+		Jmp,	// jmp   #n .  .  -> pc = pc + #n
+		JmpC,	// jmpc  #n rI .  -> pc = if rI!=0 then pc + #n else pc
+		Ldpc,	// ldpc  rI #n .  -> rI = pc + 1 + #n
+		And,	// and   rI rJ rK -> rI = rJ and rK
+		Or,		// or    rI rJ rK -> rI = rJ or rK
+		Not,	// not   rI rJ .  -> rI = not rJ
+		Lteq,	// lteq  rI rJ rK -> rI = 1 if rJ <= rK else 0
+		Eq,		// eq    rI rJ rK -> rI = 1 if rJ == rK else 0
+		vLdc,   // vldc  rI #a #b #c #d -> rI[0]=#a, rI[1]=#b, rI[2]=#c, rI[3]=#d
+		vLdmi,	// vldmi rI rJ rK -> rI[i]=mem[rJ+rk+i] for i in [0..3]
+		vStmi,	// vstmi rI rJ rK -> mem[rJ+rk+i]=rI[i] for i in [0..3]
 		Stop;
 		
 		public static Opcode fromInt(int code) {
@@ -69,6 +71,8 @@ public class Instructions {
 			case 0x18: return Eq;
 			case 0x19: return vMul;
 			case 0x1A: return vLdc;
+			case 0x1B: return vLdmi;
+			case 0x1C: return vStmi;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -102,6 +106,8 @@ public class Instructions {
 			case Eq: return 0x18;
 			case vMul: return 0x19;
 			case vLdc: return 0x1A;
+			case vLdmi: return 0x1B;
+			case vStmi: return 0x1C;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -132,5 +138,7 @@ public class Instructions {
 		put(Opcode.Stma, /*20*/10);
 		put(Opcode.Ldmi, /*20*/10);
 		put(Opcode.Stmi, /*20*/10);
+		put(Opcode.vLdmi, /*20*/10);
+		put(Opcode.vStmi, /*20*/10);
 	}};
 }

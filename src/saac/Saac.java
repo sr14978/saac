@@ -84,7 +84,8 @@ public class Saac implements ClockedComponentI {
 		List<ClearableComponent> clearables = new ArrayList<>();
 		
 		FListConnection<RegisterResult> writeBackToRegisters = new FListConnection<>();
-		registerFile = new RegisterFile(writeBackToRegisters.getOutputEnd());
+		FConnection<Boolean> clearDirtiesFromWriteback = new FConnection<>();
+		registerFile = new RegisterFile(writeBackToRegisters.getOutputEnd(), clearDirtiesFromWriteback.getOutputEnd());
 		
 		FListConnection<MemoryResult> sendStoresToMem = new FListConnection<>();
 		FListConnection<Integer> storeDonesFromMem = new FListConnection<>();
@@ -165,6 +166,7 @@ public class Saac implements ClockedComponentI {
 				BRToFetch.getInputEnd(), BRToWriteback.getInputEnd());
 
 		ReorderBuffer reorderBuffer = new ReorderBuffer();
+		FConnection<Boolean> writebackToDecode = new FConnection<>();
 		
 		Decoder decoder = new Decoder(fetchToDecode.getOutputEnd(), registerFile, reorderBuffer, memory,
 				decodeToAUReservationStation.getInputEnd(),
@@ -176,7 +178,8 @@ public class Saac implements ClockedComponentI {
 				resevationStationToAUs.get(0).getInputEnd(),
 				resevationStationToLS.getInputEnd(),
 				resevationStationToBR.getInputEnd(),
-				virtualRegisterValueBus.getOutputEnd()
+				virtualRegisterValueBus.getOutputEnd(),
+				writebackToDecode.getOutputEnd()
 				);
 		
 		WritebackHandler writebackHandler = new WritebackHandler(memory, reorderBuffer,
@@ -185,7 +188,10 @@ public class Saac implements ClockedComponentI {
 				BRToWriteback.getOutputEnd(),
 				writeBackToRegisters.getInputEnd(),
 				virtualRegisterValueBus.getInputEnd(),
-				sendStoresToMem.getInputEnd());
+				sendStoresToMem.getInputEnd(),
+				writebackToDecode.getInputEnd(),
+				clearDirtiesFromWriteback.getInputEnd()
+				);
 		
 		//add the components to the list of things drawn on screen - specifying the location and size
 		{

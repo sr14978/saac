@@ -1,17 +1,19 @@
 package saac.dataObjects.Instruction.Results;
 
+import saac.dataObjects.Instruction.Value;
+
 public class MemoryResult extends InstructionResult {
 	
-	private int value;
+	private Value value;
 	private int address;
 	
-	public MemoryResult(int instructionNumber, int a, int v) {
+	public MemoryResult(int instructionNumber, int a, Value v) {
 		this.instructionNumber = instructionNumber;
 		value = v;
 		address = a;
 	}
 
-	public int getValue() {
+	public Value getValue() {
 		return value;
 	}
 	
@@ -20,6 +22,6 @@ public class MemoryResult extends InstructionResult {
 	}
 	
 	public String toString() {
-		return super.toString() + "addr: " + Integer.toString(address) + ", val: " + Integer.toString(value); 
+		return super.toString() + "addr: " + Integer.toString(address) + ", val: " + value.toString(); 
 	}
 }

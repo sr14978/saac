@@ -35,8 +35,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 	ReorderBuffer reorderBuffer;
 	FListConnection<RegisterResult>.Input resultOutput;
 	MultiFConnection<RegisterResult>.Input virtualRegisterValueBus;
-	
+	FConnection<Boolean>.Input toUnfreezeDecode;
 	FListConnection<MemoryResult>.Input sendStoresToMem;
+	FConnection<Boolean>.Input clearRegisterDirties;
 	
 	//to enforce round robin collection of inputs
 	int nextInput = 0;
@@ -48,7 +49,9 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 			FConnection<InstructionResult>.Output inputBr,
 			FListConnection<RegisterResult>.Input resultOutput,
 			MultiFConnection<RegisterResult>.Input virtualRegisterValueBus,
-			FListConnection<MemoryResult>.Input sendStoresToMem) {
+			FListConnection<MemoryResult>.Input sendStoresToMem,
+			FConnection<Boolean>.Input toUnfreezeDecode,
+			FConnection<Boolean>.Input clearRegisterDirties) {
 		this.inputs = new ArrayList<>(inputEUs);
 		this.inputs.add(inputLS);
 		this.inputs.add(inputBr);
@@ -58,6 +61,8 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		this.memory = memory;
 		this.reorderBuffer = reorderBuffer;
 		this.sendStoresToMem = sendStoresToMem;
+		this.toUnfreezeDecode = toUnfreezeDecode;
+		this.clearRegisterDirties = clearRegisterDirties;
 	}
 
 	@Override
@@ -122,6 +127,8 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 					if(!br.wasCorrect()) {
 						reorderBuffer.clearAfter();
 						reorderBuffer.bufferInstructionStart--;
+						clearRegisterDirties.put(true);
+						toUnfreezeDecode.put(false);
 					}
 				}
 			}

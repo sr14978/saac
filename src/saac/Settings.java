@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 public class Settings {
 	
 	public static enum IssueWindow {Aligned, Unaligned};
-	public static IssueWindow ISSUE_WINDOW_METHOD = IssueWindow.Unaligned; 
+	public static IssueWindow ISSUE_WINDOW_METHOD = IssueWindow.Aligned; 
 	
 	public static enum BranchPrediciton {Blocking, Simple_Static, Static, Dynamic};
 	public static BranchPrediciton BRANCH_PREDICTION_MODE = BranchPrediciton.Simple_Static;
@@ -16,13 +16,13 @@ public class Settings {
 	
 	public static int SUPERSCALER_WIDTH = 2;
 	
-	public static boolean OUT_OF_ORDER_ENABLED = true;
+	public static boolean OUT_OF_ORDER_ENABLED = false;
 	
-	public static int VIRTUAL_ADDRESS_NUM = 32;
+	public static int VIRTUAL_ADDRESS_NUM = 16;
 	
 	public static boolean REGISTER_RENAMING_ENABLED = false;
 	
-	public static int LOAD_LIMIT = 1;
+	public static int LOAD_LIMIT = 2;
 	
 	public static Supplier<Integer> PARALLEL_INSTRUCTION_FETCH = () -> 4 * SUPERSCALER_WIDTH;
 		

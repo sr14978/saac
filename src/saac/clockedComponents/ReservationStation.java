@@ -109,10 +109,14 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	public static void fillInSingleParamWithResult(Supplier<Optional<SourceItem>> getter, Consumer<SourceItem> setter,  RegisterResult result) {
 		if(getter.get().isPresent()) {
 			SourceItem p = getter.get().get();
-			if(p.isRegister() && p.getRegisterNumber() == result.getTarget().getVirtualRegNumber()) {
-				if(result.getValue().isScalar()) {
+			if(p.isRegister()) {
+				if(p.getRegisterNumber().isScalar()
+						&& result.getValue().isScalar()
+						&& p.getRegisterNumber().getScalarValue() == result.getTarget().getVirtualRegNumber()) {
 					setter.accept(SourceItem.ScalarData(result.getValue().getScalarValue()));
-				} else {
+				} else if(p.getRegisterNumber().isVector() 
+						&& result.getValue().isVector()
+						&& p.getRegisterNumber().getVectorValues() == result.getTarget().getVirtualRegNumber()){
 					setter.accept(SourceItem.VectorData(result.getValue().getVectorValues()));
 				}
 			}

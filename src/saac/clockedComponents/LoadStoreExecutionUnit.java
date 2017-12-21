@@ -67,7 +67,7 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 			//memory.setWord(inst.getParamB(), inst.getParamA());
 			res = new MemoryResult(inst.getVirtualNumber(),
 					inst.getParamB().get().getScalarValue(),
-					inst.getParamA().get().getScalarValue());
+					inst.getParamA().get());
 			break;
 		case Ldmi:
 			res = new RegisterResult(inst.getVirtualNumber(),
@@ -79,7 +79,27 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 			//memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
 			res = new MemoryResult(inst.getVirtualNumber(),
 					inst.getParamB().get().getScalarValue() + inst.getParamC().get().getScalarValue(),
-					inst.getParamA().get().getScalarValue());
+					inst.getParamA().get());
+			break;
+		case vLdmi:
+			res = new RegisterResult(inst.getVirtualNumber(),
+					inst.getDest().get(),
+					Value.Vector(new int[] {
+							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue()),
+							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 1),
+							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 2),
+							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 3)
+						}
+						)
+					);
+			delay = Instructions.InstructionDelay.get(inst.getOpcode());
+			break;
+		case vStmi:
+			//memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
+			res = new MemoryResult(inst.getVirtualNumber(),
+					inst.getParamB().get().getScalarValue() + inst.getParamC().get().getScalarValue(),
+					inst.getParamA().get()
+				);
 			break;
 		default:
 			throw new NotImplementedException();

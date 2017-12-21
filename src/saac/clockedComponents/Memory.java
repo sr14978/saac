@@ -107,8 +107,21 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 			for(DelayQueueItem<MemoryResult> item : new ArrayList<>(queue)) {
 				if(item.getDelay() == 0) {
 					MemoryResult store = item.getResult();
-					setWord(store.getAddr(), store.getValue());
+					if(store.getValue().isScalar()) {
+						setWord(store.getAddr(), store.getValue().getScalarValue());
+					} else {
+						int[] val = store.getValue().getVectorValues();
+						setWord(store.getAddr(), val[0]);
+						setWord(store.getAddr()+1, val[1]);
+						setWord(store.getAddr()+2, val[2]);
+						setWord(store.getAddr()+3, val[3]);
+					}
 					removeMemoryAddressWrite(store.getAddr(), store.getVirtualNumber());
+					if(store.getValue().isVector()) {
+						removeMemoryAddressWrite(store.getAddr()+1, store.getVirtualNumber());
+						removeMemoryAddressWrite(store.getAddr()+2, store.getVirtualNumber());
+						removeMemoryAddressWrite(store.getAddr()+3, store.getVirtualNumber());
+					}
 					outs.add(store.getVirtualNumber());
 					queue.remove(item);
 				}

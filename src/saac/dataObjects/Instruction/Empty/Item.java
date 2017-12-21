@@ -1,12 +1,12 @@
 package saac.dataObjects.Instruction.Empty;
-
+import saac.dataObjects.Instruction.Register;
 import java.util.Optional;
 
 public class Item {
-	private Optional<Integer> register;
+	private Optional<Register> register;
 	private Optional<Integer> data;
 
-	public static Item Register(int value) {
+	public static Item Register(Register value) {
 		return new Item(Optional.of(value), Optional.empty());
 	}
 	
@@ -14,7 +14,7 @@ public class Item {
 		return new Item(Optional.empty(), Optional.of(value));
 	}
 	
-	private Item(Optional<Integer> register, Optional<Integer> data) {
+	private Item(Optional<Register> register, Optional<Integer> data) {
 		this.register = register;
 		this.data = data;
 	}
@@ -24,8 +24,11 @@ public class Item {
 	public boolean isDataValue() {
 		return data.isPresent();
 	}
-	public int getValue() {
-		return register.isPresent()?register.get():data.get();
+	public Register getRegisterNumber() {
+		return register.get();
+	}
+	public int getDataValue() {
+		return data.get();
 	}
 	public String toString() {
 		return register.isPresent()?"r"+register.get():"d" + data.get();

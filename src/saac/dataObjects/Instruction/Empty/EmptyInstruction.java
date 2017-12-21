@@ -1,22 +1,22 @@
 package saac.dataObjects.Instruction.Empty;
 
 import java.util.Optional;
-
 import saac.dataObjects.Instruction.Instruction;
+import saac.dataObjects.Instruction.Register;
 import saac.utils.Instructions.Opcode;
 
-public class EmptyInstruction extends Instruction<Optional<Integer>, Optional<Item>>{
+public class EmptyInstruction extends Instruction<Optional<Register>, Optional<Item>>{
 		
 	private final int instructionNumber;
 	private final Opcode opcode;
 	//register numbers
-	private final Optional<Integer> dest; 
+	private final Optional<Register> dest; 
 	private final Optional<Item> paramA;
 	private final Optional<Item> paramB;
 	private final Optional<Item> paramC;
 	private final Optional<Item> paramD;
 	
-	public EmptyInstruction(int instructionNumber, Opcode opcode, Optional<Integer> dest,
+	public EmptyInstruction(int instructionNumber, Opcode opcode, Optional<Register> dest,
 			Optional<Item> paramA,
 			Optional<Item> paramB,
 			Optional<Item> paramC,
@@ -38,7 +38,7 @@ public class EmptyInstruction extends Instruction<Optional<Integer>, Optional<It
 		return opcode;
 	}
 	
-	public Optional<Integer> getDest() {
+	public Optional<Register> getDest() {
 		return dest;
 	}
 	

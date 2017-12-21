@@ -1,5 +1,7 @@
 package saac.clockedComponents;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import saac.Settings;
@@ -32,9 +34,11 @@ public class LSReservationStation extends ReservationStation {
 				for(Integer id : ids) {
 					for(PartialInstruction inst : partialBuffer) {
 						PartialLSInstruction LSInst = (PartialLSInstruction) inst;
-						Optional<Integer> o = LSInst.getWaitedForId();
-						if(o.isPresent() && o.get().equals(id)) {
-							LSInst.clearWaitedForId();
+						List<Integer> is = LSInst.getWaitedForId();
+						for(Integer i : new ArrayList<>(is)) {
+							if(i.equals(id)) {
+								LSInst.getWaitedForId().remove(i);
+							}
 						}
 					}
 				}
@@ -49,7 +53,7 @@ public class LSReservationStation extends ReservationStation {
 	
 	public static boolean isAllParametersAndMemPresent(PartialInstruction i) {
 		if(Settings.REGISTER_RENAMING_ENABLED) {
-			return ReservationStation.isAllParametersPresent(i) && !((PartialLSInstruction) i).getWaitedForId().isPresent();
+			return ReservationStation.isAllParametersPresent(i) && ((PartialLSInstruction) i).getWaitedForId().isEmpty();
 		} else {
 			return ReservationStation.isAllParametersPresent(i);
 		}

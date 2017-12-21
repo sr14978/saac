@@ -121,6 +121,8 @@ public class Parsers {
 		instructions.add(binaryRR("not", Opcode.Not));
 		instructions.add(tertiaryRNNNN("vldc", Opcode.vLdc));
 		instructions.add(tertiaryRRR("vmul", Opcode.vMul));
+		instructions.add(tertiaryRRR("vldmi", Opcode.vLdmi));
+		instructions.add(tertiary_RRR("vstmi", Opcode.vStmi));
 	}
 
 	public static int[] parseInstruction(String line) throws ParserException {
