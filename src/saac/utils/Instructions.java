@@ -40,6 +40,7 @@ public class Instructions {
 		vLdc,   // vldc  rI #a #b #c #d -> rI[0]=#a, rI[1]=#b, rI[2]=#c, rI[3]=#d
 		vLdmi,	// vldmi rI rJ rK -> rI[i]=mem[rJ+rk+i] for i in [0..3]
 		vStmi,	// vstmi rI rJ rK -> mem[rJ+rk+i]=rI[i] for i in [0..3]
+		vSum,	// vsum  rI rJ .  -> rI = rJ[0]+rJ[1]+rJ[2]+rJ[3] 
 		Stop;
 		
 		public static Opcode fromInt(int code) {
@@ -73,6 +74,7 @@ public class Instructions {
 			case 0x1A: return vLdc;
 			case 0x1B: return vLdmi;
 			case 0x1C: return vStmi;
+			case 0x1D: return vSum;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -108,6 +110,7 @@ public class Instructions {
 			case vLdc: return 0x1A;
 			case vLdmi: return 0x1B;
 			case vStmi: return 0x1C;
+			case vSum: return 0x1D;
 			default: throw new NotImplementedException();
 			}
 		}
@@ -127,6 +130,7 @@ public class Instructions {
 		put(Opcode.vLdc, 0);
 		put(Opcode.Add, 0);
 		put(Opcode.Addi, 0);
+		put(Opcode.vSum, 0);
 		put(Opcode.Sub, 0);
 		put(Opcode.Subi, 0);
 		put(Opcode.Mul, 2);

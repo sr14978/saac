@@ -2,5 +2,6 @@ ldc r12 0
 vldmi r0 r12 r12
 vldc r4 2 2 2 2
 vmul r8 r0 r4
+vsum r13 r8
 vstmi r8 r12 r12
 stop

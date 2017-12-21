@@ -118,7 +118,7 @@ public class Parsers {
 		instructions.add(tertiaryRRR("lteq", Opcode.Lteq));
 		instructions.add(tertiaryRRR("eq", Opcode.Eq));
 		instructions.add(binaryRR("not", Opcode.Not));
-		instructions.add(binaryRR("not", Opcode.Not));
+		instructions.add(binaryRR("vsum", Opcode.vSum));
 		instructions.add(tertiaryRNNNN("vldc", Opcode.vLdc));
 		instructions.add(tertiaryRRR("vmul", Opcode.vMul));
 		instructions.add(tertiaryRRR("vldmi", Opcode.vLdmi));

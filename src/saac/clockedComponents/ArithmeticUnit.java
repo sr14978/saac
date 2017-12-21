@@ -108,6 +108,11 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 		case vMul:
 			bufferOut = vectorBinaryOperator(inst, (x,y)->x*y);
 			break;
+		case vSum:
+			int[] vals = inst.getParamA().get().getVectorValues();
+			bufferOut = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
+					Value.Scalar(vals[0] + vals[1] + vals[2] + vals[3]));
+			break;
 		default:
 			throw new NotImplementedException();
 		}

@@ -146,6 +146,11 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						usageA = usageB = Usage.ScalarReg; 
 						usageC = usageD = Usage.Null;
 						break;
+					case vSum:
+						dest = Store.ScalarReg;
+						usageA = Usage.VectorReg;
+						usageB = usageC = usageD = Usage.Null;
+						break;
 					case vLdmi:
 						dest = Store.VectorReg;
 						usageA = usageB = Usage.ScalarReg; 
@@ -695,6 +700,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Ldpc:
 			case vLdc:
 			case vMul:
+			case vSum:
 				if(outputAU.clear()) {
 					if(ReservationStation.isAllParametersPresent(inst)
 							&& isAUReservationStationEmpty.get()

@@ -48,11 +48,13 @@ public class Test {
 					&& rf.getScalarRegisterValue(10) == 6
 					&& rf.getScalarRegisterValue(11) == 8)));
 		*/
+		/*
 		Results results = runCombinations("vector.program", (rf -> {
 			int[] r = rf.getVectorRegisterValue(8);
 			return r[0] == 2 && r[1] == 4 && r[2] == 6 && r[3] == 8; 
 			}));
-		
+		*/
+		Results results = runCombinations("inner_product_stop_vector.program", (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
 		//Results results = runCombinations("inner_product_stop.program", (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
 		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
