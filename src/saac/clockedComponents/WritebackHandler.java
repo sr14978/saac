@@ -89,7 +89,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 		if(stop) {
 			if(Worker.worker != null)
 				Worker.worker.interrupt();
-			Worker.finished = true;
+			Worker.finish();
 			return;
 		}
 		List<RegisterResult> regResults = new ArrayList<>();

@@ -1,7 +1,22 @@
 package saac;
 
-import java.util.StringTokenizer;
+import static saac.utils.parsers.ParserUtils.number;
+import static saac.utils.parsers.ParserUtils.padded;
+import static saac.utils.parsers.ParserUtils.string;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import saac.utils.parsers.ParseResult;
+import saac.utils.parsers.ParseSuccess;
+import saac.utils.parsers.Parser;
+import saac.utils.parsers.ParserUtils;
 
 public class Settings {
 	
@@ -9,48 +24,98 @@ public class Settings {
 	public static IssueWindow ISSUE_WINDOW_METHOD = IssueWindow.Aligned; 
 	
 	public static enum BranchPrediciton {Blocking, Simple_Static, Static, Dynamic};
-	public static BranchPrediciton BRANCH_PREDICTION_MODE = BranchPrediciton.Simple_Static;
+	public static BranchPrediciton BRANCH_PREDICTION_MODE = BranchPrediciton.Dynamic;
 	
-	public static boolean RESERVATION_STATION_BYPASS_ENABLED = false;
+	public static boolean RESERVATION_STATION_BYPASS_ENABLED = true;
 	
-	public static int NUMBER_OF_EXECUTION_UNITS = 1;
+	public static int NUMBER_OF_EXECUTION_UNITS = 4;
 	
-	public static int SUPERSCALER_WIDTH = 4;
+	public static int SUPERSCALER_WIDTH = 16;
 	
 	public static boolean OUT_OF_ORDER_ENABLED = true;
 	
-	public static int VIRTUAL_ADDRESS_NUM = 8;
+	public static int VIRTUAL_ADDRESS_NUM = 128;
 	
 	public static boolean REGISTER_RENAMING_ENABLED = true;
 	
-	public static int LOAD_LIMIT = 2;
+	public static int LOAD_LIMIT = 16;
 	
 	public static Supplier<Integer> PARALLEL_INSTRUCTION_FETCH = () -> 4 * SUPERSCALER_WIDTH;
 		
 	public static Supplier<Integer> RESERVATION_STATION_SIZE = () -> Math.max(SUPERSCALER_WIDTH, 16);
 	
 	static {
-		String input = "Alignment: Aligned Branch: Simple_Static Bypass: false EUs: 1 Width: 1 OOO: false VirtAdresses: 8 Renaming: true LoadLimit 2";
-		if(input.length()>0) {
-			StringTokenizer st = new StringTokenizer(input, " ");
-			st.nextToken();
-			ISSUE_WINDOW_METHOD = IssueWindow.valueOf(st.nextToken());
-			st.nextToken();
-			BRANCH_PREDICTION_MODE = BranchPrediciton.valueOf(st.nextToken());
-			st.nextToken();
-			RESERVATION_STATION_BYPASS_ENABLED = Boolean.valueOf(st.nextToken());
-			st.nextToken();
-			NUMBER_OF_EXECUTION_UNITS = Integer.valueOf(st.nextToken());
-			st.nextToken();
-			SUPERSCALER_WIDTH = Integer.valueOf(st.nextToken());
-			st.nextToken();
-			OUT_OF_ORDER_ENABLED = Boolean.valueOf(st.nextToken());
-			st.nextToken();
-			VIRTUAL_ADDRESS_NUM = Integer.valueOf(st.nextToken());
-			st.nextToken();
-			REGISTER_RENAMING_ENABLED = Boolean.valueOf(st.nextToken());
-			st.nextToken();
-			LOAD_LIMIT = Integer.valueOf(st.nextToken());
+		try {
+			List<String> lines = Files.readAllLines(new File("saac.conf").toPath());
+			for(String line : lines) {
+				getParam(line);
+			}
+		} catch (NoSuchFileException e) {
+			//defaults
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+	}
+	
+	private static void getParam(String line) {
+		if(getBranchParam(line)) {}
+		else if(getAlignParam(line)) {}
+		else if(getBoolParam("RESERVATION_STATION_BYPASS_ENABLED", line, (b)->RESERVATION_STATION_BYPASS_ENABLED=b)) {}
+		else if(getNumberParam("NUMBER_OF_EXECUTION_UNITS", line, (x)->NUMBER_OF_EXECUTION_UNITS=x)) {}
+		else if(getNumberParam("SUPERSCALER_WIDTH", line, (x)->SUPERSCALER_WIDTH=x)) {}
+		else if(getBoolParam("OUT_OF_ORDER_ENABLED", line, (b)->OUT_OF_ORDER_ENABLED=b)) {}
+		else if(getNumberParam("VIRTUAL_ADDRESS_NUM", line, (x)->VIRTUAL_ADDRESS_NUM=x)) {}
+		else if(getBoolParam("REGISTER_RENAMING_ENABLED", line, (b)->REGISTER_RENAMING_ENABLED=b)) {}
+		else if(getNumberParam("LOAD_LIMIT", line, (x)->LOAD_LIMIT=x)) {}
+	}
+	
+	private static boolean getBranchParam(String line) {
+		List<Parser<BranchPrediciton>> values = new ArrayList<>();
+		values.add(string("Blocking").thenSecond(ParserUtils.pure(BranchPrediciton.Blocking)));
+		values.add(string("Simple_Static").thenSecond(ParserUtils.pure(BranchPrediciton.Simple_Static)));
+		values.add(string("Static").thenSecond(ParserUtils.pure(BranchPrediciton.Static)));
+		values.add(string("Dynamic").thenSecond(ParserUtils.pure(BranchPrediciton.Dynamic)));
+		ParseResult<BranchPrediciton> res = padded(string("BRANCH_PREDICTION_MODE"))
+				.thenSecond(padded(string("="))
+				.thenSecond(padded(ParserUtils.either(values)))).parse(line);
+		if(res instanceof ParseSuccess) {
+			BRANCH_PREDICTION_MODE = ((ParseSuccess<BranchPrediciton>) res).value;
+			return true;
+		}
+		return false;
+	}
+	
+	private static boolean getAlignParam(String line) {
+		ParseResult<IssueWindow> res =  padded(string("ISSUE_WINDOW_METHOD"))
+				.thenSecond(padded(string("="))
+				.thenSecond(padded(ParserUtils.either(
+						string("Aligned").thenSecond(ParserUtils.pure(IssueWindow.Aligned)),
+						string("Unaligned").thenSecond(ParserUtils.pure(IssueWindow.Unaligned))
+					)))).parse(line);
+		if(res instanceof ParseSuccess) {
+			ISSUE_WINDOW_METHOD = ((ParseSuccess<IssueWindow>) res).value;
+			return true;
+		}
+		return false;
+	}
+	
+	private static boolean getBoolParam(String name, String line, Consumer<Boolean> f) {
+		ParseResult<Boolean> res =  padded(string(name)).thenSecond(padded(string("=")).thenSecond(padded(ParserUtils.either(
+				string("true").thenSecond(ParserUtils.pure(true)),
+				string("false").thenSecond(ParserUtils.pure(false)))))).parse(line);
+		if(res instanceof ParseSuccess) {
+			f.accept(((ParseSuccess<Boolean>) res).value);
+			return true;
+		}
+		return false;
+	}
+	
+	private static boolean getNumberParam(String name, String line, Consumer<Integer> f) {
+		ParseResult<Integer> res = padded(string(name)).thenSecond(padded(string("=")).thenSecond(padded(number))).parse(line);
+		if(res instanceof ParseSuccess) {
+			f.accept(((ParseSuccess<Integer>) res).value);
+			return true;
+		}
+		return false;
 	}
 }

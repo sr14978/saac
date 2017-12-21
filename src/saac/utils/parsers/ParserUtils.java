@@ -8,15 +8,15 @@ public class ParserUtils {
 		System.out.println(number.parse("12"));	
 	}
 		
-	static <T> Parser<T> pure(T item) {
+	public static <T> Parser<T> pure(T item) {
 		return new Parser<T>((String line) -> new ParseSuccess<T>(item, line));
 	}
 	
-	static <T> Parser<T> fail() {
+	public static <T> Parser<T> fail() {
 		return new Parser<T>((String line) -> new ParseFail<T>());
 	}
 	
-	static <T> Parser<T> either(Parser<T> a, Parser<T> b) {
+	public static <T> Parser<T> either(Parser<T> a, Parser<T> b) {
 		return new Parser<T>(
 				(String st) -> {
 					ParseResult<T> instruction = a.parse(st);
@@ -28,7 +28,7 @@ public class ParserUtils {
 			);
 	}
 	
-	static <T> Parser<T> either(List<Parser<T>> ps) {
+	public static <T> Parser<T> either(List<Parser<T>> ps) {
 		return new Parser<T>(
 				(String st) -> {
 					for(Parser<T> p : ps) {
@@ -41,7 +41,7 @@ public class ParserUtils {
 				);
 	}
 	
-	static Parser<String> string(String s) {
+	public static Parser<String> string(String s) {
 		return new Parser<String>(
 				(String line) -> {
 						if(line.startsWith(s)) {
@@ -53,11 +53,11 @@ public class ParserUtils {
 				);
 	}
 	
-	static <T> Parser<T> padded(Parser<T> p) {
+	public static <T> Parser<T> padded(Parser<T> p) {
 		return p.thenFirst(whitespace);
 	}
     
-	static Parser<String> anyToken = new Parser<String>(
+	public static Parser<String> anyToken = new Parser<String>(
 			(String line) -> {
 				int i = 0;
 				while(i < line.length() && line.charAt(i) != ' ' ) { i++; }
@@ -65,7 +65,7 @@ public class ParserUtils {
 			}
 		);
 	
-	static Parser<String> whitespace = new Parser<String>(
+	public static Parser<String> whitespace = new Parser<String>(
 			(String line) -> {
 				int i = 0;
 				while(i < line.length() && line.charAt(i) == ' ' ) { i++; }
@@ -73,7 +73,7 @@ public class ParserUtils {
 			}
 		);
 	
-	static Parser<Integer> decimalNumber = anyToken.thenWith( (String s) -> {
+	public static Parser<Integer> decimalNumber = anyToken.thenWith( (String s) -> {
 		try {
 			int i = Integer.parseInt(s);
 			return pure(i);
@@ -82,7 +82,7 @@ public class ParserUtils {
 		}
 	});
 	
-	static Parser<Integer> hexNumber = string("0x").thenSecond(anyToken.thenWith( (String s) -> {
+	public static Parser<Integer> hexNumber = string("0x").thenSecond(anyToken.thenWith( (String s) -> {
 		try {
 			int i = Integer.parseInt(s, 16);
 			return pure(i);
@@ -91,5 +91,5 @@ public class ParserUtils {
 		}
 	}));
 	
-	static Parser<Integer> number = either(decimalNumber, hexNumber);
+	public static Parser<Integer> number = either(decimalNumber, hexNumber);
 }

@@ -13,6 +13,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
+import com.sun.xml.internal.ws.org.objectweb.asm.Label;
+
 import saac.interfaces.ComponentViewI;
 import saac.utils.Output;
 import saac.utils.RateUtils;
@@ -22,8 +24,12 @@ public class Main extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) throws Exception {
-				
-		Main window = new Main();
+		final Main window;
+		if(args.length == 1) {
+			window= new Main(args[0]);
+		} else {
+			window = new Main();
+		}		
 		window.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 	
@@ -35,10 +41,15 @@ public class Main extends JFrame {
     JLabel rateLable;
     Gui gui;
     
-	public Main() throws Exception {
-		saac = new Saac(null);
+    public Main() throws Exception {
+    	new Main(null);
+    }
+    
+	public Main(String programName) throws Exception {
+		saac = new Saac(programName);
+		Worker.init();
 		visibleComponents = saac.visibleComponents;
-		setTitle("Saac - Sam's Advanced Architecture Computer");
+		setTitle("Saac - Sam's Advanced Architecture Computer - " + programName);
 		setLayout(new BorderLayout());
 		
 		JPanel toolbar = new JPanel(new FlowLayout());
@@ -77,6 +88,21 @@ public class Main extends JFrame {
 		
 		gui = new Gui();
 		add(gui, BorderLayout.CENTER);
+		
+		JLabel settings = new JLabel(
+				String.format("Alignment: %s Branch: %s Bypass: %s EUs: %d Width: %d OOO: %s VirtAdresses: %d Renaming: %s LoadLimit %d",
+						Settings.ISSUE_WINDOW_METHOD.toString(),
+						Settings.BRANCH_PREDICTION_MODE.toString(),
+						Boolean.toString(Settings.RESERVATION_STATION_BYPASS_ENABLED),
+						Settings.NUMBER_OF_EXECUTION_UNITS,
+						Settings.SUPERSCALER_WIDTH,
+						Boolean.toString(Settings.OUT_OF_ORDER_ENABLED),
+						Settings.VIRTUAL_ADDRESS_NUM,
+						Boolean.toString(Settings.REGISTER_RENAMING_ENABLED),
+						Settings.LOAD_LIMIT
+						)
+				); 
+		add(settings, BorderLayout.SOUTH);
 		
 		setSize(1500, 900);
 		setVisible(true);
@@ -133,7 +159,11 @@ public class Main extends JFrame {
 			for(ComponentViewI cv : visibleComponents) {
 				Point pos = cv.getPosition();
 				g.translate(pos.x, pos.y);
-				cv.paint(g);
+				try {
+					cv.paint(g);
+				} catch (Exception e) {
+					//don't worry too much
+				}
 				g.translate(-pos.x, -pos.y);
 			}
 		}
@@ -151,12 +181,13 @@ public class Main extends JFrame {
     
     private void paint() {
     	gui.repaint();
-		rateLable.setText(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter));
+		rateLable.setText(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter)
+				+ " Count: " + Integer.toString(Saac.InstructionCounter));
 		rateLable.repaint();
     }
     
     void start() {
-    	if(paused && !Worker.finished) {
+    	if(paused && !Worker.isFinished()) {
     		saac.mutex.unlock();
     		paused = false;
     	}
@@ -170,9 +201,9 @@ public class Main extends JFrame {
     }
 
     void step(int n) {
-    	if(paused && !Worker.finished) {
+    	if(paused && !Worker.isFinished()) {
     		try {
-	    		for(int i = 0; i<n && !Worker.finished; i++)
+	    		for(int i = 0; i<n && !Worker.isFinished(); i++)
 		        	saac.step();
 	    		paint();
     		} catch (Exception e) {

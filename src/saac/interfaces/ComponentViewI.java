@@ -5,5 +5,5 @@ import java.awt.Point;
 
 public interface ComponentViewI {
 	Point getPosition();
-	void paint(Graphics2D g);
+	void paint(Graphics2D g) throws Exception;
 }

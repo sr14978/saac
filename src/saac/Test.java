@@ -270,9 +270,9 @@ public class Test {
 	}
 	
 	private static float runTest(String programName, Function<RegisterFile, Boolean> p) throws IOException, ParserException, Exception {
-		Worker.finished = false;
+		Worker.init();
 		Saac saac = new Saac(programName);
-		while(!Worker.finished) {
+		while(!Worker.isFinished()) {
         	saac.step();
         	if(Thread.interrupted())
     			throw new InterruptedException();

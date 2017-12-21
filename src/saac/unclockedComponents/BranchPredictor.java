@@ -43,8 +43,13 @@ public class BranchPredictor implements VisibleComponentI{
 	private final static int MAX_STORAGE_SIZE = 4;
 	Storage dynamicStorage = new Storage();
 	
-	int totalBranches = 0;
-	int totalCorrectlyPredicted = 0;
+	public static int totalBranches = 0;
+	public static int totalCorrectlyPredicted = 0;
+	
+	public BranchPredictor() {
+		totalBranches = 0;
+		totalCorrectlyPredicted = 0;
+	}
 	
 	public boolean predict(int[] inst) {
 		if(Settings.BRANCH_PREDICTION_MODE == BranchPrediciton.Simple_Static)

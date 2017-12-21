@@ -3,7 +3,6 @@ package saac.clockedComponents;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,7 +34,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	MultiFConnection<RegisterResult>.Output virtualRegisterValueBus;
 	int MaxSize = Settings.RESERVATION_STATION_SIZE.get();
 	
-	Set<PartialInstruction> partialBuffer = Collections.synchronizedSet(new TreeSet<>());
+	Set<PartialInstruction> partialBuffer = new TreeSet<>();
 	TreeSet<CompleteInstruction> completeBuffer = new TreeSet<>();
 		
 	public ReservationStation(FListConnection<PartialInstruction>.Output instructionInput,
@@ -63,35 +62,38 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 	
 	@Override
 	public void tick() throws Exception {
-		
-		if(instructionInput.ready() && partialBuffer.size() + completeBuffer.size() + instructionInput.peak().length <= MaxSize) {
-			PartialInstruction[] insts = instructionInput.pop();
-			for(PartialInstruction inst : insts) {
-				partialBuffer.add(inst);
-			}
-		}
+		synchronized(partialBuffer) {
+			synchronized(completeBuffer) {
+				if(instructionInput.ready() && partialBuffer.size() + completeBuffer.size() + instructionInput.peak().length <= MaxSize) {
+					PartialInstruction[] insts = instructionInput.pop();
+					for(PartialInstruction inst : insts) {
+						partialBuffer.add(inst);
+					}
+				}
+						
+				if(virtualRegisterValueBus.ready()) {
+					List<RegisterResult> results = virtualRegisterValueBus.pop();
+					for(RegisterResult result : results) {
+						for(PartialInstruction inst : partialBuffer) {
+							fillInSingleParamWithResult(inst::getParamA, inst::setParamA, result);
+							fillInSingleParamWithResult(inst::getParamB, inst::setParamB, result);
+							fillInSingleParamWithResult(inst::getParamC, inst::setParamC, result);
+							fillInSingleParamWithResult(inst::getParamD, inst::setParamD, result);
+						}
+					}
+				}
 				
-		if(virtualRegisterValueBus.ready()) {
-			List<RegisterResult> results = virtualRegisterValueBus.pop();
-			for(RegisterResult result : results) {
-				for(PartialInstruction inst : partialBuffer) {
-					fillInSingleParamWithResult(inst::getParamA, inst::setParamA, result);
-					fillInSingleParamWithResult(inst::getParamB, inst::setParamB, result);
-					fillInSingleParamWithResult(inst::getParamC, inst::setParamC, result);
-					fillInSingleParamWithResult(inst::getParamD, inst::setParamD, result);
+				for(PartialInstruction inst : new TreeSet<>(partialBuffer)) {
+					if(isReady(inst)) {
+						partialBuffer.remove(inst);
+						completeBuffer.add(new CompleteInstruction(inst));
+					}
+				}
+				
+				if(!partialBuffer.isEmpty() || !completeBuffer.isEmpty()) {
+					isEmpty.put(false);
 				}
 			}
-		}
-		
-		for(PartialInstruction inst : new TreeSet<>(partialBuffer)) {
-			if(isReady(inst)) {
-				partialBuffer.remove(inst);
-				completeBuffer.add(new CompleteInstruction(inst));
-			}
-		}
-		
-		if(!partialBuffer.isEmpty() || !completeBuffer.isEmpty()) {
-			isEmpty.put(false);
 		}
 	}
 
@@ -125,21 +127,25 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 
 	@Override
 	public void tock() throws Exception {
-		if(completeBuffer.size() < 1) {
-			return;
-		}
-		for(int i = 0; i<instructionOutputs.size(); i++) {
-			FConnection<CompleteInstruction>.Input output = instructionOutputs.get(i);
-			if(output.clear()) {
-				CompleteInstruction inst = completeBuffer.pollFirst();
-				output.put(inst);
-				Output.info.println(inst + " sent for execution on EU " + i);
+		synchronized(partialBuffer) {
+			synchronized(completeBuffer) {
+				if(completeBuffer.size() < 1) {
+					return;
+				}
+				for(int i = 0; i<instructionOutputs.size(); i++) {
+					FConnection<CompleteInstruction>.Input output = instructionOutputs.get(i);
+					if(output.clear()) {
+						CompleteInstruction inst = completeBuffer.pollFirst();
+						output.put(inst);
+						Output.info.println(inst + " sent for execution on EU " + i);
+					}
+					if(completeBuffer.isEmpty())
+						break;
+				}
+				if(partialBuffer.isEmpty() && completeBuffer.isEmpty()) {
+					isEmpty.put(true);
+				}
 			}
-			if(completeBuffer.isEmpty())
-				break;
-		}
-		if(partialBuffer.isEmpty() && completeBuffer.isEmpty()) {
-			isEmpty.put(true);
 		}
 	}
 
@@ -152,9 +158,13 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 		public void paint(Graphics2D gc) {
 			DrawingHelper.drawBox(gc, "Fetcher");
 			gc.setColor(Color.BLACK);
-			gc.drawString(partialBuffer.size()==MaxSize?"F":"", 5, 32);
-			gc.drawString(partialBuffer.toString(), 15, 25);
-			gc.drawString(completeBuffer.toString(), 15, 40);
+			synchronized(partialBuffer) {
+				synchronized(completeBuffer) {
+					gc.drawString(partialBuffer.size()==MaxSize?"F":"", 5, 32);
+					gc.drawString(partialBuffer.toString(), 15, 25);
+					gc.drawString(completeBuffer.toString(), 15, 40);
+				}
+			}
 		}
 	}
 
