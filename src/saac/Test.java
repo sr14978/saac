@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import saac.Settings.BranchPrediciton;
+import saac.Settings.BranchPrediction;
 import saac.Settings.IssueWindow;
 import saac.clockedComponents.RegisterFile;
 import saac.test.TestOutput;
@@ -36,7 +36,10 @@ public class Test {
 	}
 	
 	public static void main(String[] args) throws Exception {		
-		
+		String programName = "inner_product_stop.program";
+		if(args.length == 1) {
+			programName = args[0];
+		}
 		System.out.println("Testing...");
 		/*
 		Results results = new Results(new HashMap<Test.Config, Float>(), new ArrayList<Test.Config>(), 0, null);
@@ -56,7 +59,7 @@ public class Test {
 			}));
 		*/
 		//Results results = runCombinations("inner_product_stop_vector.program", (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
-		Results results = runCombinations("inner_product_stop.program", (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
+		Results results = runCombinations(programName, (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
 		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
 		TestOutput.writeOutputs(results.resultsArray);		
@@ -84,7 +87,7 @@ public class Test {
 		}
 		if(bestConfigs != null) {
 			Set<IssueWindow> windowAlignment = new HashSet<>();
-			Set<BranchPrediciton> branchPrediction = new HashSet<>();
+			Set<BranchPrediction> branchPrediction = new HashSet<>();
 			Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
 			Set<Integer> numberOfExecutionUnits = new HashSet<>();
 			Set<Integer> superScalerWidth = new HashSet<>();
@@ -128,7 +131,7 @@ public class Test {
 			System.out.println("All passed");
 		else {
 			Set<IssueWindow> windowAlignment = new HashSet<>();
-			Set<BranchPrediciton> branchPrediction = new HashSet<>();
+			Set<BranchPrediction> branchPrediction = new HashSet<>();
 			Set<Boolean> reservationStationBypassEnabled = new HashSet<>();
 			Set<Integer> numberOfExecutionUnits = new HashSet<>();
 			Set<Integer> superScalerWidth = new HashSet<>();
@@ -169,9 +172,9 @@ public class Test {
 
 	public static Results runCombinations(String programName, Function<RegisterFile, Boolean> validationFunction) {
 		Map<Config, Float> results = new HashMap<>();
-		float[][][][][][][][][] resultsArray = new float[Settings.IssueWindow.values().length][Settings.BranchPrediciton.values().length][2][7][7][2][5][2][6];
+		float[][][][][][][][][] resultsArray = new float[Settings.IssueWindow.values().length][Settings.BranchPrediction.values().length][2][7][7][2][5][2][6];
 		List<Config> failures = new ArrayList<>();
-		int total = /*bypass*/2 * /*units*/7 * /*width*/7 * /*order*/2 * /*addr*/5 * /*renaming*/2 * /*load*/6 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
+		int total = /*bypass*/2 * /*units*/7 * /*width*/7 * /*order*/2 * /*addr*/5 * /*renaming*/2 * /*load*/6 * Settings.BranchPrediction.values().length * Settings.IssueWindow.values().length;
 		//int total = /*bypass*/2 * /*units*/3 * /*width*/4 * /*order*/2 * /*addr*/4 * /*renaming*/2 * /*load*/4 * Settings.BranchPrediciton.values().length * Settings.IssueWindow.values().length;
 		int runNum = 0;
 		int failureNum = 0;
@@ -179,7 +182,7 @@ public class Test {
 		for(IssueWindow window : Settings.IssueWindow.values()) {
 		//IssueWindow window = Settings.IssueWindow.Aligned; {
 			Settings.ISSUE_WINDOW_METHOD = window;
-			for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
+			for(BranchPrediction branch : Settings.BranchPrediction.values()) {
 			//BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static; {
 				Settings.BRANCH_PREDICTION_MODE = branch;
 				for(boolean bypass : new boolean[] {false, true}) {
@@ -290,7 +293,7 @@ public class Test {
 	
 	static class Config {
 		IssueWindow windowAlignment;
-		BranchPrediciton branchPrediction;
+		BranchPrediction branchPrediction;
 		boolean reservationStationBypassEnabled;
 		int numberOfExecutionUnits;
 		int superScalerWidth;
@@ -300,7 +303,7 @@ public class Test {
 		int loadLimit;
 		Config(
 			IssueWindow windowAlignment,
-			BranchPrediciton branchPrediction,
+			BranchPrediction branchPrediction,
 			boolean reservationStationBypassEnabled,
 			int numberOfExecutionUnits,
 			int superScalerWidth,

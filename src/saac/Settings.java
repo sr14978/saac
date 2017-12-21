@@ -1,5 +1,6 @@
 package saac;
 
+import static saac.utils.parsers.ParserUtils.either;
 import static saac.utils.parsers.ParserUtils.number;
 import static saac.utils.parsers.ParserUtils.padded;
 import static saac.utils.parsers.ParserUtils.string;
@@ -8,7 +9,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -16,15 +16,14 @@ import java.util.function.Supplier;
 import saac.utils.parsers.ParseResult;
 import saac.utils.parsers.ParseSuccess;
 import saac.utils.parsers.Parser;
-import saac.utils.parsers.ParserUtils;
 
 public class Settings {
 	
 	public static enum IssueWindow {Aligned, Unaligned};
 	public static IssueWindow ISSUE_WINDOW_METHOD = IssueWindow.Aligned; 
 	
-	public static enum BranchPrediciton {Blocking, Simple_Static, Static, Dynamic};
-	public static BranchPrediciton BRANCH_PREDICTION_MODE = BranchPrediciton.Dynamic;
+	public static enum BranchPrediction {Blocking, Simple_Static, Static, Dynamic};
+	public static BranchPrediction BRANCH_PREDICTION_MODE = BranchPrediction.Dynamic;
 	
 	public static boolean RESERVATION_STATION_BYPASS_ENABLED = true;
 	
@@ -58,28 +57,29 @@ public class Settings {
 	}
 	
 	private static void getParam(String line) {
-		if(getBranchParam(line)) {}
-		else if(getAlignParam(line)) {}
-		else if(getBoolParam("RESERVATION_STATION_BYPASS_ENABLED", line, (b)->RESERVATION_STATION_BYPASS_ENABLED=b)) {}
-		else if(getNumberParam("NUMBER_OF_EXECUTION_UNITS", line, (x)->NUMBER_OF_EXECUTION_UNITS=x)) {}
-		else if(getNumberParam("SUPERSCALER_WIDTH", line, (x)->SUPERSCALER_WIDTH=x)) {}
-		else if(getBoolParam("OUT_OF_ORDER_ENABLED", line, (b)->OUT_OF_ORDER_ENABLED=b)) {}
-		else if(getNumberParam("VIRTUAL_ADDRESS_NUM", line, (x)->VIRTUAL_ADDRESS_NUM=x)) {}
-		else if(getBoolParam("REGISTER_RENAMING_ENABLED", line, (b)->REGISTER_RENAMING_ENABLED=b)) {}
-		else if(getNumberParam("LOAD_LIMIT", line, (x)->LOAD_LIMIT=x)) {}
+		if(getBranchParam(line));
+		else if(getAlignParam(line));
+		else if(getBoolParam("RESERVATION_STATION_BYPASS_ENABLED", line, (b)->RESERVATION_STATION_BYPASS_ENABLED=b));
+		else if(getNumberParam("NUMBER_OF_EXECUTION_UNITS", line, (x)->NUMBER_OF_EXECUTION_UNITS=x));
+		else if(getNumberParam("SUPERSCALER_WIDTH", line, (x)->SUPERSCALER_WIDTH=x));
+		else if(getBoolParam("OUT_OF_ORDER_ENABLED", line, (b)->OUT_OF_ORDER_ENABLED=b));
+		else if(getNumberParam("VIRTUAL_ADDRESS_NUM", line, (x)->VIRTUAL_ADDRESS_NUM=x));
+		else if(getBoolParam("REGISTER_RENAMING_ENABLED", line, (b)->REGISTER_RENAMING_ENABLED=b));
+		else if(getNumberParam("LOAD_LIMIT", line, (x)->LOAD_LIMIT=x));
 	}
 	
 	private static boolean getBranchParam(String line) {
-		List<Parser<BranchPrediciton>> values = new ArrayList<>();
-		values.add(string("Blocking").thenSecond(ParserUtils.pure(BranchPrediciton.Blocking)));
-		values.add(string("Simple_Static").thenSecond(ParserUtils.pure(BranchPrediciton.Simple_Static)));
-		values.add(string("Static").thenSecond(ParserUtils.pure(BranchPrediciton.Static)));
-		values.add(string("Dynamic").thenSecond(ParserUtils.pure(BranchPrediciton.Dynamic)));
-		ParseResult<BranchPrediciton> res = padded(string("BRANCH_PREDICTION_MODE"))
+		@SuppressWarnings("unchecked")
+		ParseResult<BranchPrediction> res = padded(string("BRANCH_PREDICTION_MODE"))
 				.thenSecond(padded(string("="))
-				.thenSecond(padded(ParserUtils.either(values)))).parse(line);
+				.thenSecond(padded(either(new Parser[] {
+					string("Blocking").thenPure(BranchPrediction.Blocking),
+					string("Simple_Static").thenPure(BranchPrediction.Simple_Static),
+					string("Static").thenPure(BranchPrediction.Static),
+					string("Dynamic").thenPure(BranchPrediction.Dynamic)
+				})))).parse(line);
 		if(res instanceof ParseSuccess) {
-			BRANCH_PREDICTION_MODE = ((ParseSuccess<BranchPrediciton>) res).value;
+			BRANCH_PREDICTION_MODE = ((ParseSuccess<BranchPrediction>) res).value;
 			return true;
 		}
 		return false;
@@ -88,9 +88,9 @@ public class Settings {
 	private static boolean getAlignParam(String line) {
 		ParseResult<IssueWindow> res =  padded(string("ISSUE_WINDOW_METHOD"))
 				.thenSecond(padded(string("="))
-				.thenSecond(padded(ParserUtils.either(
-						string("Aligned").thenSecond(ParserUtils.pure(IssueWindow.Aligned)),
-						string("Unaligned").thenSecond(ParserUtils.pure(IssueWindow.Unaligned))
+				.thenSecond(padded(either(
+						string("Aligned").thenPure(IssueWindow.Aligned),
+						string("Unaligned").thenPure(IssueWindow.Unaligned)
 					)))).parse(line);
 		if(res instanceof ParseSuccess) {
 			ISSUE_WINDOW_METHOD = ((ParseSuccess<IssueWindow>) res).value;
@@ -100,9 +100,11 @@ public class Settings {
 	}
 	
 	private static boolean getBoolParam(String name, String line, Consumer<Boolean> f) {
-		ParseResult<Boolean> res =  padded(string(name)).thenSecond(padded(string("=")).thenSecond(padded(ParserUtils.either(
-				string("true").thenSecond(ParserUtils.pure(true)),
-				string("false").thenSecond(ParserUtils.pure(false)))))).parse(line);
+		ParseResult<Boolean> res =  padded(string(name))
+				.thenSecond(padded(string("="))
+						.thenSecond(padded(either(
+								string("true").thenPure(true),
+								string("false").thenPure(false))))).parse(line);
 		if(res instanceof ParseSuccess) {
 			f.accept(((ParseSuccess<Boolean>) res).value);
 			return true;
@@ -111,7 +113,9 @@ public class Settings {
 	}
 	
 	private static boolean getNumberParam(String name, String line, Consumer<Integer> f) {
-		ParseResult<Integer> res = padded(string(name)).thenSecond(padded(string("=")).thenSecond(padded(number))).parse(line);
+		ParseResult<Integer> res = padded(string(name))
+				.thenSecond(padded(string("="))
+						.thenSecond(padded(number))).parse(line);
 		if(res instanceof ParseSuccess) {
 			f.accept(((ParseSuccess<Integer>) res).value);
 			return true;

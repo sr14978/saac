@@ -10,7 +10,7 @@ import java.util.List;
 
 import saac.Saac;
 import saac.Settings;
-import saac.Settings.BranchPrediciton;
+import saac.Settings.BranchPrediction;
 import saac.Worker;
 import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.dataObjects.Instruction.Results.InstructionResult;
@@ -122,7 +122,7 @@ public class WritebackHandler implements ClockedComponentI, VisibleComponentI {
 				break loop;
 			} else if(res instanceof BranchResult) {
 				Saac.InstructionCounter++;
-				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
+				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediction.Blocking) {
 					BranchResult br = (BranchResult) res;
 					if(!br.wasCorrect()) {
 						reorderBuffer.clearAfter();

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import saac.Settings;
-import saac.Settings.BranchPrediciton;
+import saac.Settings.BranchPrediction;
 import saac.Settings.IssueWindow;
 
 public class TestOutput {
@@ -15,7 +15,7 @@ public class TestOutput {
 		PrintWriter printer = new PrintWriter(fileWriter);
 		
 		for(IssueWindow window : Settings.IssueWindow.values()) {
-			for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
+			for(BranchPrediction branch : Settings.BranchPrediction.values()) {
 				for(boolean bypass : new boolean[] {false, true}) {
 					for(int units = 1, u=0; units<=64; units*=2, u++) {
 						for(int width = 1, w=0; width<=64; width*=2, w++) {

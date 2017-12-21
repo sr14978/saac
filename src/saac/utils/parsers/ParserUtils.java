@@ -41,6 +41,19 @@ public class ParserUtils {
 				);
 	}
 	
+	public static <T> Parser<T> either(Parser<T>[] ps) {
+		return new Parser<T>(
+				(String st) -> {
+					for(Parser<T> p : ps) {
+						ParseResult<T> instruction = p.parse(st);
+						if(instruction instanceof ParseSuccess)
+							return instruction;
+					}
+					return new ParseFail<T>();
+					}
+				);
+	}
+	
 	public static Parser<String> string(String s) {
 		return new Parser<String>(
 				(String line) -> {

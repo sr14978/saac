@@ -31,6 +31,10 @@ public class Parser<T> {
 		return this.thenWith((any) -> p);
 	}
 	
+	public <H> Parser<H> thenPure(H p) {
+		return this.thenWith((any) -> ParserUtils.pure(p));
+	}
+	
 	public <H> Parser<T> thenFirst(Parser<H> p) {
 		return this.thenWith((first) -> p.thenSecond(pure(first)));
 	}

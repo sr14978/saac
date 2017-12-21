@@ -5,7 +5,7 @@ import java.awt.Graphics2D;
 import java.util.LinkedList;
 
 import saac.Settings;
-import saac.Settings.BranchPrediciton;
+import saac.Settings.BranchPrediction;
 import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
@@ -52,11 +52,11 @@ public class BranchPredictor implements VisibleComponentI{
 	}
 	
 	public boolean predict(int[] inst) {
-		if(Settings.BRANCH_PREDICTION_MODE == BranchPrediciton.Simple_Static)
+		if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Simple_Static)
 			return predictSimpleStatic();
-		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediciton.Static)
+		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Static)
 			return predictStatic(inst);
-		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediciton.Dynamic) {
+		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Dynamic) {
 			return predictDynamic(inst);
 		}
 		throw new NotImplementedException();

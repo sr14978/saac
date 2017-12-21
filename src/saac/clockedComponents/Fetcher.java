@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import saac.Settings;
-import saac.Settings.BranchPrediciton;
+import saac.Settings.BranchPrediction;
 import saac.dataObjects.Instruction.Results.BranchResult;
 import saac.interfaces.BufferedConnection;
 import saac.interfaces.ClearableComponent;
@@ -123,7 +123,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				inst[6] = instructionCounter++;
 				outInsts.add(inst);
 				
-				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediciton.Blocking) {
+				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediction.Blocking) {
 					boolean prediction = predictor.predict(inst);
 					inst[5] = prediction?1:0;
 					if(prediction) {
