@@ -366,7 +366,6 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						}
 						if(inst.getDest().isPresent()) {
 							if(inst.getDest().get().isVector()) {
-								System.out.println("hi");
 								setVectorRegisterDirty(inst.getDest().get().getRegNumber());
 							} else {
 								setScalarRegisterDirty(inst.getDest().get().getRegNumber());
@@ -424,9 +423,9 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 	}
 
 	private boolean loadStoreInstructionsReady(PartialInstruction inst) {
-		if(inst.getOpcode().equals(Opcode.Ldmi)) {
+		if(inst.getOpcode().equals(Opcode.Ldmi) || inst.getOpcode().equals(Opcode.vLdmi)) {
 			return inst.getParamA().get().isDataValue() && inst.getParamB().get().isDataValue();
-		} else if(inst.getOpcode().equals(Opcode.Stmi)) {
+		} else if(inst.getOpcode().equals(Opcode.Stmi) || inst.getOpcode().equals(Opcode.vStmi)) {
 			return inst.getParamB().get().isDataValue() && inst.getParamC().get().isDataValue();
 		} else {
 			return true;

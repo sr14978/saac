@@ -23,16 +23,7 @@ import saac.utils.Instructions;
 
 public class Memory implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	static final int addressMax = 0x10000;
-	static private int[] values = new int[addressMax];
-	
-	//initialise with values
-	static {
-		for(int i=0; i<0x100; i++)
-			values[0x0+i] = i+1;
-		
-		for(int i=0; i<0x100; i++)
-			values[0x100+i] = (i+2);
-	}
+	private int[] values = new int[addressMax];
 	
 	List<DelayQueueItem<MemoryResult>> queue = new LinkedList<>(); 
 	FListConnection<MemoryResult>.Output input;
@@ -42,6 +33,12 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 	public Memory(FListConnection<MemoryResult>.Output input, FListConnection<Integer>.Input output) {
 		this.input = input;
 		this.output = output;
+		//initialise with values
+		for(int i=0; i<0x100; i++)
+			values[0x0+i] = i+1;
+		
+		for(int i=0; i<0x100; i++)
+			values[0x100+i] = (i+2);
 	}
 	
 	public int getWord(int addr) {

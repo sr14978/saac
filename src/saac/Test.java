@@ -12,7 +12,6 @@ import java.util.function.Function;
 import saac.Settings.BranchPrediciton;
 import saac.Settings.IssueWindow;
 import saac.clockedComponents.RegisterFile;
-import saac.test.TestOutput;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
 
@@ -42,17 +41,22 @@ public class Test {
 		Results results = new Results(new HashMap<Test.Config, Float>(), new ArrayList<Test.Config>(), 0, null);
 		results.results.put(new Config(Settings.ISSUE_WINDOW_METHOD, Settings.BRANCH_PREDICTION_MODE, Settings.RESERVATION_STATION_BYPASS_ENABLED, 
 				Settings.NUMBER_OF_EXECUTION_UNITS, Settings.SUPERSCALER_WIDTH, Settings.OUT_OF_ORDER_ENABLED,
-				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED, Settings.LOAD_LIMIT), runTest("inner_product_stop.program", (rf -> rf.getRegisterValue(1) == 5658112)));
+				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED, Settings.LOAD_LIMIT),
+				runTest("vector.program", (rf -> 
+					rf.getScalarRegisterValue(8) == 2
+					&& rf.getScalarRegisterValue(9) == 4
+					&& rf.getScalarRegisterValue(10) == 6
+					&& rf.getScalarRegisterValue(11) == 8)));
 		*/
-		Results results = runCombinations("vector.program", (rf -> 
-			rf.getScalarRegisterValue(8) == 2
-			&& rf.getScalarRegisterValue(9) == 4
-			&& rf.getScalarRegisterValue(10) == 6
-			&& rf.getScalarRegisterValue(11) == 8));
+		Results results = runCombinations("vector.program", (rf -> {
+			int[] r = rf.getVectorRegisterValue(8);
+			return r[0] == 2 && r[1] == 4 && r[2] == 6 && r[3] == 8; 
+			}));
+		
 		//Results results = runCombinations("inner_product_stop.program", (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
 		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
 		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
-		TestOutput.writeOutputs(results.resultsArray);		
+		//TestOutput.writeOutputs(results.resultsArray);		
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
 	}
@@ -172,13 +176,13 @@ public class Test {
 		for(IssueWindow window : Settings.IssueWindow.values()) {
 		//IssueWindow window = Settings.IssueWindow.Aligned; {
 			Settings.ISSUE_WINDOW_METHOD = window;
-			//for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
-			BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static; {
+			for(BranchPrediciton branch : Settings.BranchPrediciton.values()) {
+			//BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static; {
 				Settings.BRANCH_PREDICTION_MODE = branch;
 				for(boolean bypass : new boolean[] {false, true}) {
 					Settings.RESERVATION_STATION_BYPASS_ENABLED = bypass;
 					//for(int units = 1, u=0; units<=64; units*=2, u++) {
-					for(int units = 1, u=0; units<=4; units*=2, u++) {
+					for(int units = 1, u=0; units<=8; units*=2, u++) {
 						Settings.NUMBER_OF_EXECUTION_UNITS = units;
 						//for(int width = 1, w=0; width<=64; width*=2, w++) {
 						for(int width = 1, w=0; width<=8; width*=2, w++) {
@@ -197,7 +201,7 @@ public class Test {
 									for(boolean renaming : new boolean[] {false, true}) {
 										Settings.REGISTER_RENAMING_ENABLED = renaming;
 										//for(int load = 1, l=0; load<=16; load*=2, l++) {
-										for(int load = 2, l=0; load<=2; load*=2, l++) {
+										for(int load = 2, l=0; load<=8; load*=2, l++) {
 											Settings.LOAD_LIMIT = load;
 											runNum++;
 											final Control control = new Control();
@@ -313,7 +317,7 @@ public class Test {
 		}
 		
 		public String toString() {
-			return String.format("Alignment: %s, Branch: %s, Bypass: %s, EUs: %d, Width:%d, OOO: %s, VirtAdresses: %d, Renaming: %s, LoadLimit %d",
+			return String.format("Alignment: %s Branch: %s Bypass: %s EUs: %d Width: %d OOO: %s VirtAdresses: %d Renaming: %s LoadLimit %d",
 					windowAlignment.toString(),
 					branchPrediction.toString(),
 					Boolean.toString(reservationStationBypassEnabled),
