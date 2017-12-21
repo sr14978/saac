@@ -13,8 +13,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
-import com.sun.xml.internal.ws.org.objectweb.asm.Label;
-
 import saac.interfaces.ComponentViewI;
 import saac.utils.Output;
 import saac.utils.RateUtils;

@@ -160,7 +160,7 @@ public class ReservationStation implements ClockedComponentI, VisibleComponentI,
 			gc.setColor(Color.BLACK);
 			synchronized(partialBuffer) {
 				synchronized(completeBuffer) {
-					gc.drawString(partialBuffer.size()==MaxSize?"F":"", 5, 32);
+					gc.drawString(Integer.toString(partialBuffer.size()), 2, 32);
 					gc.drawString(partialBuffer.toString(), 15, 25);
 					gc.drawString(completeBuffer.toString(), 15, 40);
 				}
