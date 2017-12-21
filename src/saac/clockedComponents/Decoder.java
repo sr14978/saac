@@ -606,6 +606,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Eq:
 			case Ldpc:
 			case vLdc:
+			case vMul:
 				if(outputAU.clear()) {
 					if(ReservationStation.isAllParametersPresent(inst)
 							&& isAUReservationStationEmpty.get()

@@ -105,6 +105,9 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 							inst.getParamD().get().getScalarValue()
 							}));
 			break;
+		case vMul:
+			bufferOut = vectorBinaryOperator(inst, (x,y)->x*y);
+			break;
 		default:
 			throw new NotImplementedException();
 		}
@@ -115,6 +118,21 @@ public class ArithmeticUnit implements ClockedComponentI, VisibleComponentI, Cle
 	private static RegisterResult binaryOperator(CompleteInstruction inst, BiFunction<Integer, Integer, Integer> f) {
 		return new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
 				Value.Scalar(f.apply(inst.getParamA().get().getScalarValue(), inst.getParamB().get().getScalarValue())));
+	}
+	
+	private static RegisterResult vectorBinaryOperator(CompleteInstruction inst, BiFunction<Integer, Integer, Integer> f) {
+		int[] a = inst.getParamA().get().getVectorValues();
+		int[] b = inst.getParamB().get().getVectorValues();
+		return new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
+				Value.Vector(
+						new int[] {
+								f.apply(a[0], b[0]),
+								f.apply(a[1], b[1]),
+								f.apply(a[2], b[2]),
+								f.apply(a[3], b[3])
+						}
+					)
+				);
 	}
 	
 	@Override
