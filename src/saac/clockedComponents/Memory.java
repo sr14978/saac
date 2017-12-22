@@ -10,7 +10,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
+import saac.Settings;
 import saac.dataObjects.DelayQueueItem;
+import saac.dataObjects.MemReturn;
 import saac.dataObjects.Instruction.Results.MemoryResult;
 import saac.interfaces.ClearableComponent;
 import saac.interfaces.ClockedComponentI;
@@ -18,14 +20,38 @@ import saac.interfaces.ComponentView;
 import saac.interfaces.ComponentViewI;
 import saac.interfaces.FListConnection;
 import saac.interfaces.VisibleComponentI;
+import saac.unclockedComponents.Cache;
 import saac.utils.DrawingHelper;
-import saac.utils.Instructions;
 
 public class Memory implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	static final int addressMax = 0x10000;
 	private int[] values = new int[addressMax];
+	private Cache cache;
 	
-	List<DelayQueueItem<MemoryResult>> queue = new LinkedList<>(); 
+	class Tuple{
+		int address;
+		public int getAddress() {
+			return address;
+		}
+		public int getVirtualNumber() {
+			return virtualNumber;
+		}
+		int virtualNumber;
+		boolean isVector;
+		public boolean isVector() {
+			return isVector;
+		}
+		Tuple(int address, int virtualNumber, boolean isVector) {
+			this.address = address;
+			this.virtualNumber = virtualNumber;
+			this.isVector = isVector;
+		}
+		public String toString() {
+			return "(" + Integer.toString(virtualNumber)+") [" + Integer.toString(address) + "], " + (isVector?"v":"s"); 
+		}
+	}
+	
+	List<DelayQueueItem<Tuple>> queue = new LinkedList<>(); 
 	FListConnection<MemoryResult>.Output input;
 	FListConnection<Integer>.Input output;
 	Map<Integer, List<Integer>> memoryAddressDirtyLookup = new ConcurrentHashMap<Integer, List<Integer>>();
@@ -39,19 +65,62 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 		
 		for(int i=0; i<0x100; i++)
 			values[0x100+i] = (i+2);
+		
+		cache = new Cache(this);
 	}
 	
-	public int getWord(int addr) {
-		if(addr < addressMax && addr >= 0)
-			return values[addr];
-		else 
+	public MemReturn getWord(int addr) {
+		if(addr < addressMax && addr >= 0) {
+			if(Settings.CACHE_ENABLED) {
+				if(cache.isInCache(addr/Cache.cacheLineLength)) {
+					int[] cacheLine = cache.getCacheLine(addr/Cache.cacheLineLength);
+					return MemReturn.Cache(Optional.of(cacheLine[addr%Cache.cacheLineLength]));
+				} else {
+					if(addr < addressMax && addr >= 0) {
+						int[] cacheLine = loadCacheLineFromMemory(addr);
+						boolean hadToEvict = cache.putCacheLine(addr/Cache.cacheLineLength,cacheLine);
+						return MemReturn.Memory(Optional.of(cacheLine[addr%Cache.cacheLineLength]), hadToEvict);
+					} else { 
+						throw new ArrayIndexOutOfBoundsException();
+					}
+				}
+			} else {
+				return MemReturn.Memory(Optional.of(values[addr]), false);
+			}
+		} else {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 	}
-	public void setWord(int addr, int value) {
-		if(addr < addressMax && addr >= 0)
-			values[addr] = value;
-		else 
+	private int[] loadCacheLineFromMemory(int addr) {
+		int[] cacheLine = new int[Cache.cacheLineLength];
+		for(int i = 0; i<Cache.cacheLineLength; i++) {
+			cacheLine[i] = values[addr+i];
+		}
+		return cacheLine;
+	}
+
+	public MemReturn setWord(int addr, int value) {
+		if(addr < addressMax && addr >= 0) {
+			if(Settings.CACHE_ENABLED) {
+				int cacheAddr = addr/Cache.cacheLineLength;
+				if(cache.isInCache(cacheAddr)) {
+					int values[] = cache.getCacheLine(cacheAddr);
+					values[addr%Cache.cacheLineLength] = value;
+					cache.updateCacheLine(cacheAddr, values);
+					return MemReturn.Cache(Optional.empty());
+				} else {
+					int[] values = loadCacheLineFromMemory(addr);
+					values[addr%Cache.cacheLineLength] = value;
+					boolean hadToEvict = cache.putCacheLine(cacheAddr, values);
+					return MemReturn.Memory(Optional.empty(), hadToEvict);
+				}
+			} else {
+				values[addr] = value;
+				return MemReturn.Memory(Optional.empty(), false);
+			}
+		} else { 
 			throw new ArrayIndexOutOfBoundsException();
+		}
 	}
 
 	public Optional<Integer> getLatestMemoryAddressWrite(int addr) {
@@ -89,36 +158,45 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 		if(input.ready()) {
 			MemoryResult[] stores = input.pop();
 			for(MemoryResult store : stores) {
-				queue.add(new DelayQueueItem<MemoryResult>(store, Instructions.InstructionDelay.get(Instructions.Opcode.Stma)));
+				
+				if(store.getValue().isScalar()) {
+					MemReturn rm = setWord(store.getAddr(), store.getValue().getScalarValue());
+					queue.add(new DelayQueueItem<Tuple>(
+							new Tuple(store.getAddr(), store.getVirtualNumber(), false),
+							rm.getDelay()));
+				} else {
+					int[] val = store.getValue().getVectorValues();
+					MemReturn[] rets = new MemReturn[] {
+						setWord(store.getAddr(), val[0]),
+						setWord(store.getAddr()+1, val[1]),
+						setWord(store.getAddr()+2, val[2]),
+						setWord(store.getAddr()+3, val[3])
+					};
+					queue.add(new DelayQueueItem<Tuple>(new Tuple(store.getAddr(), store.getVirtualNumber(), true),
+							rets[0].getDelay()+rets[1].getDelay()+rets[2].getDelay()+rets[3].getDelay()
+							));
+				}			
 			}
 		}
 	}
 
 	@Override
 	public void tock() throws Exception {
-		for(DelayQueueItem<MemoryResult> item : queue) {
+		for(DelayQueueItem<Tuple> item : queue) {
 			item.decrementResultToZero();
 		}
 		if(output.clear()) {
 			List<Integer> outs = new LinkedList<>();
-			for(DelayQueueItem<MemoryResult> item : new ArrayList<>(queue)) {
+			for(DelayQueueItem<Tuple> item : new ArrayList<>(queue)) {
 				if(item.getDelay() == 0) {
-					MemoryResult store = item.getResult();
-					if(store.getValue().isScalar()) {
-						setWord(store.getAddr(), store.getValue().getScalarValue());
-					} else {
-						int[] val = store.getValue().getVectorValues();
-						setWord(store.getAddr(), val[0]);
-						setWord(store.getAddr()+1, val[1]);
-						setWord(store.getAddr()+2, val[2]);
-						setWord(store.getAddr()+3, val[3]);
+					Tuple store = item.getResult();
+					removeMemoryAddressWrite(store.getAddress(), store.getVirtualNumber());
+					if(store.isVector()) {
+						removeMemoryAddressWrite(store.getAddress()+1, store.getVirtualNumber());
+						removeMemoryAddressWrite(store.getAddress()+2, store.getVirtualNumber());
+						removeMemoryAddressWrite(store.getAddress()+3, store.getVirtualNumber());
 					}
-					removeMemoryAddressWrite(store.getAddr(), store.getVirtualNumber());
-					if(store.getValue().isVector()) {
-						removeMemoryAddressWrite(store.getAddr()+1, store.getVirtualNumber());
-						removeMemoryAddressWrite(store.getAddr()+2, store.getVirtualNumber());
-						removeMemoryAddressWrite(store.getAddr()+3, store.getVirtualNumber());
-					}
+					
 					outs.add(store.getVirtualNumber());
 					queue.remove(item);
 				}

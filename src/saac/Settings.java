@@ -37,9 +37,11 @@ public class Settings {
 	
 	public static boolean REGISTER_RENAMING_ENABLED = true;
 	
-	public static int LOAD_LIMIT = 16;
+	public static int LOAD_LIMIT = 2;
 	
 	public static boolean LINK_BRANCH_PREDICTION = false;
+	
+	public static boolean CACHE_ENABLED = false;
 	
 	public static Supplier<Integer> PARALLEL_INSTRUCTION_FETCH = () -> 4 * SUPERSCALER_WIDTH;
 		
@@ -68,6 +70,8 @@ public class Settings {
 		else if(getNumberParam("VIRTUAL_ADDRESS_NUM", line, (x)->VIRTUAL_ADDRESS_NUM=x));
 		else if(getBoolParam("REGISTER_RENAMING_ENABLED", line, (b)->REGISTER_RENAMING_ENABLED=b));
 		else if(getNumberParam("LOAD_LIMIT", line, (x)->LOAD_LIMIT=x));
+		else if(getBoolParam("LINK_BRANCH_PREDICTION", line, (b)->LINK_BRANCH_PREDICTION=b));
+		else if(getBoolParam("CACHE_ENABLED", line, (b)->CACHE_ENABLED=b));
 	}
 	
 	private static boolean getBranchParam(String line) {

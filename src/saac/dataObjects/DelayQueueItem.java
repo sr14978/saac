@@ -20,7 +20,7 @@ public class DelayQueueItem<T>{
 	}
 	
 	public String toString() {
-		return result.toString() + "(" + Integer.toString(delay) + ")";
+		return result.toString() + " t=(" + Integer.toString(delay) + ")";
 	}
 	
 }

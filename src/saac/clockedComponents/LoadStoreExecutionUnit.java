@@ -8,6 +8,7 @@ import java.util.List;
 
 import saac.Settings;
 import saac.dataObjects.DelayQueueItem;
+import saac.dataObjects.MemReturn;
 import saac.dataObjects.Instruction.Value;
 import saac.dataObjects.Instruction.Complete.CompleteInstruction;
 import saac.dataObjects.Instruction.Results.InstructionResult;
@@ -22,7 +23,6 @@ import saac.interfaces.FConnection;
 import saac.interfaces.MultiFConnection;
 import saac.interfaces.VisibleComponentI;
 import saac.utils.DrawingHelper;
-import saac.utils.Instructions;
 import saac.utils.NotImplementedException;
 
 public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleComponentI, ClearableComponent{
@@ -57,45 +57,51 @@ public class LoadStoreExecutionUnit implements ClockedComponentI, VisibleCompone
 		
 		InstructionResult res = null;		
 		int delay = 0;
+		MemReturn mr;
 		switch(inst.getOpcode()) {
 		case Ldma:
+			mr = memory.getWord(inst.getParamA().get().getScalarValue());
 			res = new RegisterResult(inst.getVirtualNumber(), inst.getDest().get(),
-					Value.Scalar(memory.getWord(inst.getParamA().get().getScalarValue())));
-			delay = Instructions.InstructionDelay.get(inst.getOpcode());
+					Value.Scalar(mr.getValue().get()));
+			delay = mr.getDelay();
 			break;
 		case Stma:
-			//memory.setWord(inst.getParamB(), inst.getParamA());
 			res = new MemoryResult(inst.getVirtualNumber(),
 					inst.getParamB().get().getScalarValue(),
 					inst.getParamA().get());
 			break;
 		case Ldmi:
+			mr = memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue());
 			res = new RegisterResult(inst.getVirtualNumber(),
 					inst.getDest().get(),
-					Value.Scalar(memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue())));
-			delay = Instructions.InstructionDelay.get(inst.getOpcode());
+					Value.Scalar(mr.getValue().get()));
+			delay = mr.getDelay();
 			break;
 		case Stmi:
-			//memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
 			res = new MemoryResult(inst.getVirtualNumber(),
 					inst.getParamB().get().getScalarValue() + inst.getParamC().get().getScalarValue(),
 					inst.getParamA().get());
 			break;
 		case vLdmi:
+			MemReturn[] rets = new MemReturn[] {
+				memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue()),
+				memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 1),
+				memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 2),
+				memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 3),
+			};
+			
 			res = new RegisterResult(inst.getVirtualNumber(),
 					inst.getDest().get(),
 					Value.Vector(new int[] {
-							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue()),
-							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 1),
-							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 2),
-							memory.getWord(inst.getParamA().get().getScalarValue() + inst.getParamB().get().getScalarValue() + 3)
-						}
-						)
+							rets[0].getValue().get(),
+							rets[1].getValue().get(),
+							rets[2].getValue().get(),
+							rets[3].getValue().get(),
+					})
 					);
-			delay = Instructions.InstructionDelay.get(inst.getOpcode());
+			delay = rets[0].getDelay()+rets[1].getDelay()+rets[2].getDelay()+rets[3].getDelay();
 			break;
 		case vStmi:
-			//memory.setWord(inst.getParamB() + inst.getParamC(), inst.getParamA());
 			res = new MemoryResult(inst.getVirtualNumber(),
 					inst.getParamB().get().getScalarValue() + inst.getParamC().get().getScalarValue(),
 					inst.getParamA().get()
