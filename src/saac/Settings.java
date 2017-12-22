@@ -22,7 +22,8 @@ public class Settings {
 	public static enum IssueWindow {Aligned, Unaligned};
 	public static IssueWindow ISSUE_WINDOW_METHOD = IssueWindow.Aligned; 
 	
-	public static enum BranchPrediction {Blocking, Simple_Static, Static, Dynamic};
+	//public static enum BranchPrediction {Blocking, Simple_Static, Static, Dynamic};
+	public static enum BranchPrediction {Blocking, Always_Taken, Always_Not_Taken, Smart_Static, Dynamic};
 	public static BranchPrediction BRANCH_PREDICTION_MODE = BranchPrediction.Dynamic;
 	
 	public static boolean RESERVATION_STATION_BYPASS_ENABLED = true;
@@ -80,8 +81,9 @@ public class Settings {
 				.thenSecond(padded(string("="))
 				.thenSecond(padded(either(new Parser[] {
 					string("Blocking").thenPure(BranchPrediction.Blocking),
-					string("Simple_Static").thenPure(BranchPrediction.Simple_Static),
-					string("Static").thenPure(BranchPrediction.Static),
+					string("Smart_Static").thenPure(BranchPrediction.Smart_Static),
+					string("Always_Taken").thenPure(BranchPrediction.Always_Taken),
+					string("Always_Not_Taken").thenPure(BranchPrediction.Always_Not_Taken),
 					string("Dynamic").thenPure(BranchPrediction.Dynamic)
 				})))).parse(line);
 		if(res instanceof ParseSuccess) {

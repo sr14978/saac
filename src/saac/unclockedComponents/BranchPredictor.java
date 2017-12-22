@@ -61,10 +61,12 @@ public class BranchPredictor implements VisibleComponentI{
 	}
 	
 	public boolean predictBinary(int[] inst) {
-		if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Simple_Static)
-			return predictSimpleStatic();
-		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Static)
-			return predictStatic(inst);
+		if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Smart_Static)
+			return predictSmartStatic(inst);
+		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Always_Taken)
+			return predictTakenStatic();
+		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Always_Not_Taken)
+			return predictNotTakenStatic();
 		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Dynamic) {
 			return predictDynamic(inst);
 		}
@@ -96,16 +98,20 @@ public class BranchPredictor implements VisibleComponentI{
 	private boolean predictDynamic(int[] inst) {
 		Item i = dynamicStorage.find(inst[4]);
 		if(i == null)
-			return predictStatic(inst);
+			return predictSmartStatic(inst);
 		return i.value>= 1 << (numberOfBits-1);
 	}
 
-	private boolean predictStatic(int[] inst) {
+	private boolean predictSmartStatic(int[] inst) {
 		return inst[1] < 0;
 	}
 
-	private boolean predictSimpleStatic() {		
+	private boolean predictNotTakenStatic() {		
 		return false;
+	}
+	
+	private boolean predictTakenStatic() {		
+		return true;
 	}
 	
 	public Optional<Integer> predictLink(int[] inst) {

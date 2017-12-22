@@ -24,7 +24,7 @@ public class ProgramLoader {
 	//final static String programName = "reoder test.program";
 	//final static String programName = "memory_branch.program";
 	//final static String programName = "depend_simple.program";
-	final static String programName = "new_insts_bra.program";
+	final static String programName = "new_insts_brr.program";
 	//final static String programName = "store_ordering.program";
 	//final static String programName = "vector.program";
 	
