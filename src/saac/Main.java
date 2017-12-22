@@ -102,7 +102,7 @@ public class Main extends JFrame {
 				); 
 		add(settings, BorderLayout.SOUTH);
 		
-		setSize(1500, 900);
+		setSize(1500, 700);
 		setVisible(true);
 		
 		Worker.worker = new Thread(){
@@ -180,7 +180,9 @@ public class Main extends JFrame {
     private void paint() {
     	gui.repaint();
 		rateLable.setText(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter)
-				+ " Count: " + Integer.toString(Saac.InstructionCounter));
+				+ ", Instruction Count: " + Integer.toString(Saac.InstructionCounter)
+				+ ", Cycle Count: " + Integer.toString(Saac.CycleCounter)
+				+ (Worker.isFinished()? " - Finished":""));
 		rateLable.repaint();
     }
     

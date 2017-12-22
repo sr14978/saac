@@ -15,7 +15,8 @@ public class Worker {
 	public static void finish() {
 		finished = true;
 		Output.final_state.println(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter)
-		+ ", Count: " + Integer.toString(Saac.InstructionCounter)
+		+ ", Instruction Count: " + Integer.toString(Saac.InstructionCounter)
+		+ ", Cycle Count: " + Integer.toString(Saac.CycleCounter)
 		+ ", Branch Prediction " + RateUtils.getRate(BranchPredictor.totalBinaryCorrectlyPredicted, BranchPredictor.totalBinaryBranches));
 	}
 	public static void init() {
