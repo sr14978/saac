@@ -66,6 +66,20 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 		for(int i=0; i<0x100; i++)
 			values[0x100+i] = (i+2);
 		
+		/*
+		for(int i=0; i<0x100; i++)
+			values[0x200+i] = 0;
+		
+		for(int i=0; i<0x100; i++)
+			values[0x200+i] = 1;
+				
+		for(int i=0; i<0x100; i++)
+			values[0x200+i] = (int) ((Math.random()*100)%2);
+		
+		for(int i=0; i<0x100; i++)
+			values[0x200+i] = (int) ((i/10)%2);
+		*/ 
+		
 		cache = new Cache(this);
 	}
 	
@@ -76,13 +90,9 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 					int[] cacheLine = cache.getCacheLine(addr/Cache.cacheLineLength);
 					return MemReturn.Cache(Optional.of(cacheLine[addr%Cache.cacheLineLength]));
 				} else {
-					if(addr < addressMax && addr >= 0) {
-						int[] cacheLine = loadCacheLineFromMemory(addr);
-						boolean hadToEvict = cache.putCacheLine(addr/Cache.cacheLineLength,cacheLine);
-						return MemReturn.Memory(Optional.of(cacheLine[addr%Cache.cacheLineLength]), hadToEvict);
-					} else { 
-						throw new ArrayIndexOutOfBoundsException();
-					}
+					int[] cacheLine = loadCacheLineFromMemory(addr);
+					boolean hadToEvict = cache.putCacheLine(addr/Cache.cacheLineLength,cacheLine, false);
+					return MemReturn.Memory(Optional.of(cacheLine[addr%Cache.cacheLineLength]), hadToEvict);
 				}
 			} else {
 				return MemReturn.Memory(Optional.of(values[addr]), false);
@@ -111,7 +121,7 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 				} else {
 					int[] values = loadCacheLineFromMemory(addr);
 					values[addr%Cache.cacheLineLength] = value;
-					boolean hadToEvict = cache.putCacheLine(cacheAddr, values);
+					boolean hadToEvict = cache.putCacheLine(cacheAddr, values, true);
 					return MemReturn.Memory(Optional.empty(), hadToEvict);
 				}
 			} else {
