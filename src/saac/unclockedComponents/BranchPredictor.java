@@ -29,6 +29,9 @@ public class BranchPredictor implements VisibleComponentI{
 			this.addr = addr;
 			this.value = value;
 		}
+		public String toString() {
+			return Integer.toString(addr) + "=" + Integer.toString(value);
+		}
 	}
 	
 	@SuppressWarnings({ "serial" })
@@ -42,7 +45,7 @@ public class BranchPredictor implements VisibleComponentI{
 		}
 	}; 
 	
-	private final static int numberOfBits = 1;
+	public static int numberOfBits = 2;
 	private final static int MAX_STORAGE_SIZE = 4;
 	Storage dynamicStorage = new Storage();
 	
@@ -96,7 +99,7 @@ public class BranchPredictor implements VisibleComponentI{
 	}
 
 	private boolean predictDynamic(int[] inst) {
-		Item i = dynamicStorage.find(inst[4]);
+		Item i = dynamicStorage.find(inst[4]-1);
 		if(i == null)
 			return predictSmartStatic(inst);
 		return i.value>= 1 << (numberOfBits-1);
