@@ -25,8 +25,8 @@ public class Cache implements VisibleComponentI{
 			return (dirty?"x":"o") + " " + Integer.toString(address*cacheLineLength) + " " + Arrays.toString(values);
 		}
 	}
-	public static final int cacheLineLength = 0x2;
-	public static final int cacheSize = 0x1;
+	public static final int cacheLineLength = 0x8;
+	public static final int cacheSize = 0x8;
 	private CacheLine[] cache = new CacheLine[cacheSize];
 	private int cacheLinesUsed = 0; 
 	Memory memory;
@@ -71,9 +71,7 @@ public class Cache implements VisibleComponentI{
 		int i = pickCachLine();
 		final boolean evict; 
 		if(cache[i] != null && cache[i].dirty) {
-			System.out.println("dirty so evicting");
 			for(int j = 0; j<cacheLineLength; j++) {
-				System.out.println(cache[i].address*cacheLineLength + j);
 				memory.putWordInMainMemory(cache[i].address*cacheLineLength + j, cache[i].values[j]);
 			}
 			evict = true;

@@ -12,7 +12,7 @@ import java.util.function.Function;
 import saac.Settings.BranchPrediction;
 import saac.Settings.IssueWindow;
 import saac.clockedComponents.RegisterFile;
-import saac.test.TestOutput;
+import saac.unclockedComponents.BranchPredictor;
 import saac.utils.RateUtils;
 import saac.utils.parsers.ParserException;
 
@@ -36,21 +36,29 @@ public class Test {
 	}
 	
 	public static void main(String[] args) throws Exception {		
-		String programName = "inner_product_stop.program";
+		//tmp();
+		
+		String programName = "matrix_mul_good.program";
+		
 		if(args.length == 1) {
 			programName = args[0];
 		}
 		System.out.println("Testing...");
+		
 		/*
 		Results results = new Results(new HashMap<Test.Config, Float>(), new ArrayList<Test.Config>(), 0, null);
 		results.results.put(new Config(Settings.ISSUE_WINDOW_METHOD, Settings.BRANCH_PREDICTION_MODE, Settings.RESERVATION_STATION_BYPASS_ENABLED, 
 				Settings.NUMBER_OF_EXECUTION_UNITS, Settings.SUPERSCALER_WIDTH, Settings.OUT_OF_ORDER_ENABLED,
 				Settings.VIRTUAL_ADDRESS_NUM, Settings.REGISTER_RENAMING_ENABLED, Settings.LOAD_LIMIT),
+				/*
 				runTest("vector.program", (rf -> 
 					rf.getScalarRegisterValue(8) == 2
 					&& rf.getScalarRegisterValue(9) == 4
 					&& rf.getScalarRegisterValue(10) == 6
-					&& rf.getScalarRegisterValue(11) == 8)));
+					&& rf.getScalarRegisterValue(11) == 8))
+				 
+				runTest(programName, (rf -> rf.getScalarRegisterValue(1) == 5658112))
+			);
 		*/
 		/*
 		Results results = runCombinations("vector.program", (rf -> {
@@ -58,13 +66,13 @@ public class Test {
 			return r[0] == 2 && r[1] == 4 && r[2] == 6 && r[3] == 8; 
 			}));
 		*/
-		//Results results = runCombinations("inner_product_stop_vector.program", (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
+
 		Results results = runCombinations(programName, (rf -> rf.getScalarRegisterValue(1) == 5658112/*440*//*1632*/));
 		//Results results = runCombinations("no_depend_ldc.program", (rf -> true));
-		//Results results = runCombinations("dynamic_branch_pred.program", (rf -> rf.get(0, Reg.Architectural) == 0 && rf.get(1, Reg.Architectural) == 4));
-		TestOutput.writeOutputs(results.resultsArray);		
+		//TestOutput.writeOutputs(results.resultsArray);		
 		System.out.println(String.format("Results: %d%%", Math.round((1-results.failureRate) * 100)));
 		printResults(results);
+		
 	}
 
 	
@@ -181,35 +189,37 @@ public class Test {
 		long startTime = System.currentTimeMillis();
 		//for(IssueWindow window : Settings.IssueWindow.values()) {
 		IssueWindow window = Settings.IssueWindow.Aligned; {
-			Settings.ISSUE_WINDOW_METHOD = window;
-			for(BranchPrediction branch : Settings.BranchPrediction.values()) {
-			//BranchPrediciton branch = Settings.BranchPrediciton.Simple_Static; {
-				Settings.BRANCH_PREDICTION_MODE = branch;
+			//Settings.ISSUE_WINDOW_METHOD = window;
+			//for(BranchPrediction branch : Settings.BranchPrediction.values()) {
+				//System.out.println(branch.name());
+			BranchPrediction branch = Settings.BranchPrediction.Dynamic; {
+				//Settings.BRANCH_PREDICTION_MODE = branch;
 				//for(boolean bypass : new boolean[] {false, true}) {
 				boolean bypass = false; {
-					Settings.RESERVATION_STATION_BYPASS_ENABLED = bypass;
+					//Settings.RESERVATION_STATION_BYPASS_ENABLED = bypass;
 					//for(int units = 1, u=0; units<=64; units*=2, u++) {
-					for(int units = 2, u=0; units<=2; units*=2, u++) {
-						Settings.NUMBER_OF_EXECUTION_UNITS = units;
+					for(int units = 4, u=0; units<=4; units*=2, u++) {
+						//Settings.NUMBER_OF_EXECUTION_UNITS = units;
 						//for(int width = 1, w=0; width<=64; width*=2, w++) {
-						for(int width = 2, w=0; width<=8; width*=2, w++) {
+						for(int width = 4, w=0; width<=4; width++, w++) {
 							Settings.SUPERSCALER_WIDTH = width;
-							for(boolean order : new boolean[] {false, true}) {
+							Settings.NUMBER_OF_EXECUTION_UNITS = width;
+							for(boolean order : new boolean[] {/*false,*/ true}) {
 								if(runNum>0) {
 									long timeLeft = (System.currentTimeMillis() - startTime) * (total-runNum) / runNum;
 									long seconds = timeLeft/1000 % 60;
 									long minutes = timeLeft/60000;
-									System.out.println(String.format("%.2f%%, time left: %d:%02d",100*((float) runNum)/total, minutes, seconds));
+									//System.out.println(String.format("%.2f%%, time left: %d:%02d",100*((float) runNum)/total, minutes, seconds));
 								}
 								Settings.OUT_OF_ORDER_ENABLED = order;
 								//for(int addr = 8, a=0; addr<=128; addr*=2, a++) {
-								for(int addr = 16, a=0; addr<=32; addr*=2, a++) {
-									Settings.VIRTUAL_ADDRESS_NUM = addr;
-									for(boolean renaming : new boolean[] {false, true}) {
-										Settings.REGISTER_RENAMING_ENABLED = renaming;
+								for(int addr = 32, a=0; addr<=32; addr*=2, a++) {
+									//Settings.VIRTUAL_ADDRESS_NUM = addr;
+									for(boolean renaming : new boolean[] {false, /*true*/}) {
+										//Settings.REGISTER_RENAMING_ENABLED = renaming;
 										//for(int load = 1, l=0; load<=16; load*=2, l++) {
-										for(int load = 2, l=0; load<=4; load*=2, l++) {
-											Settings.LOAD_LIMIT = load;
+										for(int load = 4, l=0; load<=4; load*=2, l++) {
+											//Settings.LOAD_LIMIT = load;
 											runNum++;
 											final Control control = new Control();
 											final int units_w = units;
@@ -252,7 +262,7 @@ public class Test {
 												if(!worker.isAlive()) {
 													if(control.val != null) {
 														results.put(new Config(window, branch, bypass, units, width, order, addr, renaming, load), control.val);
-														resultsArray[window.ordinal()][branch.ordinal()][bypass?1:0][u][w][order?1:0][a][renaming?1:0][l] = control.val;
+														//resultsArray[window.ordinal()][branch.ordinal()][bypass?1:0][u][w][order?1:0][a][renaming?1:0][l] = control.val;
 													} else {
 														failures.add(new Config(window, branch, bypass, units, width, order, addr, renaming, load));
 														resultsArray[window.ordinal()][branch.ordinal()][bypass?1:0][u][w][order?1:0][a][renaming?1:0][l] = -1;
@@ -274,6 +284,53 @@ public class Test {
 		return new Results(results, failures, (double) failureNum / total, resultsArray);
 	}
 	
+	private static void tmp() {
+		for(int i = 1; i<=4; i++) {
+			
+			BranchPredictor.numberOfBits = i;
+			//System.out.println("bits: " + i + ", bs: " + j);
+			final Control control = new Control();
+			Thread worker = new Thread() {
+				public void run() {
+					try {
+						control.val = runTest("branch_bit.program", (rf)->true);
+					} catch (InterruptedException e) {
+						System.err.println("Timeout: ");
+					}
+					catch (WrongAnswerException e) {
+						System.err.println("Incrorrect Answer: ");
+					}
+					catch (Exception e) {
+						e.printStackTrace(System.err);
+					}
+				}
+			};
+			Thread timer = new Thread() {
+				public void run() {
+					try {
+						Thread.sleep(4000);
+					} catch (InterruptedException e) {}										
+				}
+			};
+			worker.start();
+			timer.start();
+			while(true) {
+				if(!timer.isAlive()) {
+					worker.interrupt();
+					break;
+				}
+				if(!worker.isAlive()) {
+					if(control.val != null) {
+					} else {
+					}
+					timer.interrupt();
+					break;
+				}
+			}
+	
+		}
+	}
+	
 	private static float runTest(String programName, Function<RegisterFile, Boolean> p) throws IOException, ParserException, Exception {
 		Worker.init();
 		Saac saac = new Saac(programName);
@@ -282,6 +339,13 @@ public class Test {
         	if(Thread.interrupted())
     			throw new InterruptedException();
 		}
+		//System.out.println((float)Saac.InstructionCounter/Saac.CycleCounter);
+		/*
+		//Output.final_state.println(RateUtils.getRate(Saac.InstructionCounter, Saac.CycleCounter)
+				+ ", Instruction Count: " + Integer.toString(Saac.InstructionCounter)
+				+ ", Cycle Count: " + Integer.toString(Saac.CycleCounter)
+				+ ", Branch Prediction " + RateUtils.getRate(BranchPredictor.totalBinaryCorrectlyPredicted, BranchPredictor.totalBinaryBranches));
+		*/		
 		if(p.apply(saac.registerFile)) {
 			return RateUtils.round((float) Saac.InstructionCounter / Saac.CycleCounter);
 		} else {
