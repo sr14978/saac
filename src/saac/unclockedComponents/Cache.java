@@ -9,9 +9,10 @@ public class Cache {
 		boolean dirty;
 		int address;
 		int values[];
-		CacheLine(int address, int values[]) {
+		CacheLine(int address, int values[], boolean dirty) {
 			this.address = address;
 			this.values = values;
+			this.dirty = dirty;
 		}
 	}
 	public static final int cacheLineLength = 0x8;
@@ -47,6 +48,7 @@ public class Cache {
 			for(CacheLine cl : cache) {
 				if(cl.address == addr) {
 					cl.values = values;
+					cl.dirty = true;
 					return;
 				}
 			}
@@ -55,7 +57,7 @@ public class Cache {
 		}
 	}
 	
-	public boolean putCacheLine(int addr, int[] values) {
+	public boolean putCacheLine(int addr, int[] values, boolean dirty) {
 		int i = pickCachLine();
 		final boolean evict; 
 		if(cache[i] != null && cache[i].dirty) {
@@ -66,7 +68,7 @@ public class Cache {
 		} else {
 			evict = false;
 		}
-		cache[i] = new CacheLine(addr, values);
+		cache[i] = new CacheLine(addr, values, dirty);
 		return evict;
 	}
 
