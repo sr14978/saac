@@ -256,6 +256,7 @@ public class Saac implements ClockedComponentI {
 			visibleComponents.add(sendStoresToMem.createView(middleOffset, boxHeight*c));
 			c++;
 			visibleComponents.add(memory.createView(middleOffset, boxHeight*c));
+			visibleComponents.add(memory.createCacheView(middleOffset + BOX_SIZE, boxHeight*c));
 			c++;
 			visibleComponents.add(storeDonesFromMem.createView(middleOffset, boxHeight*c));
 		}

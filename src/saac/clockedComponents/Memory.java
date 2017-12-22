@@ -25,7 +25,7 @@ import saac.utils.DrawingHelper;
 
 public class Memory implements ClockedComponentI, VisibleComponentI, ClearableComponent{
 	static final int addressMax = 0x10000;
-	private int[] values = new int[addressMax];
+	public static int[] values = new int[addressMax];
 	private Cache cache;
 	
 	class Tuple{
@@ -84,18 +84,18 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 	}
 	
 	public MemReturn getWord(int addr) {
-		if(addr < addressMax && addr >= 0) {
+		if(addr < addressMax && addr >= 0) {	
 			if(Settings.CACHE_ENABLED) {
 				if(cache.isInCache(addr/Cache.cacheLineLength)) {
 					int[] cacheLine = cache.getCacheLine(addr/Cache.cacheLineLength);
 					return MemReturn.Cache(Optional.of(cacheLine[addr%Cache.cacheLineLength]));
 				} else {
-					int[] cacheLine = loadCacheLineFromMemory(addr);
+					int[] cacheLine = loadCacheLineFromMemory(addr - (addr%Cache.cacheLineLength));
 					boolean hadToEvict = cache.putCacheLine(addr/Cache.cacheLineLength,cacheLine, false);
 					return MemReturn.Memory(Optional.of(cacheLine[addr%Cache.cacheLineLength]), hadToEvict);
 				}
 			} else {
-				return MemReturn.Memory(Optional.of(values[addr]), false);
+				return MemReturn.Memory(Optional.of(getWordFromMainMemory(addr)), false);
 			}
 		} else {
 			throw new ArrayIndexOutOfBoundsException();
@@ -109,7 +109,7 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 		return cacheLine;
 	}
 
-	public MemReturn setWord(int addr, int value) {
+	public MemReturn storeWord(int addr, int value) {
 		if(addr < addressMax && addr >= 0) {
 			if(Settings.CACHE_ENABLED) {
 				int cacheAddr = addr/Cache.cacheLineLength;
@@ -119,18 +119,26 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 					cache.updateCacheLine(cacheAddr, values);
 					return MemReturn.Cache(Optional.empty());
 				} else {
-					int[] values = loadCacheLineFromMemory(addr);
+					int[] values = loadCacheLineFromMemory(addr - (addr%Cache.cacheLineLength));
 					values[addr%Cache.cacheLineLength] = value;
 					boolean hadToEvict = cache.putCacheLine(cacheAddr, values, true);
 					return MemReturn.Memory(Optional.empty(), hadToEvict);
 				}
 			} else {
-				values[addr] = value;
+				putWordInMainMemory(addr, value);
 				return MemReturn.Memory(Optional.empty(), false);
 			}
 		} else { 
 			throw new ArrayIndexOutOfBoundsException();
 		}
+	}
+	
+	public void putWordInMainMemory(int addr, int value) {
+		values[addr] = value;
+	}
+	
+	public int getWordFromMainMemory(int addr) {
+		return values[addr];
 	}
 
 	public Optional<Integer> getLatestMemoryAddressWrite(int addr) {
@@ -170,17 +178,17 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 			for(MemoryResult store : stores) {
 				
 				if(store.getValue().isScalar()) {
-					MemReturn rm = setWord(store.getAddr(), store.getValue().getScalarValue());
+					MemReturn rm = storeWord(store.getAddr(), store.getValue().getScalarValue());
 					queue.add(new DelayQueueItem<Tuple>(
 							new Tuple(store.getAddr(), store.getVirtualNumber(), false),
 							rm.getDelay()));
 				} else {
 					int[] val = store.getValue().getVectorValues();
 					MemReturn[] rets = new MemReturn[] {
-						setWord(store.getAddr(), val[0]),
-						setWord(store.getAddr()+1, val[1]),
-						setWord(store.getAddr()+2, val[2]),
-						setWord(store.getAddr()+3, val[3])
+						storeWord(store.getAddr(), val[0]),
+						storeWord(store.getAddr()+1, val[1]),
+						storeWord(store.getAddr()+2, val[2]),
+						storeWord(store.getAddr()+3, val[3])
 					};
 					queue.add(new DelayQueueItem<Tuple>(new Tuple(store.getAddr(), store.getVirtualNumber(), true),
 							rets[0].getDelay()+rets[1].getDelay()+rets[2].getDelay()+rets[3].getDelay()
@@ -223,7 +231,7 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 			removeMemoryAddressWrite(addr, y->y>=i);
 		}
 	}
-
+	
 	class View extends ComponentView {
 		
 		View(int x, int y) {
@@ -235,12 +243,24 @@ public class Memory implements ClockedComponentI, VisibleComponentI, ClearableCo
 			gc.setColor(Color.BLACK);
 			gc.drawString(memoryAddressDirtyLookup.toString(), 5, 35);
 			gc.drawString(queue.toString(), 5, 45);
+			for(int k = 0; k<3; k++) {
+				for(int i = 0 ; i< 0x10; i++) {
+					for(int j = 0 ; j< 0x10; j++) {
+						gc.drawString(Integer.toString(values[k*0x100+ j*0x10+i]), -440 + i*30 + (30*16 + 10)*k, 100 + j*20);
+					}
+				}
+			}
+			
 		}
 	}
 
 	@Override
 	public ComponentViewI createView(int x, int y) {
 		return new View(x, y);
+	}
+	
+	public ComponentViewI createCacheView(int x, int y) {
+		return cache.createView(x, y);
 	}
 
 	

@@ -1,9 +1,16 @@
 package saac.unclockedComponents;
 
+import java.awt.Graphics2D;
+import java.util.Arrays;
+
 import saac.clockedComponents.Memory;
+import saac.interfaces.ComponentView;
+import saac.interfaces.ComponentViewI;
+import saac.interfaces.VisibleComponentI;
+import saac.utils.DrawingHelper;
 import saac.utils.NotImplementedException;
 
-public class Cache {
+public class Cache implements VisibleComponentI{
 
 	class CacheLine {
 		boolean dirty;
@@ -14,9 +21,12 @@ public class Cache {
 			this.values = values;
 			this.dirty = dirty;
 		}
+		public String toString() {
+			return (dirty?"x":"o") + " " + Integer.toString(address*cacheLineLength) + " " + Arrays.toString(values);
+		}
 	}
-	public static final int cacheLineLength = 0x8;
-	public static final int cacheSize = 0x10;
+	public static final int cacheLineLength = 0x2;
+	public static final int cacheSize = 0x1;
 	private CacheLine[] cache = new CacheLine[cacheSize];
 	private int cacheLinesUsed = 0; 
 	Memory memory;
@@ -61,8 +71,10 @@ public class Cache {
 		int i = pickCachLine();
 		final boolean evict; 
 		if(cache[i] != null && cache[i].dirty) {
+			System.out.println("dirty so evicting");
 			for(int j = 0; j<cacheLineLength; j++) {
-				memory.setWord(cache[i].address*cacheLineLength + j, cache[i].values[j]);
+				System.out.println(cache[i].address*cacheLineLength + j);
+				memory.putWordInMainMemory(cache[i].address*cacheLineLength + j, cache[i].values[j]);
 			}
 			evict = true;
 		} else {
@@ -91,5 +103,25 @@ public class Cache {
 				throw new NotImplementedException();
 			}
 		}
+	}
+
+	class View extends ComponentView {
+		
+		View(int x, int y) {
+			super(x, y);
+		}
+		
+		public void paint(Graphics2D gc) {
+			DrawingHelper.drawBox(gc, "Cache");
+			for(int i = 0; i<cacheSize; i++) {
+				if(cache[i] != null)
+					gc.drawString(cache[i].toString(), 50, 12 + 10*i);
+			}
+		}
+	}
+
+	@Override
+	public ComponentViewI createView(int x, int y) {
+		return new View(x, y);
 	}
 }
