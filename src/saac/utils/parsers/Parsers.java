@@ -109,7 +109,7 @@ public class Parsers {
 		instructions.add(tertiaryRRR("ldmi", Opcode.Ldmi));
 		instructions.add(tertiary_RRR("stmi", Opcode.Stmi));
 		instructions.add(unaryN("br", Opcode.Br));
-		instructions.add(unaryR("ln", Opcode.Ln));
+		instructions.add(unaryR("brr", Opcode.Brr));
 		instructions.add(unaryN("jmp", Opcode.Jmp));
 		instructions.add(binaryNR("jmpc", Opcode.JmpC));
 		instructions.add(binaryRN("ldpc", Opcode.Ldpc));

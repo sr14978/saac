@@ -144,7 +144,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 					break insts;
 				}
 				break;
-			case Ln:
+			case Brr:
 				clearOutput.put(true);
 				inst[2] = inst[1];
 				inst[4] = inst[6] + 1;

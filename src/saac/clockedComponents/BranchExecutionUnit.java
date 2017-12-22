@@ -62,7 +62,7 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 						inst.getParamD().get().getScalarValue(),
 						false, inst.getParamC().get().getScalarValue()-1);
 			break;
-		case Ln:
+		case Brr:
 			bufferOut = BranchResult.LinkBranch(inst.getVirtualNumber(),
 					inst.getParamA().get().getScalarValue(),
 					inst.getParamA().get().getScalarValue() == inst.getParamD().get().getScalarValue(), true,

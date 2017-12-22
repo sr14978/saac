@@ -26,7 +26,7 @@ public class Instructions {
 		Ldmi,	// ldmi	 rI rJ rK -> rI = mem[rJ + rk] 
 		Stmi,	// stmi	 rI rJ rK -> mem[rJ + rk] = rI 
 		Br,  	// br 	 #n .  .  -> pc = #n
-		Ln,  	// ln 	 rK .  .  -> pc = rK
+		Brr,  	// brr 	 rK .  .  -> pc = rK
 		Jmp,	// jmp   #n .  .  -> pc = pc + #n
 		JmpC,	// jmpc  #n rI .  -> pc = if rI!=0 then pc + #n else pc
 		Ldpc,	// ldpc  rI #n .  -> rI = pc + 1 + #n
@@ -58,7 +58,7 @@ public class Instructions {
 			case 0xC: return Ldmi;
 			case 0xD: return Stmi;
 			case 0xE: return Br;
-			case 0xF: return Ln;
+			case 0xF: return Brr;
 			case 0x10: return Jmp;
 			case 0x11: return JmpC;
 			case 0x12: return Ldpc;
@@ -94,7 +94,7 @@ public class Instructions {
 			case Ldmi: return 0xC;
 			case Stmi: return 0xD;
 			case Br: return 0xE;
-			case Ln: return 0xF;
+			case Brr: return 0xF;
 			case Jmp: return 0x10;
 			case JmpC: return 0x11;
 			case Ldpc: return 0x12;

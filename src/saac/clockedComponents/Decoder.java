@@ -207,7 +207,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 						usageA = Usage.Data;
 						usageB = usageC = usageD = Usage.Null;
 						break;
-					case Ln:
+					case Brr:
 						dest = Store.Null;
 						usageA = Usage.ScalarReg;
 						usageC = usageD = Usage.Data;
@@ -737,7 +737,7 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 			case Br:
 			case Jmp:
 			case JmpC:
-			case Ln:
+			case Brr:
 				if(outputBR.clear()) {
 					if(ReservationStation.isAllParametersPresent(inst)
 							&& isBRReservationStationEmpty.get()
