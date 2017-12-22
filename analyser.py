@@ -40,7 +40,10 @@ def show3D(x, z, f, xs, zs):
   print(len(xs))
   print(len(zs))
   ax.scatter(xs, zs, ys, marker='o')
+  #ax.plot_surface(xs, zs, ys, alpha=0.5)
   plt.show()
+  
+
 
 unit_load = lambda: show3D(unit_n, load_n, lambda i,j: vals[:,:,:,i,...,j], [i for i in range(unit_n) for j in range(load_n)], [i for j in range(unit_n) for i in range(load_n)])
 unit_width = lambda: show3D(unit_n, width_n, lambda i,j: vals[:,:,:,i,j,...], [i for i in range(unit_n) for j in range(width_n)], [i for j in range(unit_n) for i in range(width_n)])

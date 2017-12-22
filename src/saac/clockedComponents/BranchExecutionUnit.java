@@ -51,19 +51,22 @@ public class BranchExecutionUnit implements ClockedComponentI, VisibleComponentI
 		*/
 		case JmpC:
 			if(inst.getParamB().get().getScalarValue() != 0) {
-				bufferOut = new BranchResult(inst.getVirtualNumber(),
+				bufferOut = BranchResult.StandardBranch(inst.getVirtualNumber(),
 						inst.getParamA().get().getScalarValue() + inst.getParamC().get().getScalarValue(),
 						inst.getParamD().get().getScalarValue(),
 						true, inst.getParamC().get().getScalarValue()-1);
 				Output.jumping_info.println("jumping to " + bufferOut);
 			} else
-				bufferOut = new BranchResult(inst.getVirtualNumber(),
+				bufferOut = BranchResult.StandardBranch(inst.getVirtualNumber(),
 						inst.getParamC().get().getScalarValue(),
 						inst.getParamD().get().getScalarValue(),
 						false, inst.getParamC().get().getScalarValue()-1);
 			break;
 		case Ln:
-			bufferOut = new BranchResult(inst.getVirtualNumber(), inst.getParamA().get().getScalarValue(), true, true, -1);
+			bufferOut = BranchResult.LinkBranch(inst.getVirtualNumber(),
+					inst.getParamA().get().getScalarValue(),
+					inst.getParamA().get().getScalarValue() == inst.getParamD().get().getScalarValue(), true,
+					inst.getParamC().get().getScalarValue()-1);
 			break;
 		default:
 			throw new NotImplementedException();

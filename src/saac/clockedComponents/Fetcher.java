@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import saac.Settings;
 import saac.Settings.BranchPrediction;
@@ -58,11 +59,16 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 		
 		if(fromBrUnit.ready()){
 			BranchResult res = fromBrUnit.pop();
-			if(halt && res.getVirtualNumber() == haltingInstruction) {
-				programCounter = res.getNewPc();
-				halt = false;
+			if(res.isLinkBranch()) {
+				predictor.updateLinkBranch(res);
 			} else {
 				predictor.update(res);
+			}
+			if(halt && res.getVirtualNumber() == haltingInstruction) {
+				programCounter = res.getNewPc();
+				instructionCounter = res.getVirtualNumber();
+				halt = false;
+			} else {
 				if(!res.wasCorrect()) {
 					for(ClearableComponent cc : clearables)
 						cc.clear(res.getVirtualNumber());
@@ -124,7 +130,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				outInsts.add(inst);
 				
 				if(Settings.BRANCH_PREDICTION_MODE != BranchPrediction.Blocking) {
-					boolean prediction = predictor.predict(inst);
+					boolean prediction = predictor.predictBinary(inst);
 					inst[5] = prediction?1:0;
 					if(prediction) {
 						programCounter = inst[3] + inst[1];
@@ -141,13 +147,20 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			case Ln:
 				clearOutput.put(true);
 				inst[2] = inst[1];
+				inst[4] = inst[6] + 1;
 				inst[6] = instructionCounter++;
 				outInsts.add(inst);
-				halt = true;
-				haltingInstruction = inst[6]; //instruction number
-				break insts;	
+				Optional<Integer> prediction = predictor.predictLink(inst);
+				if(Settings.LINK_BRANCH_PREDICTION && prediction.isPresent()) {
+					inst[5] = prediction.get();
+				} else {
+					inst[5] = -1;
+					halt = true;
+					haltingInstruction = inst[6]; //instruction number
+				}
+				break insts;
 			case Ldpc:
-				inst[3] = inst[5] + 1;
+				inst[3] = inst[6] + 1;
 			default:
 				inst[6] = instructionCounter++;
 				outInsts.add(inst);

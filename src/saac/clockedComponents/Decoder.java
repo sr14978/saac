@@ -210,7 +210,8 @@ public class Decoder implements ClearableComponent, ClockedComponentI, VisibleCo
 					case Ln:
 						dest = Store.Null;
 						usageA = Usage.ScalarReg;
-						usageB = usageC = usageD = Usage.Null;
+						usageC = usageD = Usage.Data;
+						usageB = Usage.Null;
 						break;
 					case JmpC:
 						dest = Store.Null;

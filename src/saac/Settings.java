@@ -39,6 +39,8 @@ public class Settings {
 	
 	public static int LOAD_LIMIT = 16;
 	
+	public static boolean LINK_BRANCH_PREDICTION = false;
+	
 	public static Supplier<Integer> PARALLEL_INSTRUCTION_FETCH = () -> 4 * SUPERSCALER_WIDTH;
 		
 	public static Supplier<Integer> RESERVATION_STATION_SIZE = () -> Math.max(SUPERSCALER_WIDTH, 16);

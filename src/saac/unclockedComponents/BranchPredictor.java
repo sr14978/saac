@@ -2,7 +2,10 @@ package saac.unclockedComponents;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Optional;
 
 import saac.Settings;
 import saac.Settings.BranchPrediction;
@@ -43,15 +46,21 @@ public class BranchPredictor implements VisibleComponentI{
 	private final static int MAX_STORAGE_SIZE = 4;
 	Storage dynamicStorage = new Storage();
 	
-	public static int totalBranches = 0;
-	public static int totalCorrectlyPredicted = 0;
+	public static int totalBinaryBranches;
+	public static int totalBinaryCorrectlyPredicted;
+	public static int totalLinkBranches;
+	public static int totalLinkCorrectlyPredicted;
+		
+	private Map<Integer, Integer> lastLinkTargets = new HashMap<>();
 	
 	public BranchPredictor() {
-		totalBranches = 0;
-		totalCorrectlyPredicted = 0;
+		totalBinaryBranches = 0;
+		totalBinaryCorrectlyPredicted = 0;
+		totalLinkBranches = 0;
+		totalLinkCorrectlyPredicted = 0;
 	}
 	
-	public boolean predict(int[] inst) {
+	public boolean predictBinary(int[] inst) {
 		if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Simple_Static)
 			return predictSimpleStatic();
 		else if(Settings.BRANCH_PREDICTION_MODE == BranchPrediction.Static)
@@ -61,7 +70,7 @@ public class BranchPredictor implements VisibleComponentI{
 		}
 		throw new NotImplementedException();
 	}
-	
+		
 	public void update(BranchResult br) {
 		int addr = br.getAddr();
 		Item i = dynamicStorage.find(addr);
@@ -80,8 +89,8 @@ public class BranchPredictor implements VisibleComponentI{
 				i.value--;
 		}
 		if(br.wasCorrect())
-			totalCorrectlyPredicted++;
-		totalBranches++;
+			totalBinaryCorrectlyPredicted++;
+		totalBinaryBranches++;
 	}
 
 	private boolean predictDynamic(int[] inst) {
@@ -98,6 +107,31 @@ public class BranchPredictor implements VisibleComponentI{
 	private boolean predictSimpleStatic() {		
 		return false;
 	}
+	
+	public Optional<Integer> predictLink(int[] inst) {
+		if(Settings.LINK_BRANCH_PREDICTION) {
+			if(lastLinkTargets.containsKey(inst[4])) {
+				return Optional.of(lastLinkTargets.get(inst[4]));
+			} else {
+				return Optional.empty();
+			}
+		} else {
+			return Optional.empty();
+		}
+	}
+	
+	public void updateLinkBranch(BranchResult br) {
+		int addr = br.getAddr();
+		int newPc = br.getNewPc();
+		
+		if(!lastLinkTargets.containsKey(addr) && lastLinkTargets.size() == MAX_STORAGE_SIZE) {
+			lastLinkTargets.remove(lastLinkTargets.keySet().toArray()[(int) Math.random()*MAX_STORAGE_SIZE]);
+		}
+		lastLinkTargets.put(addr, newPc);
+		if(br.wasCorrect())
+			totalLinkCorrectlyPredicted++;
+		totalLinkBranches++;
+	}
 
 	class View extends ComponentView {
 		
@@ -110,11 +144,18 @@ public class BranchPredictor implements VisibleComponentI{
 			gc.setColor(Color.BLACK);
 			gc.drawString("addr", 5, 25);
 			gc.drawString("pred", 5, 40);
-			for(int i = 0; i<dynamicStorage.size(); i++) {
+			int i;
+			for(i = 0; i<dynamicStorage.size(); i++) {
 				gc.drawString(Integer.toString(dynamicStorage.get(i).addr), 30 * i + 35, 25);
 				gc.drawString(Integer.toString(dynamicStorage.get(i).value), 30 * i + 35, 40);
 			}
-			gc.drawString(RateUtils.getRate(totalCorrectlyPredicted, totalBranches), 200, 30);
+			for(Integer addr : lastLinkTargets.keySet()) {
+				gc.drawString(Integer.toString(addr), 30 * i + 35, 25);
+				gc.drawString(Integer.toString(lastLinkTargets.get(addr)), 30 * i + 35, 40);
+				i++;
+			}
+			gc.drawString(RateUtils.getRate(totalBinaryCorrectlyPredicted, totalBinaryBranches), 200, 25);
+			gc.drawString(RateUtils.getRate(totalBinaryCorrectlyPredicted, totalBinaryBranches), 200, 40);
 		}
 	}
 	
