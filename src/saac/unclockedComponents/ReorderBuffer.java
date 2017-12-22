@@ -61,7 +61,7 @@ public class ReorderBuffer {
 	public void clearAfter() {
 		int bufferIndex = bufferIndexStart;
 		while(bufferIndex != bufferIndexEnd) {
-			reorderBuffer[bufferIndexStart] = null;
+			reorderBuffer[bufferIndex] = null;
 			bufferIndex = (bufferIndex + 1) % BUFF_SIZE;
 		}
 		bufferIndexEnd = bufferIndex;

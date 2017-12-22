@@ -66,7 +66,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 			}
 			if(halt && res.getVirtualNumber() == haltingInstruction) {
 				programCounter = res.getNewPc();
-				instructionCounter = res.getVirtualNumber();
+				instructionCounter = res.getVirtualNumber()+1;
 				halt = false;
 			} else {
 				if(!res.wasCorrect()) {
@@ -88,6 +88,10 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 	
 	@Override
 	public void tock() throws Exception {
+		
+		if(!clearOutput.clear()) {
+			return;
+		}
 		
 		if(!output.empty()) {
 			return;
@@ -133,8 +137,10 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 					boolean prediction = predictor.predictBinary(inst);
 					inst[5] = prediction?1:0;
 					if(prediction) {
-						programCounter = inst[3] + inst[1];
+						programCounter = inst[4] + inst[1];
 						clearOutput.put(true);
+						inInsts.clear();
+						break insts;
 					}
 				} else {
 					clearOutput.put(true);
@@ -150,6 +156,7 @@ public class Fetcher implements ClockedComponentI, VisibleComponentI {
 				inst[4] = inst[6] + 1;
 				inst[6] = instructionCounter++;
 				outInsts.add(inst);
+				inInsts.clear();
 				Optional<Integer> prediction = predictor.predictLink(inst);
 				if(Settings.LINK_BRANCH_PREDICTION && prediction.isPresent()) {
 					inst[5] = prediction.get();

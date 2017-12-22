@@ -15,7 +15,7 @@ public class ProgramLoader {
 	final static String programDirectory = "programs/";
 	//final static String programName = "no_depend_mul.program";
 	//final static String programName = "no_depend_ldc.program";
-	//final static String programName = "inner_product_stop.program";
+	final static String programName = "inner_product_stop.program";
 	//final static String programName = "inner_product_stop_vector.program";
 	//final static String programName = "reorder.program";
 	//final static String programName = "static_branch_pred.program";
@@ -24,7 +24,7 @@ public class ProgramLoader {
 	//final static String programName = "reoder test.program";
 	//final static String programName = "memory_branch.program";
 	//final static String programName = "depend_simple.program";
-	final static String programName = "new_insts_brr.program";
+	//final static String programName = "new_insts_brr.program";
 	//final static String programName = "store_ordering.program";
 	//final static String programName = "vector.program";
 	

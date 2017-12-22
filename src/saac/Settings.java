@@ -22,7 +22,6 @@ public class Settings {
 	public static enum IssueWindow {Aligned, Unaligned};
 	public static IssueWindow ISSUE_WINDOW_METHOD = IssueWindow.Aligned; 
 	
-	//public static enum BranchPrediction {Blocking, Simple_Static, Static, Dynamic};
 	public static enum BranchPrediction {Blocking, Always_Taken, Always_Not_Taken, Smart_Static, Dynamic};
 	public static BranchPrediction BRANCH_PREDICTION_MODE = BranchPrediction.Dynamic;
 	
